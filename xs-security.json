@@ -1,0 +1,60 @@
+{
+  "xsappname": "kupit-o2p",
+  "tenant-mode": "dedicated",
+  "description": "Security profile of called application", 
+  "scopes": [
+    {
+      "name": "uaa.user",
+      "description": "UAA"
+    },
+    {
+      "name": "$XSAPPNAME.kupito2p_scope",
+      "description": "Read and Consume Services"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Token_Exchange",
+      "description": "UAA",
+      "scope-references": [
+        "uaa.user"
+      ]
+    },
+    {
+      "name": "kupito2p_scope_auth",
+      "description": "Read and Consume Services",
+      "scope-references": [
+        "uaa.user",
+        "$XSAPPNAME.kupito2p_scope"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "kupit_o2p_process",
+      "description": "RC for Kupit O2P",
+      "role-template-references": [
+        "$XSAPPNAME.Token_Exchange",
+        "$XSAPPNAME.kupito2p_scope_auth"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://*.eu10.applicationstudio.cloud.sap/**",
+      "https://*.eu10cf.applicationstudio.cloud.sap/**",
+      "https://*.cfapps.eu10.hana.ondemand.com/**",
+      "https://*.cfapps.eu10.ondemand.com/**",
+      "https://*.us10.applicationstudio.cloud.sap/**",
+      "https://*.cfapps.us10.hana.ondemand.com/**",
+      "https://*.us10cf.trial.applicationstudio.cloud.sap/**",
+      "https://*.authentication.us10.hana.ondemand.com/**",
+      "https://*.applicationstudio.cloud.sap/**",
+      "https://*.us10.trial.applicationstudio.cloud.sap/**",
+      "https://*.authentication.eu10.hana.ondemand.com/**",
+      "http://localhost:5000/",
+      "http://localhost:4004/",
+      "https://*.hana.ondemand.com/**"
+    ]
+  }
+}

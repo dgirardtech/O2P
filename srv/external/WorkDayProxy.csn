@@ -1,0 +1,277 @@
+{
+ "meta": {
+  "creator": "cds-dk 7.7.1"
+ },
+ "$version": "2.0",
+ "definitions": {
+  "WorkDayProxy": {
+   "kind": "service",
+   "@cds.external": true,
+   "@m.IsDefaultEntityContainer": "true"
+  },
+  "WorkDayProxy.wdEmployee": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "IdPosizione": {
+     "key": true,
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "DescrizionePosizione": {
+     "type": "cds.LargeString"
+    },
+    "WorkdayEmployeeID": {
+     "type": "cds.LargeString"
+    },
+    "Nome": {
+     "type": "cds.LargeString"
+    },
+    "MiddleName": {
+     "type": "cds.LargeString"
+    },
+    "Cognome": {
+     "type": "cds.LargeString"
+    },
+    "FullName": {
+     "type": "cds.LargeString"
+    },
+    "Nome_t": {
+     "type": "cds.LargeString"
+    },
+    "Cognome_t": {
+     "type": "cds.LargeString"
+    },
+    "MailDipendente": {
+     "type": "cds.LargeString"
+    },
+    "Username": {
+     "type": "cds.LargeString"
+    },
+    "UtenteSAP": {
+     "type": "cds.LargeString"
+    },
+    "Company": {
+     "type": "cds.LargeString"
+    },
+    "BusinessLine": {
+     "type": "cds.LargeString"
+    },
+    "IdSupPosizione": {
+     "type": "cds.LargeString"
+    },
+    "concatFunctionProperty": {
+     "type": "cds.LargeString"
+    },
+    "functionproperties": {
+     "@cds.ambiguous": "missing on condition?",
+     "type": "cds.Association",
+     "target": "WorkDayProxy.FunctionProperty",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    }
+   }
+  },
+  "WorkDayProxy.wdEmployeeExtended": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "IdPosizione": {
+     "key": true,
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "DescrizionePosizione": {
+     "type": "cds.LargeString"
+    },
+    "WorkdayEmployeeID": {
+     "type": "cds.LargeString"
+    },
+    "Nome": {
+     "type": "cds.LargeString"
+    },
+    "MiddleName": {
+     "type": "cds.LargeString"
+    },
+    "Cognome": {
+     "type": "cds.LargeString"
+    },
+    "FullName": {
+     "type": "cds.LargeString"
+    },
+    "Nome_t": {
+     "type": "cds.LargeString"
+    },
+    "Cognome_t": {
+     "type": "cds.LargeString"
+    },
+    "MailDipendente": {
+     "type": "cds.LargeString"
+    },
+    "Username": {
+     "type": "cds.LargeString"
+    },
+    "UtenteSAP": {
+     "type": "cds.LargeString"
+    },
+    "Company": {
+     "type": "cds.LargeString"
+    },
+    "BusinessLine": {
+     "type": "cds.LargeString"
+    },
+    "IsManager": {
+     "type": "cds.Boolean"
+    },
+    "IdSupPosizione": {
+     "type": "cds.LargeString"
+    },
+    "SupDescrizionePosizione": {
+     "type": "cds.LargeString"
+    },
+    "SupWorkdayEmployeeID": {
+     "type": "cds.LargeString"
+    },
+    "SupNome": {
+     "type": "cds.LargeString"
+    },
+    "SupMiddleName": {
+     "type": "cds.LargeString"
+    },
+    "SupCognome": {
+     "type": "cds.LargeString"
+    },
+    "SupFullName": {
+     "type": "cds.LargeString"
+    },
+    "SupNome_t": {
+     "type": "cds.LargeString"
+    },
+    "SupCognome_t": {
+     "type": "cds.LargeString"
+    },
+    "SupMail": {
+     "type": "cds.LargeString"
+    },
+    "SupUserName": {
+     "type": "cds.LargeString"
+    },
+    "SupSapUserName": {
+     "type": "cds.LargeString"
+    },
+    "SupCompany": {
+     "type": "cds.LargeString"
+    },
+    "SupBusinessLine": {
+     "type": "cds.LargeString"
+    },
+    "IdManagerAreaPosizione": {
+     "type": "cds.LargeString"
+    },
+    "ManagerAreaFullName": {
+     "type": "cds.LargeString"
+    },
+    "ManagerAreaID": {
+     "type": "cds.LargeString"
+    },
+    "ManagerAreaDescription": {
+     "type": "cds.LargeString"
+    },
+    "concatFunctionProperty": {
+     "type": "cds.LargeString"
+    },
+    "functionproperties": {
+     "@cds.ambiguous": "missing on condition?",
+     "type": "cds.Association",
+     "target": "WorkDayProxy.FunctionProperty",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    }
+   }
+  },
+  "WorkDayProxy.FunctionProperty": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "employee_IdPosizione": {
+     "key": true,
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "IdFunction": {
+     "key": true,
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "Description": {
+     "type": "cds.LargeString"
+    },
+    "Typology": {
+     "type": "cds.LargeString"
+    },
+    "employee": {
+     "@cds.ambiguous": "missing on condition?",
+     "type": "cds.Association",
+     "target": "WorkDayProxy.wdEmployeeExtended",
+     "on": [
+      {
+       "ref": [
+        "employee",
+        "IdPosizione"
+       ]
+      },
+      "=",
+      {
+       "ref": [
+        "employee_IdPosizione"
+       ]
+      }
+     ]
+    }
+   }
+  }
+ }
+}

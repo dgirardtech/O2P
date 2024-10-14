@@ -1,0 +1,192 @@
+@server = http://localhost:4004
+//@server = http://localhost:39061
+//GET {{server}}/odata/v2/catalog/$metadata
+### ----------------------------------------------------------------------
+
+GET {{server}}/odata/v4/kupito2pmodel-srv/$metadata
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+### ----------------------------------------------------------------------
+ 
+GET {{server}}/odata/v4/kupito2pbpa-srv/UpdateTaskId(MAIL_LIST='rcao@q8.it',REQUEST_ID=1000000030,STEP=10)
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+
+
+GET {{server}}/odata/v2/kupito2pmodel-srv/getMonitorTaskLink?REQUEST_ID=1000000041
+ Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+ 
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/Attachments(REQUEST_ID=1000000149,ID=1)
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+
+GET {{server}}/odata/v4/kupito2pmodel-srv/Attachments(REQUEST_ID=1000000149,ID=1)/CONTENT
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+### ----------------------------------------------------------------------
+ 
+ 
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/createProcess()
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+
+ 
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/saveUserAction
+Content-Type: application/json;IEEE754Compatible=true   
+Authorization: Basic ale:ale 
+
+{
+    "REQUEST_ID": 1, 
+    "STEPID": 10, 
+    "CURRENT_APPROVERS": "davide.girard@avvale.com"
+}
+
+
+
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/assignApprover
+Content-Type: application/json;IEEE754Compatible=true   
+Authorization: Basic ale:ale 
+
+{
+    "REQUEST_ID": 1000000153, 
+    "NOTE": "", 
+    "EMAIL": "rcao@q8.it"
+}
+
+
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/checkTaskCreated
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+{
+    "REQUEST_ID": 1000000030, 
+    "WF_INSTACE_ID": "26df6f5f-27f6-11ef-84e8-eeee0a9efb8d" 
+}
+
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/getPDFContent?REQUEST_ID=1000000146
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+ 
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/Attachments
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+{    
+    "REQUEST_ID": 1000000010,
+    "MEDIATYPE": "text/plain",
+    "FILENAME": "debug1.txt",
+    "ATTACHMENTTYPE_ATTACHMENTTYPE": "GENERIC"
+}
+
+
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/Request(1)
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+{    
+       "REQUEST_ID"     :  1,
+       "MONTH"          : "01",
+       "YEAR"           : "2024"
+}
+
+
+### ----------------------------------------------------------------------
+DELETE {{server}}/odata/v4/kupito2pmodel-srv/Attachments(REQUEST_ID=1000000102,ID=1) 
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/Request(REQUEST_ID=1)/to_Notes
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v2/kupito2pmodel-srv/Request(REQUEST_ID=1)
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+ 
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v2/kupito2pmodel-srv/Request(REQUEST_ID=1000000064)?$expand=to_Attachments
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=1000000064,ID=10)/CONTENT
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/Notes
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+{    
+    "REQUEST_ID": 1000000010,
+    "NOTE": "Note test"
+}
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/Notes
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/Year
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/Month
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v4/kupito2pmodel-srv/getTemplate()
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/saveUserAction
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+{    
+    "REQUEST_ID": 1000000041,
+    "STEPID": 10,
+    "ACTION": "A"
+}
+
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v2/kupito2pmodel-srv/getSalesPoint?MONTH='03'&YEAR='2024'
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+
+### ----------------------------------------------------------------------
+GET {{server}}/odata/v2/kupito2pmodel-srv/UserTaskCounter/$count
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+### ----------------------------------------------------------------------
+GET http://localhost:4004/odata/v2/kupito2pmodel-srv/UserTaskCounter/$count
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vdG9rZW5fa2V5cyIsImtpZCI6ImRlZmF1bHQtand0LWtleS0xOTU0MTAzNjIyIiwidHlwIjoiSldUIiwiamlkIjogIlJKNlE1ZVFTcHk3bDcwSmxnK2dTZjFLZ3ROcFdaVGpBcVZIL3lCZ2x4RlU9In0.eyJqdGkiOiJkYmE5OTJhNmI3ZmY0MDQxYjhlMjA4OGZjODY2N2NlNSIsImV4dF9hdHRyIjp7ImVuaGFuY2VyIjoiWFNVQUEiLCJzdWJhY2NvdW50aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJ6ZG4iOiJjZi1rdXBpdC1kZXYteXk2Z3M4M2gifSwic3ViIjoic2Ita3VwaXQtY2lwcmVnLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLUNJUFJFRyF0MjA4NzU1IiwiYXV0aG9yaXRpZXMiOlsidWFhLnJlc291cmNlIl0sInNjb3BlIjpbInVhYS5yZXNvdXJjZSJdLCJjbGllbnRfaWQiOiJzYi1rdXBpdC1jaXByZWctS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtQ0lQUkVHIXQyMDg3NTUiLCJjaWQiOiJzYi1rdXBpdC1jaXByZWctS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtQ0lQUkVHIXQyMDg3NTUiLCJhenAiOiJzYi1rdXBpdC1jaXByZWctS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtQ0lQUkVHIXQyMDg3NTUiLCJncmFudF90eXBlIjoiY2xpZW50X2NyZWRlbnRpYWxzIiwicmV2X3NpZyI6ImIyZTY2YjYyIiwiaWF0IjoxNzE4ODc4MDQ3LCJleHAiOjE3MTg5MjEyNDcsImlzcyI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vb2F1dGgvdG9rZW4iLCJ6aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJhdWQiOlsidWFhIiwic2Ita3VwaXQtY2lwcmVnLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLUNJUFJFRyF0MjA4NzU1Il19.EmaA1GutYZ-yfnpio81KYs21VKMa73LBcMmFC_RwTC7-QDz-vkrzyd073JJ3LO0bCkjlIM2pyBRRbjrrgSznFtlm936zW3imjPc86JMbt0Gkcvg1jcFVmExuBJfuiRfknXiyIGe81SosWU7IUtO2P2WcbAtZ230yZLRs3ssgHIP2rf7Kv5v3jKMrIIJmXSMRJBp0KvJRXNfzCiKu-ZdrfsfeFfYcXIhjcvYopPQ0NQX97A4z34x6amDT3zCDHCh4dAZ8JxdqGMgj4QaNUHKRBERDXtVrtdmb0H3hlEmDQM0VLXxA4DJWbHxo35Wq4RbOe5CV2fG-9fw5xos9sOMpsA

@@ -1,0 +1,166 @@
+{
+  "name": "kupit-o2p",
+  "version": "1.0.0",
+  "description": "A simple CAP project.",
+  "repository": "<Add your repository here>",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@cap-js-community/odata-v2-adapter": "^1.11.9",
+    "@sap-cloud-sdk/connectivity": "^3.7.0",
+    "@sap-cloud-sdk/http-client": "^3.7.0",
+    "@sap-cloud-sdk/odata-v2": "^3.12.1",
+    "@sap-cloud-sdk/openapi": "^3.12.1",
+    "@sap-cloud-sdk/openapi-generator": "^3.11.0",
+    "@sap/cds": "^7.6.1",
+    "@sap/cds-hana": "^2",
+    "@sap/cds-odata-v2-adapter-proxy": "^1.9.7",
+    "@sap/hana-client": "^2.20.23",
+    "@sap/textbundle": "^5.1",
+    "@sap/xsenv": "^4.0.0",
+    "@sap/xssec": "^3.6.1",
+    "express": "^4",
+    "helmet": "^7.1.0",
+    "in": "^0.19.0",
+    "mathjs": "^12.1.0",
+    "moment": "^2.29.4",
+    "passport": "^0",
+    "project": "^0.1.6",
+    "sap-cf-axios": "^1.0.2",
+    "underscore": "^1.13.6",
+    "xml-js": "^1.6.11"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^1",
+    "@sap-cloud-sdk/generator": "^3.13.0",
+    "@sap-cloud-sdk/openapi-generator": "^3.12.1",
+    "@sap/cds-dk": "^7",
+    "@sap/dev-cap-tools": "^1.31.0",
+    "@sap/eslint-plugin-cds": "^3",
+    "@sap/hdi-deploy": "4.9.4",
+    "eslint": "^9"
+  },
+  "scripts": {
+    "start": "cds-serve"
+  },
+
+  
+  "cds": {
+    "query": {
+      "limit": {
+        "default": 9999,
+        "max": 9999
+      }
+    },
+    "log": {
+      "levels": {
+        "remote": "debug",
+        "cds": "debug"
+      }
+    },
+    "cov2ap": {
+      "plugin": true
+    },
+    "features": {
+      "[production]": {
+        "kibana_formatter": true
+      }
+    },
+    "requires": {
+      "[production]": {
+        "auth": "xsuaa"
+      },
+      "[development]": {
+        "auth": {
+          "strategy": "mock",
+          "users": {
+            "ale": {
+              "password": "ale",
+              "roles": [
+                "kupito2p_scope"
+              ]
+            }
+          }
+        }
+      },
+      "db": {
+        "kind": "hana-cloud"
+      },
+      "Workflow": {
+        "kind": "rest",
+        "model": "srv/external/SPA_Workflow_Runtime_v2",
+        "credentials": {
+          "destination": "sap_process_automation_api_xsuaa",
+          "forwardAuthToken": true
+        }
+      },
+      "MoaExtraction": {
+        "kind": "rest",
+        "credentials": {
+          "destination": "kupit-moa-data-extraction-dest",
+          "_path": "/v2/catalog",
+          "path": "/odata/v2/catalog"
+        }
+      },
+      "mailService": {
+        "kind": "rest",
+        "credentials": {
+          "destination": "destinationMAIL",
+          "forwardAuthToken": true
+        }
+      },
+      "MailHandler": {
+        "kind": "rest",
+        "credentials": {
+          "destination": "kpi-mail-handler-fiori",
+          "path": "/odata/v2/mailservice"
+        }
+      },
+      "WorkDayProxy": {
+        "kind": "odata-v2",
+        "model": "srv/external/WorkDayProxy",
+        "credentials": {
+          "destination": "WorkDay-Proxy"
+        },
+        "_destinationOptions": {
+          "selectionStrategy": "alwaysProvider"
+        }
+      },
+      "ZSI_SERVICE_STATION_GW_SRV": {
+        "kind": "odata-v2",
+        "model": "srv/external/ZsiServiceStationGw",
+        "csrf": true,
+        "csrfInBatch": true,
+        "credentials": {
+          "destination": "ECC", 
+          "path": "/sap/opu/odata/sap/ZSI_SERVICE_STATION_GW_SRV",
+          "requestTimeout": 600000
+        }
+      }
+      ,
+      "ZSI_SERV_STATION_DEALER_SRV": {
+        "kind": "odata-v2", 
+        "model": "srv/external/ZSI_SERV_STATION_DEALER_SRV",
+        "csrf": true,
+        "csrfInBatch": true,
+        "credentials": {
+          "destination": "ECC", 
+          "path": "/sap/opu/odata/sap/ZSI_SERV_STATION_DEALER_SRV",
+          "requestTimeout": 600000
+        }
+      },
+      
+      "ZSERVICE_STATION_SRV": {
+        "kind": "odata-v2", 
+        "model": "srv/external/ZSERVICE_STATION_SRV",
+        "csrf": true,
+        "csrfInBatch": true,
+        "credentials": {
+          "destination": "ECC", 
+          "path": "/sap/opu/odata/sap/ZSERVICE_STATION_SRV",
+          "requestTimeout": 600000
+        }
+      }
+    }
+  }
+}

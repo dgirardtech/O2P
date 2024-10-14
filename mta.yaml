@@ -1,0 +1,176 @@
+_schema-version: '3.1'
+ID: kupit-o2p
+version: 1.0.0
+description: "CAP Project Kupit O2P"
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+modules:
+  - name: kupit-o2p-srv
+    type: nodejs
+    path: gen/srv
+    requires:
+      - name: kupit-o2p-auth
+      - name: kupit-o2p-db
+      - name: kupit-o2p-logging
+      - name: kupit-o2p-destination
+      - name: kupit-o2p-connectivity
+        parameters:
+          config:
+            instance_min_count: 1
+            instance_max_count: 4
+            scaling_rules:
+              - metric_type: memoryutil
+                threshold: 30
+                operator: '>'
+                adjustment: '+1'
+                breach_duration_secs: 60
+                cool_down_secs: 320
+              - metric_type: cpu
+                threshold: 30
+                operator: '>'
+                adjustment: '+1'
+                breach_duration_secs: 60
+                cool_down_secs: 320
+              - metric_type: memoryutil
+                threshold: 30
+                operator: '<='
+                adjustment: '-1'
+                breach_duration_secs: 60
+                cool_down_secs: 320
+              - metric_type: cpu
+                threshold: 30
+                operator: '<='
+                adjustment: '-1'
+                breach_duration_secs: 60
+                cool_down_secs: 320
+    provides:
+    - name: srv-api # required by consumers of CAP services (e.g. approuter)
+      public: true
+      properties:
+        srv-url: ${default-url}
+        forwardAuthToken: true
+    parameters:
+      buildpack: nodejs_buildpack
+      disk-quota: 512M
+      memory: 1024M
+      #those are optional and limit the scope where the config can be consumed
+      visibility:
+        - org: ${org}
+          space: ${space}
+    build-parameters:
+      builder: npm
+  - name: kupit-o2p-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: kupit-o2p-db
+  - name: kupit-o2p-content
+    type: com.sap.application.content
+    build-parameters:
+      no-source: true    
+    requires:
+      - name: srv-api
+      - name: kupit-o2p-auth
+        parameters:
+          service-key:
+            name: kupit-o2p-auth-key
+      - name: kupit-o2p-destination
+        parameters:
+          content-target: true
+      - name: kupit-o2p-connectivity
+    parameters:
+      content:
+        subaccount:
+          existing_destinations_policy: ignore
+          destinations:
+            - Name: kupit-o2p-fiori
+              Description: Mail Services destination FIORI
+              URL: ~{srv-api/srv-url}
+              Authentication: OAuth2UserTokenExchange
+              ServiceInstanceName: kupit-o2p-auth
+              ServiceKeyName: kupit-o2p-auth-key
+              HTML5.Timeout: 600000
+              timeout: 600000
+              ClientReadTimeout: 600000
+              HTML5.SocketReadTimeoutInSeconds: 600
+              WebIDEEnabled: true
+              WebIDESystem: kupit-o2p-fiori
+              WebIDEUsage: odata_gen,odata_hci,odata_smp,odata_abap,ui5_execute_abap,dev_abap,odata_xs
+              HTML5.DynamicDestination: true
+              sap.cloud.service: kupit-o2p.service
+            - Name: kupit-o2p-bpa
+              Description: Mail Services destination BPA
+              URL: ~{srv-api/srv-url}/odata/v2/kupito2pbpa-srv
+              Authentication: OAuth2ClientCredentials
+              ServiceInstanceName: kupit-o2p-auth
+              ServiceKeyName: kupit-o2p-auth-key
+              HTML5.Timeout: 600000
+              timeout: 600000
+              ClientReadTimeout: 600000
+              HTML5.SocketReadTimeoutInSeconds: 600
+              WebIDEEnabled: true
+              WebIDESystem: kupit-o2p-fiori
+              WebIDEUsage: odata_gen,odata_hci,odata_smp,odata_abap,ui5_execute_abap,dev_abap,odata_xs
+              HTML5.DynamicDestination: true
+              sap.cloud.service: kupit-o2p.service 
+              sap.processautomation.enabled: true
+              sap.build.usage: CAP
+              sap.applicationdevelopment.actions.enabled: true
+        instance:
+          existing_destinations_policy: update
+          destinations:
+            - Name: kupit-o2p-dest
+              Description: Mail simplifieds destination
+              URL: ~{srv-api/srv-url}/odata/v2
+              Authentication: OAuth2ClientCredentials
+              ServiceInstanceName: kupit-o2p-auth
+              ServiceKeyName: kupit-o2p-auth-key
+              HTML5.Timeout: 600000
+              timeout: 600000
+              ClientReadTimeout: 600000
+              HTML5.SocketReadTimeoutInSeconds: 600
+              WebIDEEnabled: true
+              WebIDESystem: kupit-o2p-dest
+              WebIDEUsage: odata_gen,odata_hci,odata_smp,odata_abap,ui5_execute_abap,dev_abap,odata_xs
+              sap.cloud.service: kupit-o2p.service
+resources:
+  - name: kupit-o2p-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: kupit-o2p-${org}-${space}
+        tenant-mode: dedicated
+  - name: kupit-o2p-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+  - name: kupit-o2p-logging
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-plan: lite
+  - name: kupit-o2p-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+        version: 1.0.0
+      service: destination
+      service-plan: lite
+  - name: kupit-o2p-connectivity
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: connectivity
+      service-plan: lite

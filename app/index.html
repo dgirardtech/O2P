@@ -1,0 +1,52 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title> Project Preview </title>
+    <script src="shared-config.js"></script>
+    <script src="https://ui5.sap.com/1.120.13/resources/sap-ui-core.js" 
+            id="sap-ui-bootstrap"
+            data-sap-ui-theme="sap_horizon"
+            data-sap-ui-bindingSyntax="complex" 
+            data-sap-ui-xx-bindingSyntax="complex"
+            data-sap-ui-resourceroots='{"assets": "assets"}' 
+            data-sap-ui-libs="sap.m,sap.uxap,sap.ui.layout,sap.f">
+    </script>
+    <link rel="stylesheet" href="assets/preview.css">
+</head>
+
+<body id="body" class="sapUiBody">
+    <script>
+        "use strict";
+        sap.ui.localResources("assets");
+        (function (jQuery, App, Page) {
+            sap.ui.getCore().attachInit(function () {
+                sap.ui.define([
+                    "sap/ui/core/mvc/Controller",
+                    "sap/ui/model/json/JSONModel"
+                ], function (Controller, JSONModel) {
+                    return Controller.extend("PreviewController", {
+                        onInit: function () {
+
+                            const data = {"Services":[{"ServiceName":"O2PModelService","DetailsURL":"./odata/v4/kupito2pmodel-srv/","Metadata":"./odata/v4/kupito2pmodel-srv/$metadata","Entities":[{"Name":"Request","URL":"./odata/v4/kupito2pmodel-srv/Request","FioriURL":"$fiori-preview/CipregModelService/Request#preview-app"},{"Name":"SalesPoints","URL":"./odata/v4/kupitcipregmodel-srv/SalesPoints","FioriURL":"$fiori-preview/CipregModelService/SalesPoints#preview-app"},{"Name":"Attachments","URL":"./odata/v4/kupitcipregmodel-srv/Attachments","FioriURL":"$fiori-preview/CipregModelService/Attachments#preview-app"},{"Name":"Notes","URL":"./odata/v4/kupitcipregmodel-srv/Notes","FioriURL":"$fiori-preview/CipregModelService/Notes#preview-app"},{"Name":"WorkDay","URL":"./odata/v4/kupitcipregmodel-srv/WorkDay","FioriURL":"$fiori-preview/CipregModelService/WorkDay#preview-app"},{"Name":"Status","URL":"./odata/v4/kupitcipregmodel-srv/Status","FioriURL":"$fiori-preview/CipregModelService/Status#preview-app"},{"Name":"AttachmentType","URL":"./odata/v4/kupitcipregmodel-srv/AttachmentType","FioriURL":"$fiori-preview/CipregModelService/AttachmentType#preview-app"},{"Name":"ProcessType","URL":"./odata/v4/kupitcipregmodel-srv/ProcessType","FioriURL":"$fiori-preview/CipregModelService/ProcessType#preview-app"}],"EntitiesCount":8}]}
+                            this.getView().setModel(new JSONModel(data));
+                        }
+                    });
+                });
+                var oApp = new App()
+                var previewView = sap.ui.view({
+                    viewName: "assets.Preview",
+                    type: sap.ui.core.mvc.ViewType.XML
+                });
+                oApp.addPage(new Page({
+                    content: [previewView],
+                    showHeader: false
+                })).placeAt("content");
+            });
+
+        }(jQuery, sap.m.App, sap.m.Page));
+    </script>
+    <div id="content"></div>
+</body>
+
+</html>

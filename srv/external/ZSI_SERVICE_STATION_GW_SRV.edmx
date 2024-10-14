@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+	<edmx:DataServices m:DataServiceVersion="2.0">
+		<Schema Namespace="ZSI_SERVICE_STATION_GW_SRV" xml:lang="it" sap:schema-version="1" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+			<EntityType Name="ZSI_SERVICE_STATION_GW" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="SALES_ORG"/>
+					<PropertyRef Name="DISTR_CH"/>
+					<PropertyRef Name="DIVISION"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_ORG" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DISTR_CH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIVISION" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LOC_VALUE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LOC_DESCR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="AREA_Q8" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="AREA_Q8DESCR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="STATUS" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="STATUS_DESCR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_DISTRICT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="EASY_STATION" Type="Edm.String" Nullable="false" MaxLength="5" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="HIGHWAY_STATION" Type="Edm.String" Nullable="false" MaxLength="5" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CHAIN_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CHAIN_CODE_DESCR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIFFERENTIATOR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIFFERENTIATOR_DESCR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DNA" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DNA_DESCR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="VOLUME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="UNITOF_MES" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<NavigationProperty Name="ServStationToContractItem" Relationship="ZSI_SERVICE_STATION_GW_SRV.ServStationToContractItem" FromRole="FromRole_ServStationToContractItem" ToRole="ToRole_ServStationToContractItem"/>
+				<NavigationProperty Name="ServStationToAddress" Relationship="ZSI_SERVICE_STATION_GW_SRV.ServStationToAddress" FromRole="FromRole_ServStationToAddress" ToRole="ToRole_ServStationToAddress"/>
+				<NavigationProperty Name="ServStationToAgent" Relationship="ZSI_SERVICE_STATION_GW_SRV.ServStationToAgent" FromRole="FromRole_ServStationToAgent" ToRole="ToRole_ServStationToAgent"/>
+				<NavigationProperty Name="ServStationToDealer" Relationship="ZSI_SERVICE_STATION_GW_SRV.ServStationToDealer" FromRole="FromRole_ServStationToDealer" ToRole="ToRole_ServStationToDealer"/>
+			</EntityType>
+			<EntityType Name="ZSI_SERVS_CONTRACT_GW_ITEM" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="SALES_ORG"/>
+					<PropertyRef Name="DISTR_CH"/>
+					<PropertyRef Name="DIVISION"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_ORG" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DISTR_CH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIVISION" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CONTRACT_NUMBER" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CONTRACT_START" Type="Edm.DateTime" Nullable="false" Precision="0" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CONTRACT_END" Type="Edm.DateTime" Nullable="false" Precision="0" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="VALIDITY_PERIOD" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="VALIDITY_PERIOD_DESC" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ZSI_SERVS_ANNUAL_VOLUMES" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="SALES_ORG"/>
+					<PropertyRef Name="DISTR_CH"/>
+					<PropertyRef Name="DIVISION"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_ORG" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DISTR_CH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIVISION" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="FROM_DATE" Type="Edm.DateTime" Nullable="false" Precision="7" sap:unicode="false" sap:label="Data" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="TO_DATE" Type="Edm.DateTime" Nullable="false" Precision="7" sap:unicode="false" sap:label="Data" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MAT_GROUP" Type="Edm.String" Nullable="false" MaxLength="9" sap:unicode="false" sap:label="Gr. materiali" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MATERIAL" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MAT_VOL" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MAT_YEAR" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:label="Collegamento" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MAT_MONTH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="C.Tx02" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ChainList" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="ChainCode"/>
+				</Key>
+				<Property Name="ChainCode" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Cd.sett.ind." sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="ChainDesc" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="Spras" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="Lingua" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<NavigationProperty Name="ChainToAddress" Relationship="ZSI_SERVICE_STATION_GW_SRV.ChainListToAddress" FromRole="FromRole_ChainListToAddress" ToRole="ToRole_ChainListToAddress"/>
+				<NavigationProperty Name="ChainToServiceStation" Relationship="ZSI_SERVICE_STATION_GW_SRV.ChainListToServStation" FromRole="FromRole_ChainListToServStation" ToRole="ToRole_ChainListToServStation"/>
+			</EntityType>
+			<EntityType Name="RentReceivedType" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="ServiceStationId"/>
+					<PropertyRef Name="CompanyCode"/>
+					<PropertyRef Name="Language"/>
+				</Key>
+				<Property Name="ServiceStationId" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="CompanyCode" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="Language" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="RentalUnit" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LeaseOutNumber" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="RentalStart" Type="Edm.DateTime" Nullable="false" Precision="0" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="RentalEnd" Type="Edm.DateTime" Nullable="false" Precision="0" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="RentAmount" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="RentalUnitDesc" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ServiceStationDataType" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="ServiceStationId"/>
+					<PropertyRef Name="SalesOrg"/>
+					<PropertyRef Name="DistrChanel"/>
+					<PropertyRef Name="Division"/>
+				</Key>
+				<Property Name="ServiceStationId" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SalesOrg" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DistrChanel" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Division" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LocValue" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LocDescr" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="AreaQ8" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="AreaQ8descr" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Status" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="StatusDescr" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SalesDistrict" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="EasyStation" Type="Edm.String" Nullable="false" MaxLength="5" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="HighwayStation" Type="Edm.String" Nullable="false" MaxLength="5" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ChainCode" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ChainCodeDescr" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Differentiator" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DifferentiatorDescr" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Dna" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DnaDescr" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Volume" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="UnitOfMes" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LocName" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Street" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="StreetNumb" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="City" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ZipCode" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Region" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Province" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Code" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Name" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Address" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Zip" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Piva" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Fcode" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="GestorePVCode" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="SALES_ORG"/>
+					<PropertyRef Name="DISTR_CH"/>
+					<PropertyRef Name="DIVISION"/>
+					<PropertyRef Name="PARTNER"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="SALES_ORG" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="DISTR_CH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="DIVISION" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="PARTNER_FUNC" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PARTNER" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PARTNER_DESCRIPTION" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ACTIVE" Type="Edm.String" Nullable="false" MaxLength="1" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="START_DATE" Type="Edm.DateTime" Precision="0" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="END_DATE" Type="Edm.DateTime" Precision="0" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="OrganizationalUnitType" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="Vkgrp"/>
+				</Key>
+				<Property Name="Spras" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Lingua" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Vkgrp" Type="Edm.String" Nullable="false" MaxLength="3" sap:unicode="false" sap:label="Gr.add.vendite" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Bezei" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Descrizione" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="PVDealerRev" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SALES_POINT"/>
+					<PropertyRef Name="DEALER"/>
+				</Key>
+				<Property Name="SALES_POINT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DEALER" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CUSTOMER_NAME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="TAX_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ZSI_SERVS_ADDRESS_GW" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="SALES_ORG"/>
+					<PropertyRef Name="DISTR_CH"/>
+					<PropertyRef Name="DIVISION"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_ORG" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DISTR_CH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIVISION" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LOC_NAME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="STREET" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="STREET_NUMB" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CITY" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ZIP_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="REGION" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PROVINCE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ZSI_SERVS_AGENT_GW" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="SALES_ORG"/>
+					<PropertyRef Name="DISTR_CH"/>
+					<PropertyRef Name="DIVISION"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_ORG" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DISTR_CH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIVISION" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="AGENT_ID" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LAST_NAME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="FIRST_NAME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="USER_ID" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ZSI_SERVS_DEALER_GW" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="SALES_ORG"/>
+					<PropertyRef Name="DISTR_CH"/>
+					<PropertyRef Name="DIVISION"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_ORG" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DISTR_CH" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DIVISION" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="NAME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ADDRESS" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CITY" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="REGION" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ZIP" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PIVA" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="FCODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="DomainList" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="DomainName"/>
+					<PropertyRef Name="Spras"/>
+				</Key>
+				<Property Name="DomainName" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Spras" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Lingua" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DomainCode" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DomainValue" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ProductSupplyByPeriodType" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="ServiceStationId"/>
+					<PropertyRef Name="DateFrom"/>
+					<PropertyRef Name="DateTo"/>
+					<PropertyRef Name="UoM"/>
+				</Key>
+				<Property Name="ServiceStationId" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="DateFrom" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="DateTo" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="UoM" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="Material" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MaterialDesc" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Volume" Type="Edm.Decimal" Nullable="false" Precision="12" Scale="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ProdGroup" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ProdGroupDesc" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MatGroup" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MatGroupDesc" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MatGroup3" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MatGroup3desc" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="Alias" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="ServiceStationProduct" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SERV_SID"/>
+					<PropertyRef Name="LANGUAGE"/>
+					<PropertyRef Name="REFERENCE_DATE"/>
+					<PropertyRef Name="PRODGROUP"/>
+				</Key>
+				<Property Name="SERV_SID" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="LANGUAGE" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+				<Property Name="REFERENCE_DATE" Type="Edm.DateTime" Nullable="false" Precision="0" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PRODGROUP" Type="Edm.String" Nullable="false" MaxLength="3" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PRODGROUPTEXT" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="Agreement" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SALES_POINT"/>
+				</Key>
+				<Property Name="COMPANY_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MONTH" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="YEAR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_POINT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DEALER" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CUSTOMER_NAME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="TAX_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="START_DATE_ACCESS_MEMBER" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ACCES_TYPE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="AGREEMENT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="OLD_AGREEMENT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="START_DATE_OLD_AGREEMENT" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="END_DATE_ACCESS_MEMBER" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PV_ADDRESS" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="AmountCurrency" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="Date"/>
+					<PropertyRef Name="ForeignCurrency"/>
+					<PropertyRef Name="LocalCurrency"/>
+				</Key>
+				<Property Name="Date" Type="Edm.DateTime" Nullable="false" Precision="7" sap:unicode="false" sap:label="Data" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ForeignCurrency" Type="Edm.String" Nullable="false" MaxLength="5" sap:unicode="false" sap:label="Divisa" sap:updatable="false" sap:sortable="false" sap:filterable="false" sap:semantics="currency-code"/>
+				<Property Name="LocalCurrency" Type="Edm.String" Nullable="false" MaxLength="5" sap:unicode="false" sap:label="Divisa" sap:updatable="false" sap:sortable="false" sap:filterable="false" sap:semantics="currency-code"/>
+				<Property Name="ForeignAmount" Type="Edm.Decimal" Nullable="false" Precision="23" Scale="4" sap:unicode="false" sap:label="Importo" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="LocalAmount" Type="Edm.Decimal" Precision="23" Scale="4" sap:unicode="false" sap:label="Importo" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="TypeOfRate" Type="Edm.String" MaxLength="4" sap:unicode="false" sap:label="Tipo di cambio" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DateExchangeRate" Type="Edm.DateTime" Precision="7" sap:unicode="false" sap:label="Data" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<EntityType Name="Cessation" sap:content-version="1">
+				<Key>
+					<PropertyRef Name="SALES_POINT"/>
+					<PropertyRef Name="DEALER"/>
+				</Key>
+				<Property Name="COMPANY_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="MONTH" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="YEAR" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="SALES_POINT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="DEALER" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CUSTOMER_NAME" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="INDUSTRY_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="TAX_CODE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="AGREEMENT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="END_DATE_AGREEMENT" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="CIPREG_ACCES_DATE" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ACCRUAL_AMOUNT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="PAYED_AMOUNT" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+				<Property Name="ACCRUAL_BALANCE" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+			</EntityType>
+			<Association Name="ServStationToAnnualVolumes" sap:content-version="1">
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVICE_STATION_GW" Multiplicity="1" Role="FromRole_ServStationToAnnualVolumes"/>
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_ANNUAL_VOLUMES" Multiplicity="*" Role="ToRole_ServStationToAnnualVolumes"/>
+				<ReferentialConstraint>
+					<Principal Role="FromRole_ServStationToAnnualVolumes">
+						<PropertyRef Name="DIVISION"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="SERV_SID"/>
+					</Principal>
+					<Dependent Role="ToRole_ServStationToAnnualVolumes">
+						<PropertyRef Name="DIVISION"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="SERV_SID"/>
+					</Dependent>
+				</ReferentialConstraint>
+			</Association>
+			<Association Name="ServStationToAddress" sap:content-version="1">
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVICE_STATION_GW" Multiplicity="1" Role="FromRole_ServStationToAddress"/>
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_ADDRESS_GW" Multiplicity="0..1" Role="ToRole_ServStationToAddress"/>
+				<ReferentialConstraint>
+					<Principal Role="FromRole_ServStationToAddress">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Principal>
+					<Dependent Role="ToRole_ServStationToAddress">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Dependent>
+				</ReferentialConstraint>
+			</Association>
+			<Association Name="ServStationToAgent" sap:content-version="1">
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVICE_STATION_GW" Multiplicity="1" Role="FromRole_ServStationToAgent"/>
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_AGENT_GW" Multiplicity="0..1" Role="ToRole_ServStationToAgent"/>
+				<ReferentialConstraint>
+					<Principal Role="FromRole_ServStationToAgent">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Principal>
+					<Dependent Role="ToRole_ServStationToAgent">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Dependent>
+				</ReferentialConstraint>
+			</Association>
+			<Association Name="ServStationToDealer" sap:content-version="1">
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVICE_STATION_GW" Multiplicity="1" Role="FromRole_ServStationToDealer"/>
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_DEALER_GW" Multiplicity="0..1" Role="ToRole_ServStationToDealer"/>
+				<ReferentialConstraint>
+					<Principal Role="FromRole_ServStationToDealer">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Principal>
+					<Dependent Role="ToRole_ServStationToDealer">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Dependent>
+				</ReferentialConstraint>
+			</Association>
+			<Association Name="ServStationToContractItem" sap:content-version="1">
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVICE_STATION_GW" Multiplicity="1" Role="FromRole_ServStationToContractItem"/>
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_CONTRACT_GW_ITEM" Multiplicity="*" Role="ToRole_ServStationToContractItem"/>
+				<ReferentialConstraint>
+					<Principal Role="FromRole_ServStationToContractItem">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Principal>
+					<Dependent Role="ToRole_ServStationToContractItem">
+						<PropertyRef Name="SERV_SID"/>
+						<PropertyRef Name="SALES_ORG"/>
+						<PropertyRef Name="DISTR_CH"/>
+						<PropertyRef Name="DIVISION"/>
+					</Dependent>
+				</ReferentialConstraint>
+			</Association>
+			<Association Name="ChainListToAddress" sap:content-version="1">
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ChainList" Multiplicity="1" Role="FromRole_ChainListToAddress"/>
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_ADDRESS_GW" Multiplicity="*" Role="ToRole_ChainListToAddress"/>
+				<ReferentialConstraint>
+					<Principal Role="FromRole_ChainListToAddress">
+						<PropertyRef Name="ChainCode"/>
+					</Principal>
+					<Dependent Role="ToRole_ChainListToAddress">
+						<PropertyRef Name="SERV_SID"/>
+					</Dependent>
+				</ReferentialConstraint>
+			</Association>
+			<Association Name="ChainListToServStation" sap:content-version="1">
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ChainList" Multiplicity="1" Role="FromRole_ChainListToServStation"/>
+				<End Type="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVICE_STATION_GW" Multiplicity="*" Role="ToRole_ChainListToServStation"/>
+			</Association>
+			<EntityContainer Name="ZSI_SERVICE_STATION_GW_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx">
+				<EntitySet Name="ZSI_SERVICE_STATION_GWSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVICE_STATION_GW" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="ZSI_SERVS_CONTRACT_GW_ITEMSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_CONTRACT_GW_ITEM" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="ZSI_SERVS_ANNUAL_VOLUMESSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_ANNUAL_VOLUMES" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="ChainListSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ChainList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<EntitySet Name="RentReceivedTypeSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.RentReceivedType" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="ServiceStationDataSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ServiceStationDataType" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="GestorePVCodeSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.GestorePVCode" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="OrganizationalUnitSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.OrganizationalUnitType" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="PVDealerRevSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.PVDealerRev" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<EntitySet Name="ZSI_SERVS_ADDRESS_GWSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_ADDRESS_GW" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="ZSI_SERVS_AGENT_GWSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_AGENT_GW" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="ZSI_SERVS_DEALER_GWSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ZSI_SERVS_DEALER_GW" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="DomainListSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.DomainList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<EntitySet Name="ProductSupplyByPeriodSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ProductSupplyByPeriodType" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+				<EntitySet Name="ServiceStationProductSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.ServiceStationProduct" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<EntitySet Name="AgreementSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.Agreement" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<EntitySet Name="AmountCurrencySet" EntityType="ZSI_SERVICE_STATION_GW_SRV.AmountCurrency" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<EntitySet Name="CessationSet" EntityType="ZSI_SERVICE_STATION_GW_SRV.Cessation" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<AssociationSet Name="ServStationToAddress_AssocSet" Association="ZSI_SERVICE_STATION_GW_SRV.ServStationToAddress" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+					<End EntitySet="ZSI_SERVICE_STATION_GWSet" Role="FromRole_ServStationToAddress"/>
+					<End EntitySet="ZSI_SERVS_ADDRESS_GWSet" Role="ToRole_ServStationToAddress"/>
+				</AssociationSet>
+				<AssociationSet Name="ServStationToContractItemSet" Association="ZSI_SERVICE_STATION_GW_SRV.ServStationToContractItem" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+					<End EntitySet="ZSI_SERVICE_STATION_GWSet" Role="FromRole_ServStationToContractItem"/>
+					<End EntitySet="ZSI_SERVS_CONTRACT_GW_ITEMSet" Role="ToRole_ServStationToContractItem"/>
+				</AssociationSet>
+				<AssociationSet Name="ChainListToAddressSet" Association="ZSI_SERVICE_STATION_GW_SRV.ChainListToAddress" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+					<End EntitySet="ChainListSet" Role="FromRole_ChainListToAddress"/>
+					<End EntitySet="ZSI_SERVS_ADDRESS_GWSet" Role="ToRole_ChainListToAddress"/>
+				</AssociationSet>
+				<AssociationSet Name="ChainListToServStation_AssocSet" Association="ZSI_SERVICE_STATION_GW_SRV.ChainListToServStation" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+					<End EntitySet="ChainListSet" Role="FromRole_ChainListToServStation"/>
+					<End EntitySet="ZSI_SERVICE_STATION_GWSet" Role="ToRole_ChainListToServStation"/>
+				</AssociationSet>
+				<AssociationSet Name="ServStationToAnnualVolumes_AssocSet" Association="ZSI_SERVICE_STATION_GW_SRV.ServStationToAnnualVolumes" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+					<End EntitySet="ZSI_SERVICE_STATION_GWSet" Role="FromRole_ServStationToAnnualVolumes"/>
+					<End EntitySet="ZSI_SERVS_ANNUAL_VOLUMESSet" Role="ToRole_ServStationToAnnualVolumes"/>
+				</AssociationSet>
+				<AssociationSet Name="ServStationToAgent_AssocSet" Association="ZSI_SERVICE_STATION_GW_SRV.ServStationToAgent" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+					<End EntitySet="ZSI_SERVICE_STATION_GWSet" Role="FromRole_ServStationToAgent"/>
+					<End EntitySet="ZSI_SERVS_AGENT_GWSet" Role="ToRole_ServStationToAgent"/>
+				</AssociationSet>
+				<AssociationSet Name="ServStationToDealer_AssocSet" Association="ZSI_SERVICE_STATION_GW_SRV.ServStationToDealer" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+					<End EntitySet="ZSI_SERVICE_STATION_GWSet" Role="FromRole_ServStationToDealer"/>
+					<End EntitySet="ZSI_SERVS_DEALER_GWSet" Role="ToRole_ServStationToDealer"/>
+				</AssociationSet>
+			</EntityContainer>
+			<atom:link rel="self" href="http://ITNAPSPA02.Q8INT.COM:8000/sap/opu/odata/sap/ZSI_SERVICE_STATION_GW_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+			<atom:link rel="latest-version" href="http://ITNAPSPA02.Q8INT.COM:8000/sap/opu/odata/sap/ZSI_SERVICE_STATION_GW_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+		</Schema>
+	</edmx:DataServices>
+</edmx:Edmx>
