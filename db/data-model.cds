@@ -121,6 +121,7 @@ entity Status : CodeList {
   Completato            = 'COM';
   Rifiutato             = 'REJ';
   InApprovazione        = 'APP';
+    InApprovazione2        = 'BOH';
   }
 }
 
