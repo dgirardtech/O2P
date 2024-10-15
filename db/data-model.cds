@@ -141,10 +141,7 @@ entity UserAction {
 }
 
 
-entity YearRequest {
-  key YEAR       : String(4);
-      REQUEST_ID : REQUEST_ID_PROG;
-}
+ 
 
 entity StepDescription {
   key STEP             : STEP_ID;

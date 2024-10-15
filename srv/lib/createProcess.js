@@ -532,43 +532,7 @@ async function getNextRequestId(iRequest) {
     return lRequestID;
 }
 
-async function getNextRequestIdO2P(iRequest, iCdsTx) {
-    let lRequestID = 0;
-    try {
-        LOG.info("Get next RequestID");
-
-        //Verifico che l'anno sia lo stesso 
-        yearMoment = moment(new Date()).format('YYYY');
-        let numberRange = 1;
-
-        await cds.tx(async () => {
-            let year = await SELECT.one.from(YearRequest).forUpdate(3)
-
-            if (year !== undefined) {
-                if (year.YEAR !== yearMoment) {
-                    let reqYearDelete = await DELETE.from(YearRequest);
-                } else {
-                    numberRange = numberRange + year.REQUEST_ID;
-                }
-            }
-            let requestRecord = new Object();
-            requestRecord.YEAR = yearMoment;
-            requestRecord.REQUEST_ID = numberRange;
-            let reqYearupsert = await UPSERT.into(YearRequest).entries(requestRecord);
-
-        })
-
-        let lRequestIDform = await reqWithZeroes(numberRange, 4);
-        let requestIDO2P = yearMoment + 'R' + lRequestIDform;
-        return requestIDO2P;
-    } catch (error) {
-        let errMEssage = "Get New RequestId " + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    //return lRequestID;
-}
+ 
 
 async function reqWithZeroes(iNumber, iLength) {
 

@@ -49,8 +49,7 @@ service O2PModelService @(requires: [
             key SEQUENCE,
                 *
         }
-
-    entity YearRequest     as projection on KupitO2PModel.YearRequest;
+ 
     entity WorkDay         as projection on WorkDayService.wdEmployeeExtended;
 
     @readonly

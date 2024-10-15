@@ -18,7 +18,7 @@ module.exports = cds.service.impl(async function () {
 
     const { Requester, Paymode,  AttachmentType, Attachments, Notes, ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView } = this.entities;
     const { WorkDay } = this.entities;
-    const { YearRequest, UserTaskCounter } = this.entities;
+    const {  UserTaskCounter } = this.entities;
     const { Request } = this.entities;
 
     global.ApprovalView = ApprovalView;
@@ -28,8 +28,7 @@ module.exports = cds.service.impl(async function () {
     global.AttachmentType = AttachmentType;
     global.Attachments = Attachments;
     global.Notes = Notes; 
-    global.WorkDay = WorkDay;
-    global.YearRequest = YearRequest;
+    global.WorkDay = WorkDay; 
     global.ApprovalHistory = ApprovalHistory;
     global.Request = Request;
     global.UserTaskCounter = UserTaskCounter;
