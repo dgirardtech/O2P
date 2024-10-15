@@ -39,12 +39,7 @@ exports.UserAction = Object.freeze({
 });
 
  
-exports.processType  = Object.freeze({ 
-  Mensile    : '01',
-  Annuale    : '02',
-  Revoca     : '03',
-  Cessazione : '04'
-  });
+ 
   
 
 exports.stepStatus = Object.freeze({

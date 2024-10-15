@@ -61,22 +61,22 @@ async function createProcess(iRequest) {
 
         //Get MOA Approvers
 
-        if (iRequest.data.PROCESSTYPE === consts.processType.Annuale ||
-            iRequest.data.PROCESSTYPE === consts.processType.Cessazione) {
-            let userCompiler = iRequest.user.id;
-            returnGetMoaApprovers = await getMoaApprovers(iRequest, returnRequestId, userCompiler, iRequest.data.PROCESSTYPE);
-            if (returnGetMoaApprovers.errors) {
-                return returnGetMoaApprovers;
-            }
+        let userCompiler = iRequest.user.id;
+        returnGetMoaApprovers = await getMoaApprovers(iRequest, returnRequestId, userCompiler);
+        if (returnGetMoaApprovers.errors) {
+            return returnGetMoaApprovers;
         }
 
+/*
         let returnNextRequestId = await getNextRequestIdO2P(iRequest, cdsTx);
         if (returnNextRequestId.errors) {
             return returnNextRequestId;
         }
 
+        */
+
         //Save request    
-        let returnCreateRequest = await createRequest(iRequest, returnRequestId, returnNextRequestId, cdsTx);
+        let returnCreateRequest = await createRequest(iRequest, returnRequestId, 0, cdsTx);
         if (returnCreateRequest.errors) {
             return returnCreateRequest;
         }
@@ -84,13 +84,12 @@ async function createProcess(iRequest) {
 
 
         //Save MOA Approvers
-        if (iRequest.data.PROCESSTYPE === consts.processType.Annuale ||
-            iRequest.data.PROCESSTYPE === consts.processType.Cessazione) {
-            returnSaveMoaApprovers = await saveMoaApprovers(iRequest, returnRequestId, returnGetMoaApprovers, cdsTx);
-            if (returnSaveMoaApprovers.errors) {
-                return returnSaveMoaApprovers;
-            }
+
+        returnSaveMoaApprovers = await saveMoaApprovers(iRequest, returnRequestId, returnGetMoaApprovers, cdsTx);
+        if (returnSaveMoaApprovers.errors) {
+            return returnSaveMoaApprovers;
         }
+
 
 
 
@@ -106,12 +105,6 @@ async function createProcess(iRequest) {
             return returnApprovalHistory;
         }
 
-        if (iRequest.data.PROCESSTYPE === consts.processType.Mensile) {
-            let returnSalesPoints = await insertSalesPoints(iRequest, returnRequestId)
-            if (returnSalesPoints.errors) {
-                return returnSalesPoints;
-            }
-        }
 
 
         //Start BPA Process
@@ -204,68 +197,7 @@ async function checkTaskCreated(iRequest) {
     return message;
 
 }
-
-async function insertSalesPoints(iRequest, iRequestId) {
-
-    let sPoint = {};
-    let sPointUpdate = new Array();
-
-    try {
-
-        var EccService = await cds.connect.to('ZSI_SERVICE_STATION_GW_SRV');
-        const { AgreementSet } = EccService.entities;
-
-        let query = SELECT.from(AgreementSet).where(
-            {
-                MONTH: iRequest.data.MONTH,
-                YEAR: iRequest.data.YEAR,
-                COMPANY_CODE: 'IT02'
-            })
-
-        let aSalesPoint = await EccService.run(query);
-
-        for (let i = 0; i < aSalesPoint.length; i++) {
-
-            sPoint = {};
-
-            sPoint.to_Request_REQUEST_ID = iRequestId
-            sPoint.ID = i
-            sPoint.SALES_POINT = aSalesPoint[i].SALES_POINT
-            sPoint.DEALER = aSalesPoint[i].DEALER
-            sPoint.CUSTOMER_NAME = aSalesPoint[i].CUSTOMER_NAME
-            sPoint.TAX_CODE = aSalesPoint[i].TAX_CODE
-            sPoint.START_DATE_ACCESS_MEMBER = aSalesPoint[i].START_DATE_ACCESS_MEMBER
-            sPoint.ACCES_TYPE = aSalesPoint[i].ACCES_TYPE
-            sPoint.AGREEMENT = aSalesPoint[i].AGREEMENT
-            sPoint.OLD_AGREEMENT = aSalesPoint[i].OLD_AGREEMENT
-            sPoint.START_DATE_OLD_AGREEMENT = aSalesPoint[i].START_DATE_OLD_AGREEMENT
-            sPoint.END_DATE_ACCESS_MEMBER = aSalesPoint[i].END_DATE_ACCESS_MEMBER
-            sPoint.PV_ADDRESS = aSalesPoint[i].PV_ADDRESS
-
-            sPointUpdate.push(sPoint);
-
-        }
-
-        if (sPointUpdate.length > 0) {
-
-            const cdsTx = cds.tx(); //-> creo la transaction //gli allegati vengono committati per la gestione della mail
-            let upsertSPoint = UPSERT.into(SalesPoints).entries(sPointUpdate);
-            let upsertResponse = await cdsTx.run(upsertSPoint);
-            await cdsTx.commit();
-
-        }
-
-    } catch (error) {
-        let errMEssage = "ERROR saveSalesPoint " + iRequestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-
-    return iRequest;
-
-}
-
+ 
 
 async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersion) {
 
@@ -288,94 +220,85 @@ async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersi
             return reqData;
         }
 
-        if (reqData.PROCESSTYPE_code === consts.processType.Annuale ||
-            reqData.PROCESSTYPE_code === consts.processType.Cessazione) {
-
-            if (iRequest.path === 'O2PBpaService.UpdateRequestVersion') {
-
-                oApproval = await SELECT.one.from(ApprovalHistory).
-                    where({
-                        REQUEST_ID: iRequestId,
-                        VERSION: oldVersion,
-                        To_Action_ACTION: 'REJECTED'
-                    });
-
-                if (oApproval && oApproval.STEP > 40 &&
-                    reqData.PROCESSTYPE_code === consts.processType.Annuale) {
-                    stepCheck = 40
-                }
-
-                if (oApproval && oApproval.STEP > 50 &&
-                    reqData.PROCESSTYPE_code === consts.processType.Cessazione
-                ) {
-                    stepCheck = 50
-                } else {
-
-                    if (oApproval && oApproval.STEP > 20 &&
-                        reqData.PROCESSTYPE_code === consts.processType.Cessazione
-                    ) {
-
-                        stepCheck = 20
-
-                     }
-
-                }
-            }
-
-            if (stepCheck !== "") {
-
-                let aApproval = await SELECT.from(ApprovalHistory).
-                    where({
-                        REQUEST_ID: iRequestId,
-                        VERSION: oldVersion
-                    }).orderBy('STEP asc');
 
 
-                for (let a = 0; a < iMoaApprovers.length; a++) {
-                    if (iMoaApprovers[a].STEP < stepCheck) {
+        if (iRequest.path === 'O2PBpaService.UpdateRequestVersion') {
 
-                        oApproval = aApproval[a]
-                        oApproval.VERSION = iVersion
-                        // oApproval.To_StepStatus_STEP_STATUS = consts.stepStatus.NOTASSIGNED
+            oApproval = await SELECT.one.from(ApprovalHistory).
+                where({
+                    REQUEST_ID: iRequestId,
+                    VERSION: oldVersion,
+                    To_Action_ACTION: 'REJECTED'
+                });
 
-                        aApprovalHistory.push(oApproval)
+            /*       
+               if (oApproval && oApproval.STEP > 40 &&
+                   reqData.PROCESSTYPE_code === consts.processType.Annuale) {
+                   stepCheck = 40
+               }
 
-                    } else {
+               if (oApproval && oApproval.STEP > 50 &&
+                   reqData.PROCESSTYPE_code === consts.processType.Cessazione
+               ) {
+                   stepCheck = 50
+               } else {
 
-                        aApprovalHistory.push({
-                            to_Request_REQUEST_ID: iRequestId,
-                            STEP: iMoaApprovers[a].STEP,
-                            VERSION: iVersion,
-                            To_StepStatus_STEP_STATUS: consts.stepStatus.NOTASSIGNED
-                        })
+                   if (oApproval && oApproval.STEP > 20 &&
+                       reqData.PROCESSTYPE_code === consts.processType.Cessazione
+                   ) {
+
+                       stepCheck = 20
 
                     }
-                }
+
+               }
+*/
+        }
 
 
-            } else {
 
-                for (let a = 0; a < iMoaApprovers.length; a++) {
+        if (stepCheck !== "") {
+
+            let aApproval = await SELECT.from(ApprovalHistory).
+                where({
+                    REQUEST_ID: iRequestId,
+                    VERSION: oldVersion
+                }).orderBy('STEP asc');
+
+
+            for (let a = 0; a < iMoaApprovers.length; a++) {
+                if (iMoaApprovers[a].STEP < stepCheck) {
+
+                    oApproval = aApproval[a]
+                    oApproval.VERSION = iVersion
+                    // oApproval.To_StepStatus_STEP_STATUS = consts.stepStatus.NOTASSIGNED
+
+                    aApprovalHistory.push(oApproval)
+
+                } else {
+
                     aApprovalHistory.push({
                         to_Request_REQUEST_ID: iRequestId,
                         STEP: iMoaApprovers[a].STEP,
                         VERSION: iVersion,
                         To_StepStatus_STEP_STATUS: consts.stepStatus.NOTASSIGNED
                     })
+
                 }
-
             }
-
 
 
         } else {
 
-            aApprovalHistory.push({
-                to_Request_REQUEST_ID: iRequestId,
-                STEP: 10,
-                VERSION: iVersion,
-                To_StepStatus_STEP_STATUS: consts.stepStatus.READY
-            })
+            for (let a = 0; a < iMoaApprovers.length; a++) {
+                aApprovalHistory.push({
+                    to_Request_REQUEST_ID: iRequestId,
+                    STEP: iMoaApprovers[a].STEP,
+                    VERSION: iVersion,
+                    To_StepStatus_STEP_STATUS: consts.stepStatus.NOTASSIGNED
+                })
+            }
+
         }
 
 
@@ -391,7 +314,7 @@ async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersi
     return iRequest;
 }
 
-async function getMoaApprovers(iRequest, iRequestID, iUserCompiler, iProcessType) {
+async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
     let moaRequest = {};
     let input = [];
@@ -401,39 +324,39 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler, iProcessType
     // let reqData = await SELECT.one.from(Request).where({ REQUEST_ID: iRequestID });
 
     try {
-  
-
-            let sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
-            if (sendFakeMail === "false") {
 
 
-
-                input.push({ attribute: "COMPANYNAMEAT", value: "KUPIT" });
-                input.push({ attribute: "BPROCESSNAMEAT", value: "O2PAPP" });
-                input.push({ attribute: "DEFAULTLVLAT", value: "TRUE" });
-                input.push({ attribute: "MAILCOMPILER", value: iUserCompiler });
-
-                moaRequest = { input: input };
+        let sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
+        if (sendFakeMail === "false") {
 
 
-                moaResponse = await MoaExtraction.send('POST', '/NewMoaExtraction', moaRequest);
 
-                result = moaResponse.d.results;
+            input.push({ attribute: "COMPANYNAMEAT", value: "KUPIT" });
+            input.push({ attribute: "BPROCESSNAMEAT", value: "O2PAPP" });
+            input.push({ attribute: "DEFAULTLVLAT", value: "TRUE" });
+            input.push({ attribute: "MAILCOMPILER", value: iUserCompiler });
+
+            moaRequest = { input: input };
 
 
-            } else {
+            moaResponse = await MoaExtraction.send('POST', '/NewMoaExtraction', moaRequest);
+
+            result = moaResponse.d.results;
 
 
-                result.push({ INDEX: "10", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
-                result.push({ INDEX: "20", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Coordinatore Vendite", ISMANAGER: "false" });
-                result.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore Rete", ISMANAGER: "false" });
-                result.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
-                result.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Coordinatore Vendite", ISMANAGER: "false" });
-                result.push({ INDEX: "60", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore Rete", ISMANAGER: "false" });
+        } else {
 
-            }
 
-        
+            result.push({ INDEX: "10", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
+            result.push({ INDEX: "20", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Coordinatore Vendite", ISMANAGER: "false" });
+            result.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore Rete", ISMANAGER: "false" });
+            result.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
+            result.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Coordinatore Vendite", ISMANAGER: "false" });
+            result.push({ INDEX: "60", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore Rete", ISMANAGER: "false" });
+
+        }
+
+
 
     } catch (error) {
         iRequest.error(450, error.message, null, 450);
@@ -460,7 +383,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler, iProcessType
      
      */
 
- 
+
     return result;
 
 }
@@ -664,13 +587,12 @@ async function createRequest(iRequest, iRequestId, iRequestO2PId, iCdsTx) {
 
     let requestRecord = new Object();
     requestRecord.REQUEST_ID = iRequestId;
-    requestRecord.O2P_REQUEST_ID = iRequestO2PId;
+   // requestRecord.O2P_REQUEST_ID = iRequestO2PId;
 
     requestRecord.MONTH = iRequest.data.MONTH;
     requestRecord.YEAR = iRequest.data.YEAR;
-    requestRecord.PROCESSTYPE_code = iRequest.data.PROCESSTYPE;
 
-    // if(iRequest.data.PROCESSTYPE === consts.processType.Mensile){   }
+ 
 
     let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: actualUser }));
     if (oInfoWDPosition === undefined) {
@@ -692,7 +614,7 @@ async function createRequest(iRequest, iRequestId, iRequestO2PId, iCdsTx) {
 }
 
 async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
- 
+
 
     let responseCreateWf;
     let compiler
@@ -700,7 +622,7 @@ async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
     let definitionID
 
 
-    let compilerElement = _.findWhere(iMoaApprovers, { 
+    let compilerElement = _.findWhere(iMoaApprovers, {
         IDROLE: "COMPILER"
     });
 
@@ -736,7 +658,7 @@ async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
 
     definitionID = consts.WF_DEFINITION_ID;
 
- 
+
 
 
     try {
@@ -779,10 +701,10 @@ async function userTaskCounter(iData, iRequest) {
         if (iData <= 0) {
             return iData;
         }
- 
-        
+
+
         // Esegui la funzione per ottenere il token JWT
-        getToken(); 
+        getToken();
 
 
         urlTaskCollection = "TaskCollection/?$filter=Status eq 'READY' or Status eq 'RESERVED' or Status eq 'IN_PROGRESS' or Status eq 'EXECUTED'";
@@ -925,7 +847,7 @@ async function getTaskComposedUrl(iTaskId, iRequest) {
     return result;
 }
 
-async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest, iProcessCode) {
+async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest) {
 
 
     let returnSaveMoaApprovers;
@@ -934,7 +856,7 @@ async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest, iProcessC
         const cdsTx = cds.tx();
 
         //Get MOA Approvers
-        let returnGetMoaApprovers = await getMoaApprovers(iRequest, iRequestId, iUserCompiler, iProcessCode);
+        let returnGetMoaApprovers = await getMoaApprovers(iRequest, iRequestId, iUserCompiler);
         if (returnGetMoaApprovers.errors) {
             return returnGetMoaApprovers;
         }
@@ -1035,10 +957,8 @@ async function getTaskId(iRequestId, iStepId, iWfInstaceID, iRequest) {
 module.exports = {
     createProcess,
     updateWfInstanceId,
-    checkTaskCreated,
-    insertSalesPoints,
-    insertApprovalHistory,
-    insertSalesPoints,
+    checkTaskCreated, 
+    insertApprovalHistory, 
     getMoaApprovers,
     saveMoaApprovers,
     getApproverSequence,

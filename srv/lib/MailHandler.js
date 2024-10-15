@@ -113,8 +113,7 @@ async function mailProcessCompleted(iRequestId, iO2Prequest, iRecipents, iAattac
 
     var dateString = [dayStr, monthStr, year].join('/');
     content = content.replaceAll(consts.mailPatterns.DATA, dateString);
-
-    content = content.replaceAll(consts.mailPatterns.NADESIONI, salesPoints.length);
+ 
  
   
 
@@ -219,16 +218,8 @@ async function mailProcessDeleted(iRequestId, iRecipents, iFullName, iNotes, iRe
 
 async function mailMissingApprovers(iRequestData, iRequest) {
 
-    // let idMail = "MISSING_APPROVERS";
 
-    let idMail = ""
-
-    if (iRequestData.PROCESSTYPE_code === consts.processType.Annuale) {
-        idMail = "MISSING_APPROVERS_YEARLY";
-    }
-    else if (iRequestData.PROCESSTYPE_code === consts.processType.Cessazione) {
-        idMail = "MISSING_APPROVERS_CESSATION";
-    }
+   let idMail = "MISSING_APPROVERS";
 
     let returnBodyMail = await getBodyMail(iRequestData.REQUEST_ID, idMail, iRequest)
     if (returnBodyMail.errors) {
@@ -445,8 +436,7 @@ module.exports = {
     testmail,
     mailMissingApprovers,
     mailProcessDeleted,
-    mailProcessCompleted,
-    mailStartedCompleted,
+    mailProcessCompleted, 
     mailTaskRejected,
     teamsTaskNotification,
     teamsTaskRejectNotification

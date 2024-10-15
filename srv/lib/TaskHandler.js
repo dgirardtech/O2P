@@ -7,7 +7,7 @@ const { createPdf } = require('./HandlerPDF');
 const moment = require('moment');
 const { row, and } = require('mathjs');
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
-const { testmail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted, mailStartedCompleted, mailTaskRejected, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
+const { testmail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted,  mailTaskRejected, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
 
 async function saveUserAction(iRequest) {
@@ -75,34 +75,15 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
     }
 
     if (retUpdateRequestStatus === consts.requestStatus.Completed ||
-        ((iUserAction === consts.UserAction.REJECTED &&
-            requestData.PROCESSTYPE_code === consts.processType.Annuale) ||
-            (iUserAction === consts.UserAction.REJECTED &&
-                requestData.PROCESSTYPE_code === consts.processType.Cessazione))) {
+        iUserAction === consts.UserAction.REJECTED) {
 
-        if ((iUserAction === consts.UserAction.REJECTED &&
-            requestData.PROCESSTYPE_code === consts.processType.Annuale) ||
-            (iUserAction === consts.UserAction.REJECTED &&
-                requestData.PROCESSTYPE_code === consts.processType.Cessazione)) {
+        if (iUserAction === consts.UserAction.REJECTED) {
             retUpdateRequestStatus = consts.requestStatus.Refused
         }
 
         let retsendProcessMail = await sendProcessMail(iRequestId, retUpdateRequestStatus, iUserAction, iRequest);
         if (retsendProcessMail.errors) {
             return retsendProcessMail;
-        }
-
-    } else {
-
-        if (requestData.PROCESSTYPE_code === consts.processType.Cessazione &&
-            iStepID === 70 &&
-            iUserAction === consts.UserAction.APPROVED) {
-
-            let retsendProcessMail = await sendStep70Mail(iRequestId, retUpdateRequestStatus, iUserAction, iRequest);
-            if (retsendProcessMail.errors) {
-                return retsendProcessMail;
-            }
-
         }
 
     }
@@ -291,30 +272,36 @@ async function emailRejectedProcessTask(iRequestId, iRequest) {
 
         let stepCheck
 
-        if ( request.PROCESSTYPE_code === consts.processType.Annuale ){
-        if (iRequest.data.STEPID > 40   ) {
-            stepCheck = 40
-        } else {
-            stepCheck = 10
-        }
-    }
+        /*
 
-   if ( request.PROCESSTYPE_code === consts.processType.Cessazione ) {
-
-        if (iRequest.data.STEPID > 50 ) {
-            stepCheck = 50
-        } else {
-
-            if (iRequest.data.STEPID > 20 ) {
-
-                stepCheck = 20
-
+        if (request.PROCESSTYPE_code === consts.processType.Annuale) {
+            if (iRequest.data.STEPID > 40) {
+                stepCheck = 40
             } else {
                 stepCheck = 10
             }
-
         }
-    }
+
+        if (request.PROCESSTYPE_code === consts.processType.Cessazione) {
+
+            if (iRequest.data.STEPID > 50) {
+                stepCheck = 50
+            } else {
+
+                if (iRequest.data.STEPID > 20) {
+
+                    stepCheck = 20
+
+                } else {
+                    stepCheck = 10
+                }
+
+            }
+        }
+
+        */
+
+        stepCheck = 10
 
 
         let approvalH = await SELECT.one.from(ApprovalHistory).
@@ -392,23 +379,12 @@ async function updateRequestStatus(iRequestId, iStepID, iUserAction, iRequest) {
     try {
         switch (iUserAction) {
             case consts.UserAction.APPROVED:
-
-                if (requestData.PROCESSTYPE_code === consts.processType.Annuale ||
-                    requestData.PROCESSTYPE_code === consts.processType.Cessazione
-                ) {
-
+ 
                     processStatus = await getStatusProcessApproved(iRequestId, iStepID, iRequest)
                     if (processStatus === consts.requestStatus.Completed) {
                         date = new Date()
                     }
-
-                } else {
-
-                    processStatus = consts.requestStatus.Completed;
-                    date = new Date()
-
-                }
-
+ 
                 break;
 
             case consts.UserAction.TERMINATED:
@@ -422,13 +398,13 @@ async function updateRequestStatus(iRequestId, iStepID, iUserAction, iRequest) {
             return processStatus;
         }
 
-        if (requestData.PROCESSTYPE_code === consts.processType.Annuale ||
+       /* if (requestData.PROCESSTYPE_code === consts.processType.Annuale ||
             requestData.PROCESSTYPE_code === consts.processType.Cessazione
-        ) {
+        ) { */
             updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date }).where({ REQUEST_ID: iRequestId });
-        } else {
+      /*  } else {
             updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date, REQUEST_OWNER: '' }).where({ REQUEST_ID: iRequestId });
-        }
+        } */
     } catch (error) {
         let errMEssage = "ERROR updateRequestStatus " + iRequestId + " :" + error.message;
         iRequest.error(450, errMEssage, null, 450);
@@ -792,15 +768,12 @@ async function saveAttach(iPdfContent, iRequestId, iRequest) {
 
 async function userAction(iRequestId, iStepID, iUserAction, iRequest) {
 
-
-    if (iRequest.data.PROCESSTYPE === consts.processType.Annuale ||
-        iRequest.data.PROCESSTYPE === consts.processType.Cessazione
-    ) {
+ 
         let returnApproversControl = await approversControl(iRequestId, iStepID, iRequest);
         if (returnApproversControl.errors) {
             return returnApproversControl;
         }
-    }
+ 
 
 
     //Update approval history
@@ -1044,8 +1017,7 @@ async function getStepDescritpion(iRequest) {
 
 
     let rsStepDescription = await SELECT.one.from(StepDescription).
-        where({
-            PROCESSTYPE_code: rsRequest.PROCESSTYPE_code,
+        where({ 
             STEP: iRequest.data.STEP
         });
 
@@ -1135,7 +1107,7 @@ async function approversControl(iRequestId, iStepID, iRequest) {
     let userCompiler = returnRequestData.createdBy;
 
     //Aggiornamento approvatori MOA
-    let returnUpdateMoa = await updateMoaApprovers(iRequestId, userCompiler, iRequest, returnRequestData.PROCESSTYPE_code);
+    let returnUpdateMoa = await updateMoaApprovers(iRequestId, userCompiler, iRequest);
     if (returnUpdateMoa.errors) {
         return returnUpdateMoa;
     }
@@ -1650,10 +1622,12 @@ async function emailStartedProcess(iRequestId, iRequest) {
 
         recipient = _.uniq(recipient);
 
+        /*
         let retMailstart = await mailStartedCompleted(iRequestId, reqData, recipient, startedFullName, iRequest)
         if (retMailstart.errors) {
             return retMailstart;
         }
+            */
 
     } catch (error) {
         let errMEssage = "ERROR emailStartProcess " + iRequestId + " :" + error.message;

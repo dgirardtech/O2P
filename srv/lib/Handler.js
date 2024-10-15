@@ -25,15 +25,13 @@ async function updateRequest(iData, iRequest) {
         return requestData;
     }
 
-    if (iRequest.data.PROCESSTYPE === consts.processType.Annuale ||
-        iRequest.data.PROCESSTYPE === consts.processType.Cessazione
-    ) {
-        //Aggiornamento approvatori MOA
-        let returnUpdateMoa = await updateMoaApprovers(requestId, userCompiler, iRequest, requestData.PROCESSTYPE_code);
-        if (returnUpdateMoa.errors) {
-            return returnUpdateMoa;
-        }
+
+    //Aggiornamento approvatori MOA
+    let returnUpdateMoa = await updateMoaApprovers(requestId, userCompiler, iRequest);
+    if (returnUpdateMoa.errors) {
+        return returnUpdateMoa;
     }
+
 
 }
 
@@ -155,7 +153,6 @@ async function readAttachment(iData, iRequest) {
 }
 
 
-
 async function createNote(iRequest) {
     try {
         LOG.info("Notes - BEFORE CREATE Event handler")
@@ -261,7 +258,7 @@ async function getRejectorName(iRequest, iO2PRequest) {
 
         if (aRequest == undefined) {
             return "";
- 
+
 
         }
 
@@ -337,324 +334,61 @@ async function getRejectInfo(iRequest) {
     return returninfo;
 }
 
-async function getYear(iRequest) {
-
-    var aYear = []
-    var date = new Date()
-
-    aYear.push({ name: date.getFullYear() - 3, descr: date.getFullYear() - 3, code: date.getFullYear() - 3, })
-    aYear.push({ name: date.getFullYear() - 2, descr: date.getFullYear() - 2, code: date.getFullYear() - 2, })
-    aYear.push({ name: date.getFullYear() - 1, descr: date.getFullYear() - 1, code: date.getFullYear() - 1, })
-    aYear.push({ name: date.getFullYear(), descr: date.getFullYear(), code: date.getFullYear() })
-    aYear.push({ name: date.getFullYear() + 1, descr: date.getFullYear() + 1, code: date.getFullYear() + 1 })
-
-    aYear.$count = aYear.length
-
-    return aYear
-
-}
-
-async function getMonth(iRequest) {
-
-    let aMonth = []
-    let i = 0;
-
-    do {
-
-        let monthCode = new Date(1900, i).toLocaleString(iRequest.locale, { month: "2-digit" })
-
-        let monthDesc = new Date(1900, i).toLocaleString(iRequest.locale, { month: "long" });
-        monthDesc = monthDesc[0].toUpperCase() + monthDesc.slice(1);
-
-        aMonth.push({
-            name: monthDesc,
-            descr: monthDesc,
-            code: monthCode
-        })
-
-        i = i + 1;
-
-    } while (i < 12);
-
-    aMonth.$count = aMonth.length
-
-    return aMonth
-
-}
 
 
-async function getSalesPoint(iRequest) {
+async function getLayout(iRequest) {
 
-    var EccService = await cds.connect.to('ZSI_SERVICE_STATION_GW_SRV');
+    let requester   = iRequest.data.REQUESTER
+    let paymentMode = iRequest.data.PAYMENT_MODE
 
+    let oRequester = await SELECT.one.from(Requester).
+        where({ REQUESTER: requester });
 
-    const { AgreementSet } = EccService.entities;
-
-    let query = SELECT.from(AgreementSet).where(
-        {
-            MONTH: iRequest.data.MONTH,
-            YEAR: iRequest.data.YEAR,
-            COMPANY_CODE: 'IT02'
-        })
-
-    let aSalesPoint = await EccService.run(query);
-
-    for (let i = 0; i < aSalesPoint.length; i++) {
-        // aSalesPoint[i].ID = Number(i) + Number(1)
-        aSalesPoint[i].ID = i
-    }
-
-    aSalesPoint.$count = aSalesPoint.length
-
-    return aSalesPoint
-
-}
-
-async function getSalesPointCessation(iRequest) {
-
-    var EccService = await cds.connect.to('ZSI_SERVICE_STATION_GW_SRV');
-
-
-    const { CessationSet } = EccService.entities;
-
-    let query = SELECT.from(CessationSet).where(
-        {
-            MONTH: iRequest.data.MONTH,
-            YEAR: iRequest.data.YEAR,
-            COMPANY_CODE: 'IT02'
-        })
-
-    let aSalesPoint = await EccService.run(query);
-
-    for (let i = 0; i < aSalesPoint.length; i++) {
-        // aSalesPoint[i].ID = Number(i) + Number(1)
-        aSalesPoint[i].ID = i
-    }
-
-    aSalesPoint.$count = aSalesPoint.length
-
-    return aSalesPoint
-
-}
-
-// async function getRevocManager(iRequest) {
-async function getSalesPointRevocation(iRequest) {
-
-
-    var EccService = await cds.connect.to('ZSI_SERVICE_STATION_GW_SRV');
-
-
-    const { ZSI_SERVICE_STATION_GWSet } = EccService.entities;
-
-    try {
-
-        let query = SELECT.one.from(ZSI_SERVICE_STATION_GWSet).byKey(
-            {
-                SERV_SID: iRequest.data.SALES_POINT,
-                SALES_ORG: 'IT01',
-                DISTR_CH: '01',
-                DIVISION: '01'
-            })
-
-        let response = await EccService.run(query);
-
-    } catch (error) {
-        let errMEssage = iRequest.data.SALES_POINT + ' unexists';
+    if (!oRequester) {
+        let errMEssage = "ERROR get layout " + requester + ". Requester not found";
         iRequest.error(450, errMEssage, null, 450);
         LOG.error(errMEssage);
         return iRequest;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////
+    let oPayMode = await SELECT.one.from(Paymode).
+        where({ PAYMENT_MODE: paymentMode });
 
-    var EccServiceDealer = await cds.connect.to('ZSI_SERV_STATION_DEALER_SRV');
-
-
-    const { ZSI_SERV_STATION_DEALERSet } = EccServiceDealer.entities;
-
-    ////////////////////////////////////////
-
-    let queryDealer = SELECT.from(ZSI_SERV_STATION_DEALERSet).where(
-        {
-            SERV_SID: iRequest.data.SALES_POINT,
-            OIL: true
-        })
-
-    // let responseDealerOil = await EccServiceDealer.run(queryDealer);
-
-    ////////////////////////////////
-
-    let queryDealerNotOil = SELECT.from(ZSI_SERV_STATION_DEALERSet).where(
-        {
-            SERV_SID: iRequest.data.SALES_POINT,
-            OIL: false
-        })
-
-    let responseDealerNotOil = await EccServiceDealer.run(queryDealerNotOil);
-
-    /////////////////////////////////////////
-
-    // let aResponseDealer = [].concat(responseDealerNotOil, responseDealerOil);
-
-    let aResponseDealer = responseDealerNotOil
-
-    if (aResponseDealer.length === 0) {
-        let errMEssage = 'No dealers for ' + iRequest.data.SALES_POINT + ' sales point';
+    if (!oPayMode) {
+        let errMEssage = "ERROR get layout " + paymentMode + ". Payment Mode not found";
         iRequest.error(450, errMEssage, null, 450);
         LOG.error(errMEssage);
         return iRequest;
     }
 
-    ///////////////////////////////////////////////////////
 
-    var EccServiceDealerGenData = await cds.connect.to('ZSERVICE_STATION_SRV');
-    const { GeneralDataSet } = EccServiceDealerGenData.entities;
+    return { VIS_PRIORITY: true, VIS_ADD_CRO_MAIL: false }
 
- 
-//////////////////////////////////////////////////////////////////////////////////////
-
-    let aSalesPoint = []
-
-
-    for (let i = 0; i < aResponseDealer.length; i++) {
-
-
-        let queryDealerGenData = SELECT.one.from(GeneralDataSet).byKey(
-            {
-                Kunnr: aResponseDealer[i].CODE 
-            })
-    
-        let responseDealerGenData = await EccServiceDealerGenData.run(queryDealerGenData);
-
-        aSalesPoint.push({
-            ID: i,
-            SALES_POINT: aResponseDealer[i].SERV_SID,
-            CUSTOMER_NAME: aResponseDealer[i].NAME,
-            DEALER: aResponseDealer[i].CODE,
-            TAX_CODE: responseDealerGenData.Stceg
-
-        })
-    }
-
-    aSalesPoint.$count = aSalesPoint.length
-
-    return aSalesPoint
-
-    /////////////////////////////////////////////////////////////
-
-
-
-    /*
-        const { PVDealerRevSet } = EccService.entities;
-    
-        let query = SELECT.from(PVDealerRevSet).where(
-            {
-                SALES_POINT: iRequest.data.SALES_POINT 
-            })
-    
-            */
-
-    /////////////////////////////////////////////////////
-    /* let aSalesPoint = []
-    
-     if (iRequest.data.PV === "00PV001569") {
- 
-         aSalesPoint = [
-             {
-                 "SALES_POINT": "00PV001569", "CUSTOMER_NAME": "ACISTAR NOVE SAS 62",
-                 "DEALER": "0020337982", "TAX_CODE": "05379160962"
-             },
-             {
-                 "SALES_POINT": "00PV001569", "CUSTOMER_NAME": "ACISTAR NOVE SAS 63",
-                 "DEALER": "0020337983", "TAX_CODE": "05379160963"
-             },
-             {
-                 "SALES_POINT": "00PV001569", "CUSTOMER_NAME": "ACISTAR NOVE SAS 64",
-                 "DEALER": "0020337984", "TAX_CODE": "05379160964"
-             }
-         ]
-     }
- 
- 
-     if (iRequest.data.PV === "00PV001570") {
-         aSalesPoint = [
-             {
-                 "SALES_POINT": "00PV001570", "CUSTOMER_NAME": "ACISTAR NOVE SAS 65",
-                 "DEALER": "0020337985", "TAX_CODE": "05379160965"
-             }
-         ]
-     } */
-
-    /*
-    00PV000001	V.LE DELL'OCEANO INDIANO	ROMA	V.LE DELL'OCEANO INDIANO	RM	00144
-    00PV000002	V.LE DELL'OCEANO INDIANO 13	ROMA	V.LE DELL'OCEANO INDIANO 13	RM	00144
-    00PV000003	TAMOIL ITALIA SPA  (14)	MILANO	VIA ANDREA COSTA 17	MI	20131
-    00PV000004	SERVIZI & GESTIONI ITALIA S.R.	GENOVA	LUNGOMARE CANEPA, 2 R	GE	16149
-    00PV000005	STRUPPA 113/A	GENOVA	STRUPPA 113/A	GE	16165
-    00PV000006	SECONDO RICHIESTA	*	SECONDO RICHIESTA	GE	16100
-    00PV000007	SERVIZI & GESTIONI ITALIA SRL	GENOVA	C.SO ITALIA/VIA MINZONI	GE	16145
-    00PV000008	SERVIZI & GESTIONI ITALIA SRL	BOGLIASCO	VIA AURELIA KM 512+025	GE	16031
-    00PV000009	P.ZZA ERNESTO SAVIO	GENOVA	P.ZZA ERNESTO SAVIO	GE	16152
-    
-
-    aSalesPoint.$count = aSalesPoint.length
-
-    return aSalesPoint
-
-    */
-}
-
-
-/*
-async function getSalesPointRevocation(iRequest) {
-
-    var EccService = await cds.connect.to('ZSI_SERVICE_STATION_GW_SRV');
-
-
-    const { AgreementSet } = EccService.entities;
-
-    let query = SELECT.from(AgreementSet).where(
-        {
-            MONTH: iRequest.data.MONTH,
-            YEAR: iRequest.data.YEAR,
-            COMPANY_CODE: 'IT02'
-        })
-
-    let aSalesPoint = await EccService.run(query);
-
-    for (let i = 0; i < aSalesPoint.length; i++) {
-        aSalesPoint[i].ID = i
-    }
-
-    aSalesPoint.$count = aSalesPoint.length
-
-    return aSalesPoint
 
 }
-*/
 
 
 async function getTemplate(iRequest) {
 
-return '1'
+    return '1'
 
-var i = 1
-const fs = require('fs');
+    var i = 1
+    const fs = require('fs');
 
-var vBuffer = fs.readFileSync('srv/Template_ListaCessatiO2P.xlsx')
-//var bufferOne = vBuffer.toString('base64');
-var oOutput = 
+    var vBuffer = fs.readFileSync('srv/Template_ListaCessatiO2P.xlsx')
+    //var bufferOne = vBuffer.toString('base64');
+    var oOutput =
 
-{
+    {
 
-    CONTENT   : vBuffer.toString() ,
-    MEDIATYPE : 'xlsx',
-    CONTENTSTRING: vBuffer.toString('base64') 
+        CONTENT: vBuffer.toString(),
+        MEDIATYPE: 'xlsx',
+        CONTENTSTRING: vBuffer.toString('base64')
 
-}
+    }
 
-return oOutput
- 
+    return oOutput
+
 }
 
 
@@ -670,11 +404,7 @@ module.exports = {
     updateRequest,
     getRejectorName,
     getRejectMotivation,
-    getSalesPoint,
-    getSalesPointRevocation,
-    getSalesPointCessation,
     getTemplate,
-    getYear,
-    getMonth
+    getLayout
 
 }

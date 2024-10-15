@@ -2,7 +2,7 @@
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter } = require('./lib/createProcess');
-const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote, getYear, getMonth, updateRequest, getSalesPoint, getSalesPointRevocation, getTemplate, getSalesPointCessation, getRejectInfo } = require('./lib/Handler');
+const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,  getLayout, updateRequest, getTemplate,  getRejectInfo } = require('./lib/Handler');
 const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument, emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
 
 
@@ -16,23 +16,24 @@ module.exports = cds.service.impl(async function () {
 
     /////////////////////////////////////////////////////////////////////////////////////
 
-    const { SalesPoints, AttachmentType, Attachments, Notes, ApprovalHistory, Year, ApprovalFlow, StepDescription, ApprovalView } = this.entities;
+    const { Requester, Paymode,  AttachmentType, Attachments, Notes, ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView } = this.entities;
     const { WorkDay } = this.entities;
     const { YearRequest, UserTaskCounter } = this.entities;
     const { Request } = this.entities;
 
     global.ApprovalView = ApprovalView;
+    global.Paymode = Paymode;
     global.StepDescription = StepDescription;
     global.ApprovalFlow = ApprovalFlow;
     global.AttachmentType = AttachmentType;
     global.Attachments = Attachments;
-    global.Notes = Notes;
-    global.SalesPoints = SalesPoints;
+    global.Notes = Notes; 
     global.WorkDay = WorkDay;
     global.YearRequest = YearRequest;
     global.ApprovalHistory = ApprovalHistory;
     global.Request = Request;
     global.UserTaskCounter = UserTaskCounter;
+    global.Requester = Requester
 
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -82,20 +83,11 @@ module.exports = cds.service.impl(async function () {
     this.after('READ', 'Notes', readNote);
     this.before('DELETE', 'Notes', deleteNote);
 
-    this.on('READ', 'Year', getYear);
-    this.on('READ', 'Month', getMonth);
-
-
-    this.on('getSalesPoint', getSalesPoint);
-    this.on('getSalesPointRevocation', getSalesPointRevocation);
-    this.on('getSalesPointCessation',  getSalesPointCessation);
-   
-
+    this.on( 'getLayout', getLayout);
+ 
     this.on('getTemplate', getTemplate);
 
-   // this.on('getRevocManager', getRevocManager);
-
-
+ 
 
     this.on('getMonitorTaskLink', async (req) => {
         let requestId = req.data.REQUEST_ID;

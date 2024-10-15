@@ -1,18 +1,16 @@
 using kupit.o2p as KupitO2PModel from '../db/data-model';
-using {WorkDayProxy as WorkDayService} from './external/WorkDayProxy.csn'; 
+using {WorkDayProxy as WorkDayService} from './external/WorkDayProxy.csn';
 
 @path: 'kupito2pmodel-srv'
 service O2PModelService @(requires: [
     'kupito2p_scope',
     'system-user'
 ]) {
- 
+
     entity Request         as projection on KupitO2PModel.Request
                               order by
-                                  REQUEST_ID desc ;
+                                  REQUEST_ID desc;
 
-
-    
 
     entity Attachments     as
         projection on KupitO2PModel.Attachments {
@@ -69,14 +67,10 @@ service O2PModelService @(requires: [
 
 
     entity StepDescription as projection on KupitO2PModel.StepDescription;
-
- 
-
     entity UserTaskCounter as projection on KupitO2PModel.UserTaskCounter;
 
 
-
-   view MonitorRequest as
+    view MonitorRequest as
         select from Request as request
         left outer join ApprovalHistory as approvalHistory
             on  approvalHistory.to_Request.REQUEST_ID     = request.REQUEST_ID
@@ -84,19 +78,19 @@ service O2PModelService @(requires: [
             and approvalHistory.To_StepStatus.STEP_STATUS = 'READY'
         left outer join ApprovalFlow as approvalFlow
             on  approvalFlow.REQUEST_ID = approvalHistory.to_Request.REQUEST_ID
-            and approvalFlow.STEP       = approvalHistory.STEP 
-      
-    {
-        key request.REQUEST_ID as REQID, 
-            request.*,     
-            request.createdAt as CREATEDAT_TO,     
-            approvalFlow.MAIL,
-            approvalFlow.DESCROLE,
-            approvalFlow.FULLNAME, 
-            virtual null as PV : String       
-    }
-    order by
-        request.REQUEST_ID desc;
+            and approvalFlow.STEP       = approvalHistory.STEP
+
+        {
+            key request.REQUEST_ID as REQID,
+                request.*,
+                request.createdAt  as CREATEDAT_TO,
+                approvalFlow.MAIL,
+                approvalFlow.DESCROLE,
+                approvalFlow.FULLNAME,
+                virtual null       as PV : String
+        }
+        order by
+            request.REQUEST_ID desc;
 
     view ApprovalView as
         select from ApprovalFlow as approvalFlow
@@ -131,24 +125,23 @@ service O2PModelService @(requires: [
                 virtual null as SHOW_ASSIGNED_AT : Boolean
         };
 
- 
- 
-    function getTemplate() returns getTemplateReturn;
 
-    action   createProcess(MONTH : String, YEAR : String, PROCESSTYPE : String) returns Message;
+    function getTemplate()                                             returns getTemplateReturn;
+    function getLayout(REQUESTER : String, PAYMENT_MODE : String)      returns getLayoutReturn;
+    action   createProcess(REQUESTER : String)                         returns Message;
 
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                             STEPID : KupitO2PModel.STEP_ID,
-                            ACTION : KupitO2PModel.Actionenum, )             returns Message;
+                            ACTION : KupitO2PModel.Actionenum, )       returns Message;
 
 
     action   checkTaskCreated(REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                              WF_INSTACE_ID : String)                           returns Message;
+                              WF_INSTACE_ID : String)                  returns Message;
 
 
-    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns Message;
-    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)            returns RejectInfo;
+    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID) returns Message;
+    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)      returns RejectInfo;
 
     type Message      : {
         MTYPE         : MessageType;
@@ -156,7 +149,7 @@ service O2PModelService @(requires: [
         WF_INSTACE_ID : WfInstanceId;
         TASKURL       : String(250);
         TASKID        : String(150);
-        REQUESTID     : String(10); 
+        REQUESTID     : String(10);
         CONTENT       : String;
     };
 
@@ -174,16 +167,23 @@ service O2PModelService @(requires: [
     }
 
     type WfInstanceId : String(250);
- 
 
-     @open
-    type  getTemplateReturn{
 
-        CONTENT            : LargeBinary @Core.MediaType: MEDIATYPE;
-        MEDIATYPE          : String      @Core.IsMediaType;
+    @open
+    type getTemplateReturn {
+
+        CONTENT       : LargeBinary @Core.MediaType: MEDIATYPE;
+        MEDIATYPE     : String      @Core.IsMediaType;
         CONTENTSTRING : LargeString
 
     }
 
+    @open
+    type getLayoutReturn {
+
+        VIS_PRIORITY     : Boolean;
+        VIS_ADD_CRO_MAIL : Boolean
+
+    }
 
 }
