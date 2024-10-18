@@ -194,7 +194,7 @@ Authorization: Basic ale:ale
  
 
 ### ----------------------------------------------------------------------
-GET http://localhost:4004/odata/v2/kupito2pmodel-srv$metadata
+GET http://localhost:4004/odata/v2/kupito2pmodel-srv/Currencies
 Content-Type: application/json;IEEE754Compatible=true
 Authorization: Basic ale:ale
 

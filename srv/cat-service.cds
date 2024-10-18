@@ -1,11 +1,15 @@
 using kupit.o2p as KupitO2PModel from '../db/data-model';
 using {WorkDayProxy as WorkDayService} from './external/WorkDayProxy.csn';
 
+
 @path: 'kupito2pmodel-srv'
 service O2PModelService @(requires: [
     'kupito2p_scope',
     'system-user'
 ]) {
+
+
+ 
 
     entity Request         as projection on KupitO2PModel.Request
                               order by
@@ -49,7 +53,7 @@ service O2PModelService @(requires: [
             key SEQUENCE,
                 *
         }
- 
+
     entity WorkDay         as projection on WorkDayService.wdEmployeeExtended;
 
     @readonly
@@ -67,7 +71,27 @@ service O2PModelService @(requires: [
 
     entity StepDescription as projection on KupitO2PModel.StepDescription;
     entity UserTaskCounter as projection on KupitO2PModel.UserTaskCounter;
+    entity Parameters      as projection on KupitO2PModel.Parameters;
 
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    entity Requester       as projection on KupitO2PModel.Requester;
+    entity Paymode         as projection on KupitO2PModel.Paymode;
+    entity Accountreq      as projection on KupitO2PModel.Accountreq;
+    entity Bank            as projection on KupitO2PModel.Bank;
+    entity Bankreq         as projection on KupitO2PModel.Bankreq;
+    entity Bankexc         as projection on KupitO2PModel.Bankexc;
+    entity Bankdefault     as projection on KupitO2PModel.Bankdefault;
+    entity Clearacc        as projection on KupitO2PModel.Clearacc;
+    entity Doclog          as projection on KupitO2PModel.Doclog;
+    entity Docparam        as projection on KupitO2PModel.Docparam;
+    entity Document        as projection on KupitO2PModel.Document;
+    entity Orgunitreq      as projection on KupitO2PModel.Orgunitreq;
+    entity Proclog         as projection on KupitO2PModel.Proclog;
+    entity Tribreq         as projection on KupitO2PModel.Tribreq;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////
 
     view MonitorRequest as
         select from Request as request

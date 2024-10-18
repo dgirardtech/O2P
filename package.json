@@ -13,6 +13,7 @@
     "@sap-cloud-sdk/openapi": "^3.12.1",
     "@sap-cloud-sdk/openapi-generator": "^3.11.0",
     "@sap/cds": "^7.6.1",
+    "@sap/cds-common-content": "^2.1.0",
     "@sap/cds-hana": "^2",
     "@sap/cds-odata-v2-adapter-proxy": "^1.9.7",
     "@sap/hana-client": "^2.20.23",
@@ -37,14 +38,12 @@
     "@sap/cds-dk": "^7",
     "@sap/dev-cap-tools": "^1.31.0",
     "@sap/eslint-plugin-cds": "^3",
-    "@sap/hdi-deploy": "4.9.4",
+    "@sap/hdi-deploy": "^5.3.2",
     "eslint": "^9"
   },
   "scripts": {
     "start": "cds-serve"
   },
-
-  
   "cds": {
     "query": {
       "limit": {
@@ -132,31 +131,29 @@
         "csrf": true,
         "csrfInBatch": true,
         "credentials": {
-          "destination": "ECC", 
+          "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZSI_SERVICE_STATION_GW_SRV",
           "requestTimeout": 600000
         }
-      }
-      ,
+      },
       "ZSI_SERV_STATION_DEALER_SRV": {
-        "kind": "odata-v2", 
+        "kind": "odata-v2",
         "model": "srv/external/ZSI_SERV_STATION_DEALER_SRV",
         "csrf": true,
         "csrfInBatch": true,
         "credentials": {
-          "destination": "ECC", 
+          "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZSI_SERV_STATION_DEALER_SRV",
           "requestTimeout": 600000
         }
       },
-      
       "ZSERVICE_STATION_SRV": {
-        "kind": "odata-v2", 
+        "kind": "odata-v2",
         "model": "srv/external/ZSERVICE_STATION_SRV",
         "csrf": true,
         "csrfInBatch": true,
         "credentials": {
-          "destination": "ECC", 
+          "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZSERVICE_STATION_SRV",
           "requestTimeout": 600000
         }

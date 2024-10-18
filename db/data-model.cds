@@ -3,12 +3,15 @@ namespace kupit.o2p;
 using {
   managed,
   sap.common.CodeList,
-  sap.common.Currencies,
+  sap.common.Currencies as Currencies, 
 } from '@sap/cds/common';
 
-entity Request : managed, Currencies {
-  key REQUEST_ID                     : REQUEST_ID;
-     // O2P_REQUEST_ID                 : O2P_REQUEST_ID;
+  
+using from '@sap/cds-common-content';
+
+//ZFI_O2P_REQUEST
+entity Request : managed {
+  key REQUEST_ID                     : REQUEST_ID; 
       STATUS                         : Association to one Status;
       STARDATE                       : DateTime;
       ENDDATE                        : DateTime;
@@ -20,20 +23,20 @@ entity Request : managed, Currencies {
       TITLE                          : String(100);
       AREA_CODE                      : String(10);
       PAYMENT_MODE                   : Association to one Paymode;
-      WAERS                          : Association to Currencies;
-      PRIORITY                       : Boolean;
+      WAERS                          : Association to one Currencies;
+      PRIORITY                       : Boolean default false;
       PRIORITY_CURR                  : String(10);
       PRIORITY_MOTIV                 : String(50);
-      URGENT                         : Boolean;
-      EXTRA_MANAGER_REQUIRED         : Boolean;
-      EXTRA_MANAGER_NAME             :  String(12);
+      URGENT                         : Boolean default false;
+      EXTRA_MANAGER_REQUIRED         : Boolean default false;
+      EXTRA_MANAGER_NAME             : String(12);
       TOTAL                          : AMOUNT;
       TOTAL_DOCS                     : Decimal(3, 0);
-      F23_SIGN_CONFIRM               : Boolean;
+      F23_SIGN_CONFIRM               : Boolean default false;
       BANK_ACCOUNT                   : String(10);
       VALUE_DATE                     : Date;
       BENEFICIARY_DATE               : Date;
-      PAYMENT_CONFIRM                : Boolean;
+      PAYMENT_CONFIRM                : Boolean default false;
 
       //---> open text
       //COMPOUND_ID
@@ -47,14 +50,12 @@ entity Request : managed, Currencies {
       //EXPIRY_DATE_F23
       //---> tutti gli expire date unico campo
 
-      EXPIRY_DATE: Date;
-
-      SKIP_COORD                     : Boolean;
+      EXPIRY_DATE                    : Date;
+      SKIP_COORD                     : Boolean default false;
       TYPE_F24_ENTRATEL              : String(10); // forse associata a tabella F24_ENTRATEL dominio ZFI_O2P_D_F24_ENTRATEL_TYPE
       F24_ENTRATEL_CLEARING_ACCOUNT  : String(10);
       NEW_PROC_DOC_TYPE              : String(1); // forse associata a tabella DOC_TYPE dominio ZFI_O2P_D_DOC_PROC_TYPE
       ADDITIONAL_CRO_MAIL_RECIPIENTS : String(255);
-
 
       to_Attachments                 : Composition of many Attachments
                                          on to_Attachments.to_Request = $self;
@@ -66,6 +67,7 @@ entity Request : managed, Currencies {
                                          on to_ApprovalFlow.to_Request = $self;
 }
 
+//ZFI_O2P_APPRFLOW
 entity ApprovalFlow {
   key to_Request : Association to Request;
   key STEP       : STEP;
@@ -81,7 +83,7 @@ entity ApprovalFlow {
       ISMANAGER  : ISMANAGER;
 }
 
-
+//ZFI_O2P_APP_HIST
 entity ApprovalHistory {
   key to_Request               : Association to Request;
   key STEP                     : STEP;
@@ -100,6 +102,7 @@ entity ApprovalHistory {
 }
 
 
+//ZFI_O2P_ATTACH
 entity Attachments : managed {
   key to_Request         : Association to Request;
   key ID                 : Integer;
@@ -115,6 +118,7 @@ entity Attachments : managed {
 
 }
 
+//ZFI_O2P_NOTE
 entity Notes : managed {
   key to_Request         : Association to Request;
   key ID                 : Integer;
@@ -141,8 +145,7 @@ entity UserAction {
 }
 
 
- 
-
+//ZFI_O2P_TASKNAME
 entity StepDescription {
   key STEP             : STEP_ID;
       STEP_DESCRIPTION : localized STEP_DESCRIPTION;
@@ -150,6 +153,7 @@ entity StepDescription {
 }
 
 
+//ZFI_O2P_D_STATUS ( dominio )
 @assert.range
 entity Status : CodeList {
   key code : String(3) enum {
@@ -161,39 +165,208 @@ entity Status : CodeList {
       }
 }
 
+//ZFI_O2P_D_ATTACH_TYPE ( dominio )
 @cds.odata.valuelist
 entity AttachmentType {
   key ATTACHMENTTYPE : String(20);
-  //key STEP           : STEP;
+      //key STEP           : STEP;
       ORDER          : Integer;
       DESCRIPTION    : localized String(40);
 }
 
 
-entity Requester : managed, Currencies {
-  key REQUESTER           : String(10);
+// ZFI_O2P_PARAM
+entity Parameters : managed {
+  key PARAMETER : String;
+      DESCR     : String;
+      VALUE     : String;
+      ORDER     : Integer;
+}
+
+///////////////////////////////////////////////////////
+
+//ZFI_O2P_REQUESTR
+entity Requester : managed {
+  key CODE                : REQUESTER;
       REQUESTER_NAME      : String(50);
-      BUKRS               : String(4);
-      WAERS               : Association to Currencies;
-      SEND_TASK           : Boolean;
-      MANAGE_SPECIAL_GL   : Boolean;
-      MANAGE_ENTE_TRIBUTO : Boolean;
-      CHECK_PV_AREA       : Boolean;
-      DUMMY_CDC           : Boolean;
-      PV_MANDATORY        : Boolean;
-      CONTROLLER_CHECK    : Boolean;
-      SKIP_COORD          : Boolean;
-      INACTIVE            : Boolean;
+      BUKRS               : COMPANY;
+      WAERS               : Association to one Currencies;
+      SEND_TASK           : Boolean default false;
+      MANAGE_SPECIAL_GL   : Boolean default false;
+      MANAGE_ENTE_TRIBUTO : Boolean default false;
+      CHECK_PV_AREA       : Boolean default false;
+      DUMMY_CDC           : Boolean default false;
+      PV_MANDATORY        : Boolean default false;
+      CONTROLLER_CHECK    : Boolean default false;
+      SKIP_COORD          : Boolean default false;
+      INACTIVE            : Boolean default false;
 }
 
+//ZFI_O2P_PAYMODE
 entity Paymode : managed {
-  key PAYMENT_MODE         : String(10);
-      PAYMENT_NAME         : String(50);
-      PAYMENT_NAME_SHORT   : String(20);
-      TREASURY_CODE        : String(4);
-      MAX_ROW              : Decimal(2, 0); 
+  key CODE               : String(10);
+      PAYMENT_NAME       : String(50);
+      PAYMENT_NAME_SHORT : String(20);
+      TREASURY_CODE      : String(4);
+      MAX_ROW            : Decimal(2, 0);
 
 }
+
+
+//ZFI_O2P_ACCOUNTS
+entity Accountreq : managed {
+  key REQUESTER              : Association to one Requester;
+  key ACCOUNT                : ACCOUNT;
+      ACCOUNT_TEXT           : String(50);
+      REQUEST_CDC            : Boolean default false;
+      REQUEST_INTERNAL_ORDER : Boolean default false;
+      COORDINATOR_LIMIT      : Decimal(11, 2);
+      DIRECTOR_TRESHOLD      : Decimal(11, 2);
+      SPECIAL_GL_IND         : SPECIAL_GL_IND;
+      ADVANCE_ACCOUNT        : Boolean default false;
+      POSTAL_ACCOUNT         : Boolean default false;
+      VALUE_DATE             : Boolean default false;
+      MANDATORY_ATTRIB       : Boolean default false;
+
+}
+
+//ZFI_O2P_BANK_DET
+entity Bank : managed {
+  key CODE     : String(10);
+      NAME     : String(40);
+      ADDRESS1 : String(100);
+      ADDRESS2 : String(100);
+      ADDRESS3 : String(100);
+
+}
+
+//ZFI_O2P_BANKS
+entity Bankreq : managed {
+  key REQUESTER : Association to one Requester;
+  key BANK      : Association to one Bank;
+      BANK_NAME : String(40);
+      IBAN      : String(34);
+      ITEM      : Decimal(4, 0);
+}
+
+
+//ZFI_O2P_BANK_EXC
+entity Bankexc : managed {
+  key ABI_Q8     : String(5);
+  key ABI_VENDOR : String(5);
+}
+
+
+// ZFI_O2P_DEF_BANK
+entity Bankdefault : managed {
+  key REQUESTER    : Association to one Requester;
+  key PAYMENT_MODE : Association to one Paymode;
+      BANK         : Association to one Bank;
+}
+
+// ZFI_O2P_CLEARACC
+entity Clearacc : managed {
+  key CODE        : String(5);
+      DESCRIPTION : String(200);
+}
+
+
+// ZFI_O2P_DOC_LOG
+entity Doclog : managed {
+  key to_Request   : Association to Request;
+  key DOC_ID       : DOC_ID;
+  key LOG_TIME     : String(22);
+      CREATOR_USER : String(22);
+      DOC_TYPE     : DOCTYPE;
+      DOC_NUMBER   : DOCNUM;
+      COMPANY_CODE : COMPANY;
+      FISCAL_YEAR  : YEAR;
+      STATUS       : String(10);
+      STATUS_TEXT  : String;
+}
+
+// ZFI_O2P_DOCPARAM
+entity Docparam : managed {
+  key PAYMENT_MODE    : Association to one Paymode;
+  key STEP            : STEP;
+  key ACCOUNT_ADVANCE : Boolean default false;
+  key PRIORITY        : Boolean default false;
+  key URGENT          : Boolean default false;
+      DOC_TYPE        : DOCTYPE;
+      DOC_PROC_TYPE   : String(1)
+}
+
+//ZFI_O2P_DOCUMENT
+entity Document : managed {
+  key to_Request           : Association to Request;
+  key DOC_ID               : DOC_ID;
+  key ID                   : Integer;
+      AUTHORITY            : String(40);
+      TRIBUTE              : Decimal(2, 0);
+      DOC_YEAR             : YEAR;
+      LOCATION             : String(10);
+      VENDOR               : String(10);
+      IBAN                 : String(34);
+      PARTN_BNK_TYPE       : String(4);
+      REF_ID               : String(16);
+      SPECIAL_GL_IND       : SPECIAL_GL_IND;
+      ACCOUNT              : ACCOUNT;
+      ACCOUNT_ADVANCE      : Boolean default false;
+      REASON               : String(140);
+      AMOUNT               : AMOUNT;
+      TEXT                 : String(50);
+      COST_CENTER          : String(10);
+      INT_ORDER            : String(12);
+      DOCUMENT_COMP_CODE   : COMPANY;
+      DOCUMENT_FISCAL_YEAR : YEAR;
+      DOCUMENT_NUMBER      : DOCNUM;
+      CLEARING_NUMBER      : DOCNUM;
+      CONTABILE_NICKNAME   : String(10);
+      CONTABILE_SEND_DATE  : Date;
+      NOTE                 : String(250);
+      LAST_MOD_USER        : String(12);
+      LAST_MOD_NAME        : String(7);
+      LAST_MOD_DATE        : Date;
+      LAST_MOD_TIME        : Time;
+      ATTRIBUZIONE         : String(18);
+      RIFERIMENTO          : String(20);
+      REFKEY2              : String(12);
+      VALUT                : Date;
+      IS_FROM_EXCEL        : Boolean default false;
+
+}
+
+//ZFI_O2P_OU_REQ
+entity Orgunitreq : managed {
+  key REQUESTER : Association to one Requester;
+  key ORGUNIT   : Decimal(8, 0);
+      NOTE      : String(50)
+
+}
+
+
+//ZFI_O2P_PROC_LOG
+entity Proclog : managed {
+  key to_Request      : Association to Request;
+  key ID              : Decimal(5, 0);
+      ACTIVITY        : String(10);
+      ACTIVITY_RESULT : Boolean default false;
+      MESSAGE         : String(250);
+      USERID          : String(12);
+      ACTIVITY_DATE   : Date;
+      ACTIVITY_TIME   : Time
+
+}
+
+//ZFI_O2P_TRIB_SPL
+entity Tribreq : managed {
+  key REQUESTER      : Association to one Requester;
+  key TRIBUTE        : Decimal(2, 0);
+      SPECIAL_GL_IND : SPECIAL_GL_IND
+}
+
+
+////////////////////////////////////////////////////////////
 
 
 @cds.persistence.skip
@@ -233,6 +406,14 @@ entity StepList {
 }
 
 
+type COMPANY          : String(4);
+type DOCNUM           : String(10);
+type SPECIAL_GL_IND   : String(1);
+type YEAR             : Decimal(4, 0);
+type DOC_ID           : Integer;
+type DOCTYPE          : String(2);
+type ACCOUNT          : String(10);
+type REQUESTER        : String(10);
 type STEP             : Integer;
 type VERSION          : Integer;
 type BPA_TASKID_ID    : String(40);
@@ -241,8 +422,7 @@ type LNAME            : String(50);
 type FULLNAME         : String(100);
 type MAIL             : String(150);
 type STEP_STATUS      : StepStatusenum;
-type USER_ACTION      : UserActionenum;
-type O2P_REQUEST_ID   : String(10);
+type USER_ACTION      : UserActionenum; 
 type SEQUENCE         : Integer;
 type IDROLE           : String(150);
 type DESCROLE         : String(50);

@@ -67,16 +67,10 @@ async function createProcess(iRequest) {
             return returnGetMoaApprovers;
         }
 
-/*
-        let returnNextRequestId = await getNextRequestIdO2P(iRequest, cdsTx);
-        if (returnNextRequestId.errors) {
-            return returnNextRequestId;
-        }
-
-        */
+ 
 
         //Save request    
-        let returnCreateRequest = await createRequest(iRequest, returnRequestId, 0, cdsTx);
+        let returnCreateRequest = await createRequest(iRequest, returnRequestId,  cdsTx);
         if (returnCreateRequest.errors) {
             return returnCreateRequest;
         }
@@ -545,13 +539,12 @@ async function reqWithZeroes(iNumber, iLength) {
 
 }
 
-async function createRequest(iRequest, iRequestId, iRequestO2PId, iCdsTx) {
+async function createRequest(iRequest, iRequestId, iCdsTx) {
 
     let actualUser = iRequest.user.id;
 
     let requestRecord = new Object();
-    requestRecord.REQUEST_ID = iRequestId;
-   // requestRecord.O2P_REQUEST_ID = iRequestO2PId;
+    requestRecord.REQUEST_ID = iRequestId; 
 
     requestRecord.MONTH = iRequest.data.MONTH;
     requestRecord.YEAR = iRequest.data.YEAR;
@@ -928,7 +921,6 @@ module.exports = {
     getApproverSequence,
     getTaskInstanceUrl,
     getNextRequestId,
-    getNextRequestIdO2P,
     reqWithZeroes,
     createRequest,
     startBPAProcess,
