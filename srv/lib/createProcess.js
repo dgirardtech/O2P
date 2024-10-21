@@ -67,10 +67,10 @@ async function createProcess(iRequest) {
             return returnGetMoaApprovers;
         }
 
- 
+
 
         //Save request    
-        let returnCreateRequest = await createRequest(iRequest, returnRequestId,  cdsTx);
+        let returnCreateRequest = await createRequest(iRequest, returnRequestId, cdsTx);
         if (returnCreateRequest.errors) {
             return returnCreateRequest;
         }
@@ -78,7 +78,6 @@ async function createProcess(iRequest) {
 
 
         //Save MOA Approvers
-
         returnSaveMoaApprovers = await saveMoaApprovers(iRequest, returnRequestId, returnGetMoaApprovers, cdsTx);
         if (returnSaveMoaApprovers.errors) {
             return returnSaveMoaApprovers;
@@ -103,7 +102,6 @@ async function createProcess(iRequest) {
 
         //Start BPA Process
         let returnStartProcess = await startBPAProcess(iRequest, returnRequestId, returnSaveMoaApprovers);
-        // let returnStartProcess = await startBPAProcess(iRequest, returnRequestId);
         if (returnStartProcess.errors) {
             return returnStartProcess;
         }
@@ -118,9 +116,7 @@ async function createProcess(iRequest) {
 
         message.MTYPE = consts.SUCCESS;
         message.REQUESTID = returnRequestId;
-        message.WF_INSTACE_ID = returnStartProcess;
-        // message.TASKID = returnGetTaskInstanceUrl.TASKID;
-        // message.TASKURL = returnGetTaskInstanceUrl.TASKURL; 
+        message.WF_INSTACE_ID = returnStartProcess; 
         message.TEXT = oBundle.getText("PROCESS_STARTED", [returnRequestId]);
         return message;
 
@@ -191,7 +187,7 @@ async function checkTaskCreated(iRequest) {
     return message;
 
 }
- 
+
 
 async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersion) {
 
@@ -324,7 +320,6 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
         if (sendFakeMail === "false") {
 
 
-
             input.push({ attribute: "COMPANYNAMEAT", value: "KUPIT" });
             input.push({ attribute: "BPROCESSNAMEAT", value: "O2PAPP" });
             input.push({ attribute: "DEFAULTLVLAT", value: "TRUE" });
@@ -342,12 +337,16 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
 
             result.push({ INDEX: "10", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
-            result.push({ INDEX: "20", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Coordinatore Vendite", ISMANAGER: "false" });
-            result.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore Rete", ISMANAGER: "false" });
-            result.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
-            result.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Coordinatore Vendite", ISMANAGER: "false" });
-            result.push({ INDEX: "60", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore Rete", ISMANAGER: "false" });
-
+            result.push({ INDEX: "20", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });  // o Uffcio Attività Fisse
+            result.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore", ISMANAGER: "false" });
+            result.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
+            result.push({ INDEX: "42", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false" });
+            result.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
+            result.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
+            result.push({ INDEX: "60", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza ", ISMANAGER: "false" }); // o Addetto Cassa o Controller
+            result.push({ INDEX: "70", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
+            result.push({ INDEX: "80", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Compilatore", ISMANAGER: "false" });
+            
         }
 
 
@@ -526,7 +525,7 @@ async function getNextRequestId(iRequest) {
     return lRequestID;
 }
 
- 
+
 
 async function reqWithZeroes(iNumber, iLength) {
 
@@ -544,12 +543,11 @@ async function createRequest(iRequest, iRequestId, iCdsTx) {
     let actualUser = iRequest.user.id;
 
     let requestRecord = new Object();
-    requestRecord.REQUEST_ID = iRequestId; 
+    requestRecord.REQUEST_ID = iRequestId;
 
-    requestRecord.MONTH = iRequest.data.MONTH;
-    requestRecord.YEAR = iRequest.data.YEAR;
+    requestRecord.REQUESTER_CODE = iRequest.data.REQUESTER;  
 
- 
+
 
     let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: actualUser }));
     if (oInfoWDPosition === undefined) {
@@ -599,6 +597,8 @@ async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
         return iRequest;
     }
 
+
+
     oBPAContext = {
         "REQUESTID": iRequestId,
         "CURRENT_APPROVERS": compiler,
@@ -606,16 +606,18 @@ async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
         "STEP_20": 20,
         "STEP_30": 30,
         "STEP_40": 40,
+        "STEP_42": 42,
+        "STEP_45": 45,
         "STEP_50": 50,
         "STEP_60": 60,
+        "STEP_70": 70,
+        "STEP_80": 80,
         "STEP_DESCRIPTION": "",
         "ISREADONLY": "",
         "GENERICSTRING": ""
     }
 
     definitionID = consts.WF_DEFINITION_ID;
-
-
 
 
     try {
@@ -631,8 +633,8 @@ async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
 
         const userJwt = retrieveJwt(iRequest);
         responseCreateWf = await WorkflowInstancesApi.createV1WorkflowInstances(startPayload)
-            //   .execute({ destinationName: consts.API_WF_DESTINATION });
-            .execute({ destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt });
+            .execute({ destinationName: consts.API_WF_DESTINATION });
+            //.execute({ destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt });
 
     } catch (error) {
         let errMEssage = "startProcess:" + error.message + " REQUESTID: " + iRequestId;
@@ -914,8 +916,8 @@ async function getTaskId(iRequestId, iStepId, iWfInstaceID, iRequest) {
 module.exports = {
     createProcess,
     updateWfInstanceId,
-    checkTaskCreated, 
-    insertApprovalHistory, 
+    checkTaskCreated,
+    insertApprovalHistory,
     getMoaApprovers,
     saveMoaApprovers,
     getApproverSequence,

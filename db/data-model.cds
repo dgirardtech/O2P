@@ -3,15 +3,15 @@ namespace kupit.o2p;
 using {
   managed,
   sap.common.CodeList,
-  sap.common.Currencies as Currencies, 
+  sap.common.Currencies as Currencies,
 } from '@sap/cds/common';
 
-  
+
 using from '@sap/cds-common-content';
 
 //ZFI_O2P_REQUEST
 entity Request : managed {
-  key REQUEST_ID                     : REQUEST_ID; 
+  key REQUEST_ID                     : REQUEST_ID;
       STATUS                         : Association to one Status;
       STARDATE                       : DateTime;
       ENDDATE                        : DateTime;
@@ -185,7 +185,7 @@ entity Parameters : managed {
 
 ///////////////////////////////////////////////////////
 
-//ZFI_O2P_REQUESTR
+//ZFI_O2P_REQUESTR + ZFI_O2P_REQ_CUST
 entity Requester : managed {
   key CODE                : REQUESTER;
       REQUESTER_NAME      : String(50);
@@ -213,7 +213,7 @@ entity Paymode : managed {
 }
 
 
-//ZFI_O2P_ACCOUNTS
+//ZFI_O2P_ACCOUNTS + ZFI_O2P_MAN_REF3
 entity Accountreq : managed {
   key REQUESTER              : Association to one Requester;
   key ACCOUNT                : ACCOUNT;
@@ -227,6 +227,9 @@ entity Accountreq : managed {
       POSTAL_ACCOUNT         : Boolean default false;
       VALUE_DATE             : Boolean default false;
       MANDATORY_ATTRIB       : Boolean default false;
+      REFKEY2                : Boolean default false;
+      REFKEY3                : Boolean default false;
+      ACTIVE_CHECK           : Boolean default false;
 
 }
 
@@ -422,7 +425,7 @@ type LNAME            : String(50);
 type FULLNAME         : String(100);
 type MAIL             : String(150);
 type STEP_STATUS      : StepStatusenum;
-type USER_ACTION      : UserActionenum; 
+type USER_ACTION      : UserActionenum;
 type SEQUENCE         : Integer;
 type IDROLE           : String(150);
 type DESCROLE         : String(50);

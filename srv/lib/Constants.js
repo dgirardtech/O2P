@@ -3,49 +3,59 @@ exports.SEQUENCEO2P = "REQUESTIDO2P";
 exports.API_WF_DESTINATION_XSUAA = "sap_process_automation_api_xsuaa";
 exports.PATH_API_WF = "../external/modules/SPA_Workflow_Runtime";
 exports.API_WF_DESTINATION = "sap_process_automation_api";
-exports.WF_DEFINITION_ID = "";
+exports.WF_DEFINITION_ID = "eu10.cf-kupit-dev-yy6gs83h.kupito2p.o2PProcess";
 
- 
+
 
 
 // --------------
-exports.SUCCESS  = "S";
-exports.ERROR    = "E";
-exports.WARNING  = "W";
+exports.SUCCESS = "S";
+exports.ERROR = "E";
+exports.WARNING = "W";
 exports.MOAERROR = "Error";
- 
+
 //Staus BPA - O2P
 exports.requestStatus = Object.freeze({
-    Progress:  'PRO',
-    Deleted:   'DEL',
-    Refused:   'REJ',
+    Progress: 'PRO',
+    Deleted: 'DEL',
+    Refused: 'REJ',
     Completed: 'COM'
-}); 
+});
 
 
 exports.bpaUserAction = Object.freeze({
-    APPROVE:   'A',
-    REJECT:    'R',
+    APPROVE: 'A',
+    REJECT: 'R',
     TERMINATE: 'T',
-    START:     'S'
+    START: 'S'
 });
 
 
 exports.UserAction = Object.freeze({
-    APPROVED:   'APPROVED',
-    REJECTED:   'REJECTED',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
     TERMINATED: 'TERMINATED',
-    STARTED:    'STARTED', 
+    STARTED: 'STARTED',
 });
 
- 
- 
-  
+
+exports.Paymode = Object.freeze({
+    BANK_TRANSFER: 'BANK_TRANSFER',
+    MAV: 'MAV',
+    RAV: 'RAV',
+    CCPOSTALE: 'CCPOSTALE',
+    ASSCIRC_NT: 'ASSCIRC_NT',
+    F24: 'F24',
+    F23: 'F23',
+    FRECCIA: 'FRECCIA'
+
+});
+
 
 exports.stepStatus = Object.freeze({
-    READY:       'READY',
-    COMPLETED:   'COMPLETED',
-    ERROR:       'ERROR',
+    READY: 'READY',
+    COMPLETED: 'COMPLETED',
+    ERROR: 'ERROR',
     NOTASSIGNED: 'NOTASSIGNED'
 });
 
@@ -71,30 +81,30 @@ exports.mailId = Object.freeze({
 
 // NOTIFICATION ID LIST
 exports.notificationId = Object.freeze({
-    TASK_READY:    "TEAMSNOTIFICATION",
+    TASK_READY: "TEAMSNOTIFICATION",
     TASK_REJECTED: "REJECTNOTIFICATION",
 });
 
 // SOSTITUTION PATTERNS 
 exports.mailPatterns = Object.freeze({
-    DATA:       "<<DATA>>",
-    MESE:       "<<MESE>>",
-    ANNO:       "<<ANNO>>",
-    NADESIONI:  "<<NADESIONI>>",
-    REQUESTID:  "<<REQUEST_ID>>",
+    DATA: "<<DATA>>",
+    MESE: "<<MESE>>",
+    ANNO: "<<ANNO>>",
+    NADESIONI: "<<NADESIONI>>",
+    REQUESTID: "<<REQUEST_ID>>",
     FULL_NAME_COMPILER: "<<FULL_NAME_COMPILER>>",
     FULL_NAME: "<<FULL_NAME>>",
-    TASK_URL:"<<TASK_URL>>",
-    IMP2SOMMA:      "<<IMP2SOMMA>>",
-    AFAVORE:        "<<AFAVORE>>", // chiedere
-    NUM_BON:        "<<NUM_BON>>", 
+    TASK_URL: "<<TASK_URL>>",
+    IMP2SOMMA: "<<IMP2SOMMA>>",
+    AFAVORE: "<<AFAVORE>>", // chiedere
+    NUM_BON: "<<NUM_BON>>",
     DATAVECCHIADER: "<<DATAVECCHIADER>>",
-    IMPVECCHIADER:  "<<IMPVECCHIADER>>",
-    DATANUOVIADER:  "<<DATANUOVIADER>>",
-    IMPNUOVIADER:   "<<IMPNUOVIADER>>",
-    DATAINTEGR:     "<<DATAINTEGR>>",  
-    IMPINTEGR:      "<<IMPINTEGR>>",
-    IMPTOT:         "<<IMPTOT>>",
+    IMPVECCHIADER: "<<IMPVECCHIADER>>",
+    DATANUOVIADER: "<<DATANUOVIADER>>",
+    IMPNUOVIADER: "<<IMPNUOVIADER>>",
+    DATAINTEGR: "<<DATAINTEGR>>",
+    IMPINTEGR: "<<IMPINTEGR>>",
+    IMPTOT: "<<IMPTOT>>",
     INTEGR: "<<INTEGR>>",
     NOTE: "<<NOTE>>",
     TAB_GESTORI: "<<TAB_GESTORI>>",
@@ -103,10 +113,10 @@ exports.mailPatterns = Object.freeze({
 });
 
 
- 
+
 
 //Attachment Type
 exports.attachmentTypes = Object.freeze({
     ADESIONE: "ADESIONE",
-    GENERICO: "GENERICO" 
+    GENERICO: "GENERICO"
 });

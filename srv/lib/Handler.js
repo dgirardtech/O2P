@@ -338,31 +338,70 @@ async function getRejectInfo(iRequest) {
 
 async function getLayout(iRequest) {
 
-    let requester   = iRequest.data.REQUESTER
-    let paymentMode = iRequest.data.PAYMENT_MODE
+    //let requester   = iRequest.data.REQUESTER
+   // let paymentMode = iRequest.data.PAYMENT_MODE
+
+
+   let visPriority = false
+   let visAddCroMail = false
+   let visAssignToBtn = false
+   let labExpireDate = ''
+   let visExpireDate = false
 
     let oRequester = await SELECT.one.from(Requester).
-        where({ REQUESTER: requester });
+        where({ REQUESTER: iRequest.data.REQUESTER });
 
     if (!oRequester) {
-        let errMEssage = "ERROR get layout " + requester + ". Requester not found";
+        let errMEssage = "ERROR get layout " + iRequest.data.REQUESTER + ". Requester not found";
         iRequest.error(450, errMEssage, null, 450);
         LOG.error(errMEssage);
         return iRequest;
     }
 
-    let oPayMode = await SELECT.one.from(Paymode).
-        where({ PAYMENT_MODE: paymentMode });
+    
+ /*   let oPayMode = await SELECT.one.from(Paymode).
+        where({ PAYMENT_MODE: iRequest.data.PAYMENT_MODE });
 
-    if (!oPayMode) {
-        let errMEssage = "ERROR get layout " + paymentMode + ". Payment Mode not found";
+ 
+   if (!oPayMode) {
+        let errMEssage = "ERROR get layout " + iRequest.data.PAYMENT_MODE + ". Payment Mode not found";
         iRequest.error(450, errMEssage, null, 450);
         LOG.error(errMEssage);
         return iRequest;
     }
+       */
+
+      //set check priority visibility
+    if (iRequest.data.PAYMENT_MODE === consts.Paymode.BANK_TRANSFER ) {
+        visPriority   = true
+        visAddCroMail = true
+    }  
+
+    if (iRequest.data.PRIORITY === true) {
+        
+    }
+
+    if (oRequester.SEND_TASK === true) {
+        visAssignToBtn = true
+    }
+
+  /*  if (iRequest.data.PAYMENT_MODE === ) {
+
+    } else {
+        labExpireDate = ''
+    }
+    */
+
+ 
 
 
-    return { VIS_PRIORITY: true, VIS_ADD_CRO_MAIL: false }
+    return { VIS_PRIORITY: visPriority, 
+             VIS_ADD_CRO_MAIL:  visAddCroMail,
+             VIS_ASSIGN_TO_BTN : visAssignToBtn,
+             LAB_EXPIRE_DATE : labExpireDate
+            
+            
+            }
 
 
 }
