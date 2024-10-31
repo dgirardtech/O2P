@@ -40,6 +40,7 @@ exports.UserAction = Object.freeze({
 
 
 exports.Paymode = Object.freeze({
+    BONIFICO : 'BONIFICO',
     BANK_TRANSFER: 'BANK_TRANSFER',
     MAV: 'MAV',
     RAV: 'RAV',
@@ -47,7 +48,9 @@ exports.Paymode = Object.freeze({
     ASSCIRC_NT: 'ASSCIRC_NT',
     F24: 'F24',
     F23: 'F23',
-    FRECCIA: 'FRECCIA'
+    FRECCIA: 'FRECCIA',
+    FLBONIFIC: 'FLBONIFIC',
+    ENTRATEL: 'ENTRATEL'
 
 });
 

@@ -14,7 +14,6 @@ const { updateMoaApprovers, insertApprovalHistory } = require('./createProcess')
 
 
 
-
 async function updateRequest(iData, iRequest) {
 
     let requestId = iData.REQUEST_ID;
@@ -27,10 +26,13 @@ async function updateRequest(iData, iRequest) {
 
 
     //Aggiornamento approvatori MOA
+
+    /*
     let returnUpdateMoa = await updateMoaApprovers(requestId, userCompiler, iRequest);
     if (returnUpdateMoa.errors) {
         return returnUpdateMoa;
     }
+        */
 
 
 }
@@ -339,70 +341,182 @@ async function getRejectInfo(iRequest) {
 async function getLayout(iRequest) {
 
     //let requester   = iRequest.data.REQUESTER
-   // let paymentMode = iRequest.data.PAYMENT_MODE
+    // let paymentMode = iRequest.data.PAYMENT_MODE
+    // let F24EntratelType =  iRequest.data.F24_ENTRATEL_TYPE
+    // let priority = iRequest.data.PRIORITY
 
 
-   let visPriority = false
-   let visAddCroMail = false
-   let visAssignToBtn = false
-   let labExpireDate = ''
-   let visExpireDate = false
+    const oBundle = getTextBundle(iRequest);
+
+
+    let visPriority = false
+    let visAddCroMail = false
+    let visBeneficiaryDate = false
+    let labExpireDate = ''
+    let visExpireDate = false
+    let visF24EntratelTypeClAccount = false
+    let visF24EntratelType = false
 
     let oRequester = await SELECT.one.from(Requester).
-        where({ REQUESTER: iRequest.data.REQUESTER });
+        where({ CODE: iRequest.data.REQUESTER });
 
-    if (!oRequester) {
-        let errMEssage = "ERROR get layout " + iRequest.data.REQUESTER + ". Requester not found";
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-
-    
- /*   let oPayMode = await SELECT.one.from(Paymode).
-        where({ PAYMENT_MODE: iRequest.data.PAYMENT_MODE });
-
- 
-   if (!oPayMode) {
-        let errMEssage = "ERROR get layout " + iRequest.data.PAYMENT_MODE + ". Payment Mode not found";
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-       */
-
-      //set check priority visibility
-    if (iRequest.data.PAYMENT_MODE === consts.Paymode.BANK_TRANSFER ) {
-        visPriority   = true
-        visAddCroMail = true
-    }  
-
-    if (iRequest.data.PRIORITY === true) {
-        
-    }
-
-    if (oRequester.SEND_TASK === true) {
-        visAssignToBtn = true
-    }
-
-  /*  if (iRequest.data.PAYMENT_MODE === ) {
-
-    } else {
-        labExpireDate = ''
-    }
+    /*
+if (!oRequester) {
+    let errMEssage = "ERROR get layout " + iRequest.data.REQUESTER + ". Requester not found";
+    iRequest.error(450, errMEssage, null, 450);
+    LOG.error(errMEssage);
+    return iRequest;
+}
     */
 
- 
+
+    /*   let oPayMode = await SELECT.one.from(Paymode).
+           where({ PAYMENT_MODE: iRequest.data.PAYMENT_MODE });
+   
+    
+      if (!oPayMode) {
+           let errMEssage = "ERROR get layout " + iRequest.data.PAYMENT_MODE + ". Payment Mode not found";
+           iRequest.error(450, errMEssage, null, 450);
+           LOG.error(errMEssage);
+           return iRequest;
+       }
+          */
+
+    //set check priority visibility
+    if (iRequest.data.PAYMENT_MODE === consts.Paymode.BONIFICO) {
+        visPriority = true
+        visAddCroMail = true
+    }
+
+    if (iRequest.data.PRIORITY === true) {
+        visBeneficiaryDate = true
+    }
 
 
-    return { VIS_PRIORITY: visPriority, 
-             VIS_ADD_CRO_MAIL:  visAddCroMail,
-             VIS_ASSIGN_TO_BTN : visAssignToBtn,
-             LAB_EXPIRE_DATE : labExpireDate
-            
-            
-            }
+    if (iRequest.data.PAYMENT_MODE === consts.Paymode.F24) {
 
+        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_F24")
+        visExpireDate = true
+
+    }
+
+    if (iRequest.data.PAYMENT_MODE === consts.Paymode.F23) {
+
+        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_F23")
+        visExpireDate = true
+
+    }
+
+    if (iRequest.data.PAYMENT_MODE === consts.Paymode.MAV) {
+
+        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_MAV")
+        visExpireDate = true
+
+    }
+
+    if (iRequest.data.PAYMENT_MODE === consts.Paymode.FLBONIFIC) {
+
+        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_FLBONIFIC")
+        visExpireDate = true
+
+    }
+
+
+    if (iRequest.data.PAYMENT_MODE === consts.Paymode.ENTRATEL) {
+
+        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_F24")
+        visExpireDate = true
+
+        visF24EntratelType = true
+
+        if (iRequest.data.F24_ENTRATEL_TYPE === 'DEBTOFFSET') {
+            visF24EntratelTypeClAccount = true
+        }
+
+    }
+
+
+    return {
+        VIS_PRIORITY: visPriority,
+        VIS_ADD_CRO_MAIL: visAddCroMail,
+        VIS_EXPIRE_DATE: visExpireDate,
+        LAB_EXPIRE_DATE: labExpireDate,
+        VIS_BENEFICIARY_DATE: visBeneficiaryDate,
+        VIS_F24_ENTRATEL_TYPE: visF24EntratelType,
+        VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT: visF24EntratelTypeClAccount
+
+    }
+
+
+}
+
+async function checkData(iRequest) {
+
+    const oBundle = getTextBundle(iRequest);
+
+
+    let oRequest = iRequest.data.request;
+    let aDocument = iRequest.data.document
+
+
+
+
+    if (!oRequest.TITLE) {
+        let errMEssage = oBundle.getText("TITLE_MAND") //"Title field is mandatory";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+
+    }
+
+    if (!oRequest.AREA_CODE) {
+        let errMEssage = oBundle.getText("AREA_MAND")  //"Area field is mandatory";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+
+    }
+
+
+
+    if (!oRequest.WAERS_code) {
+        let errMEssage = oBundle.getText("CURR_MAND") //"Currency is mandatory";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+
+    } else {
+
+
+        let oCurrencies = await SELECT.one.from(Currencies).
+            where({ code: oRequest.WAERS_code });
+        if (!oCurrencies) {
+            let errMEssage = oBundle.getText("CURR_NVAL")// "Currency is not valid";
+            iRequest.error(450, errMEssage, null, 450);
+            LOG.error(errMEssage);
+
+        }
+    }
+
+    if (!oRequest.PAYMENT_MODE_CODE) {
+        let errMEssage = oBundle.getText("PAYMODE_MAND") //"Payment mode is mandatory";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+    }
+
+    if (oRequest.PRIORITY === true && !oRequest.BENEFICIARY_DATE) {
+        let errMEssage = oBundle.getText("BEN_DATE_MAND") //"For prior orders, insert a desired Beneficiary Date";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+    }
+
+
+
+    // da rivedere controllo totali
+    /* if (aDocument) {
+         let errMEssage = "Order with total amount null!";
+         iRequest.error(450, errMEssage, null, 450);
+         LOG.error(errMEssage);
+     } */
+
+    return iRequest;
 
 }
 
@@ -431,6 +545,179 @@ async function getTemplate(iRequest) {
 }
 
 
+async function formatMonitoring(iData, iRequest) {
+    LOG.info("formatMonitorng");
+    try {
+        let now = moment(new Date());
+        //let requestID = new Array();
+
+        iData.forEach(data => {
+            let started = moment(data.ASSIGNED_AT);
+            let dayDiff = now.diff(started, 'days')
+            data.DAYS_SPENT = dayDiff;
+
+            if (data.to_Status_code === consts.requestStatus.Refused ||
+                data.to_Status_code === consts.requestStatus.Deleted ||
+                data.to_Status_code === consts.requestStatus.Completed) {
+                data.DAYS_SPENT = 0;
+                data.STEP_TO_END = 0;
+                data.SHOW_ASSIGNED_AT = false;
+            }
+
+
+        });
+
+    } catch (error) {
+        let errMEssage = "ERROR monitoring: " + error.message;
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+    }
+}
+
+
+
+async function fromDocumentToTree(iRequest) {
+
+    let oHeader = {}
+    let oResult = {}
+    let first001DocId = false
+
+    let aDocument = iRequest.data.DOCUMENT
+
+
+    oResult.HEADER = []
+
+    for (let i = 0; i < aDocument.length; i++) {
+        if (aDocument[i].ID == 1) {
+
+            oResult.REQUEST_ID = aDocument[i].to_Request_REQUEST_ID
+
+            if (first001DocId === true) {
+                oResult.HEADER.push(oHeader)
+            }
+
+            oHeader = {
+
+                DOC_ID: aDocument[i].DOC_ID,
+                VENDOR: aDocument[i].VENDOR,
+                VENDOR_NAME: "",
+                REASON: aDocument[i].REASON,
+                POSITION: []
+
+            }
+
+            first001DocId = true
+        }
+
+        oHeader.POSITION.push({
+
+            ID: aDocument[i].ID,
+            ACCOUNT: aDocument[i].ACCOUNT,
+            COST_CENTER: aDocument[i].COST_CENTER,
+            INT_ORDER: aDocument[i].INT_ORDER,
+            AMOUNT: aDocument[i].AMOUNT
+
+        })
+
+        if (i === aDocument.length - 1) {
+            oResult.HEADER.push(oHeader)
+        }
+
+    }
+
+
+    return oResult
+
+
+}
+async function fromRequestIdToTree(iRequest) {
+
+    let oHeader = {}
+    let oResult = {}
+    let first001DocId = false
+
+
+    let aDocument = await SELECT.from(Document).
+        where({ to_Request_REQUEST_ID: iRequest.data.REQUEST_ID }).orderBy('DOC_ID asc', 'ID asc');
+
+    oResult.REQUEST_ID = iRequest.data.REQUEST_ID
+    oResult.HEADER = []
+
+    for (let i = 0; i < aDocument.length; i++) {
+        if (aDocument[i].ID == 1) {
+
+            if (first001DocId === true) {
+                oResult.HEADER.push(oHeader)
+            }
+
+            oHeader = {
+
+                DOC_ID: aDocument[i].DOC_ID,
+                VENDOR: aDocument[i].VENDOR,
+                VENDOR_NAME: "",
+                REASON: aDocument[i].REASON,
+                POSITION: []
+
+            }
+
+            first001DocId = true
+        }
+
+        oHeader.POSITION.push({
+
+            ID: aDocument[i].ID,
+            ACCOUNT: aDocument[i].ACCOUNT,
+            COST_CENTER: aDocument[i].COST_CENTER,
+            INT_ORDER: aDocument[i].INT_ORDER,
+            AMOUNT: aDocument[i].AMOUNT
+
+        })
+
+        if (i === aDocument.length - 1) {
+            oResult.HEADER.push(oHeader)
+        }
+
+    }
+
+
+    return oResult
+
+}
+
+
+
+async function fromTreeToDocument(iRequest) {
+
+    let aResult = [] 
+
+    let aHeader = iRequest.data.DOC_TREE.HEADER
+
+    for (let i = 0; i < aHeader.length; i++) {
+
+        let aPosition = aHeader[i].POSITION
+
+        for (let x = 0; x < aPosition.length; x++) {
+
+            aResult.push({
+                DOC_ID: aHeader[i].DOC_ID,
+                VENDOR: aHeader[i].VENDOR,
+                //  VENDOR_NAME : aHeader[i].VENDOR_NAME 
+                REASON: aHeader[i].REASON,
+                ID: aPosition[x].ID,
+                ACCOUNT: aPosition[x].ACCOUNT,
+                COST_CENTER: aPosition[x].COST_CENTER,
+                INT_ORDER: aPosition[x].INT_ORDER,
+                AMOUNT: aPosition[x].AMOUNT
+            })
+        }
+
+    }
+
+    return aResult
+
+}
+
 
 module.exports = {
     createAttachment,
@@ -444,6 +731,11 @@ module.exports = {
     getRejectorName,
     getRejectMotivation,
     getTemplate,
-    getLayout
+    getLayout,
+    checkData,
+    formatMonitoring,
+    fromDocumentToTree,
+    fromRequestIdToTree,
+    fromTreeToDocument
 
 }

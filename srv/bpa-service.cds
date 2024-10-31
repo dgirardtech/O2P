@@ -10,16 +10,27 @@ service O2PBpaService @(requires: [
     entity UpdateRequestVersion as projection on KupitO2PModel.UpdateRequestVersion;
 
     @cds.persistence.skip
-    entity StepParams as projection on KupitO2PModel.StepParams;
+    entity StepParams           as projection on KupitO2PModel.StepParams;
 
     @cds.persistence.skip
-    entity StepList   as projection on KupitO2PModel.StepList;
-  
-    @cds.persistence.skip
-    entity UpdateTaskId  as projection on KupitO2PModel.UpdateTaskId;
+    entity StepList             as projection on KupitO2PModel.StepList;
 
 
-    type Message     : {
+    action UpdateTaskId(REQUEST_ID : Integer,
+                        STEP : Integer,
+                        MAIL_LIST : String) returns UpdateTaskIdReturn;
+
+    type UpdateTaskIdReturn : {
+        REQUEST_ID : Integer;
+        STEP       : Integer;
+        MAIL_LIST  : String
+    }
+    /*
+      @cds.persistence.skip
+      entity UpdateTaskId  as projection on KupitO2PModel.UpdateTaskId;
+  */
+
+    type Message      : {
         MTYPE   : MessageType;
         TEXT    : String(250);
         TASKURL : String(250);
@@ -27,7 +38,7 @@ service O2PBpaService @(requires: [
     };
 
     @assert.range
-    type MessageType : String enum {
+    type MessageType  : String enum {
         Error   = 'E';
         Warning = 'W';
         Info    = 'I';

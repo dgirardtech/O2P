@@ -24,10 +24,10 @@ module.exports = cds.service.impl(async function () {
         return await updateRequestVersion(request);
     });
 
-    this.on('CREATE', UpdateTaskId, async (request) => {
+
+    this.on('UpdateTaskId', async (request) => {
         return await sendTeamsNotification(request);
     });
-
 
     
 

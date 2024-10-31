@@ -1030,6 +1030,12 @@ async function getStepDescritpion(iRequest) {
 
 
     stepDescription = stepDescription.replaceAll('<REQUEST_ID>', iRequest.data.REQUEST_ID);
+
+    let rsRequester = await SELECT.one.from(Requester).
+    where({ CODE:  rsRequest.REQUESTER_CODE });
+
+    stepDescription = stepDescription.replaceAll('<REQUESTER>', rsRequester.REQUESTER_NAME );
+    
     //stepDescription = stepDescription.replaceAll('<REQUEST_ID>', rsRequest.REQUEST_ID);
     //stepDescription = stepDescription.replaceAll('<PROJECT_TITLE>', projectTitle);
 

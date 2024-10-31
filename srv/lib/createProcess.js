@@ -662,10 +662,7 @@ async function userTaskCounter(iData, iRequest) {
         }
 
 
-        // Esegui la funzione per ottenere il token JWT
-        getToken();
-
-
+ 
         urlTaskCollection = "TaskCollection/?$filter=Status eq 'READY' or Status eq 'RESERVED' or Status eq 'IN_PROGRESS' or Status eq 'EXECUTED'";
 
 

@@ -2,7 +2,7 @@ const moment = require('moment');
 const TextBundle = require('@sap/textbundle').TextBundle;
 
 
-function getEnvParam(name, isObj){
+function getEnvParam(name, isObj) {
     if (isObj) {
         let param = (process.env[name] || cds.env[name]);
         if (typeof param === "string") {
@@ -16,7 +16,8 @@ function getEnvParam(name, isObj){
 }
 
 function getTextBundle(req) {
-    let sLocale = req.user.locale;
+    // let sLocale = req.user.locale;
+    let sLocale = req.locale;
     const oBundle = new TextBundle('../_i18n/i18n', sLocale);
     return oBundle;
 }

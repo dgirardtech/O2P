@@ -269,10 +269,11 @@ entity Bankdefault : managed {
 
 // ZFI_O2P_CLEARACC
 entity Clearacc : managed {
-  key CODE        : String(5);
+  key CODE        : String(10);
       DESCRIPTION : String(200);
 }
 
+ 
 
 // ZFI_O2P_DOC_LOG
 entity Doclog : managed {
@@ -303,23 +304,23 @@ entity Docparam : managed {
 entity Document : managed {
   key to_Request           : Association to Request;
   key DOC_ID               : DOC_ID;
-  key ID                   : Integer;
+  key ID                   : DOC_ID_POS ;
       AUTHORITY            : String(40);
       TRIBUTE              : Decimal(2, 0);
       DOC_YEAR             : YEAR;
       LOCATION             : String(10);
-      VENDOR               : String(10);
+      VENDOR               : VENDOR;
       IBAN                 : String(34);
       PARTN_BNK_TYPE       : String(4);
       REF_ID               : String(16);
       SPECIAL_GL_IND       : SPECIAL_GL_IND;
       ACCOUNT              : ACCOUNT;
       ACCOUNT_ADVANCE      : Boolean default false;
-      REASON               : String(140);
+      REASON               : REASON;
       AMOUNT               : AMOUNT;
       TEXT                 : String(50);
-      COST_CENTER          : String(10);
-      INT_ORDER            : String(12);
+      COST_CENTER          : COST_CENTER;
+      INT_ORDER            : INT_ORDER   ;
       DOCUMENT_COMP_CODE   : COMPANY;
       DOCUMENT_FISCAL_YEAR : YEAR;
       DOCUMENT_NUMBER      : DOCNUM;
@@ -364,23 +365,35 @@ entity Proclog : managed {
 //ZFI_O2P_TRIB_SPL
 entity Tribreq : managed {
   key REQUESTER      : Association to one Requester;
-  key TRIBUTE        : Decimal(2, 0);
+  key TRIBUTE        : Association to one Trib;
       SPECIAL_GL_IND : SPECIAL_GL_IND
 }
 
 
 ////////////////////////////////////////////////////////////
 
+//ZFI_O2P_TRIB_SPL
+entity Trib : managed { 
+  key CODE        : Decimal(2, 0);
+      DESCRIPTION    : localized String(40);
+}
 
+
+
+////////////////////////////////////////////////////////////
+
+
+/*
 @cds.persistence.skip
 entity UpdateTaskId {
   key REQUEST_ID : REQUEST_ID;
   key STEP       : STEP_ID;
   key MAIL_LIST  : String(250)
 }
+*/
 
 
-@cds.persistence.skip
+
 entity UserTaskCounter {
   key TASKID : BPA_TASKID_ID;
       USERID : MAIL;
@@ -409,11 +422,16 @@ entity StepList {
 }
 
 
+     type COST_CENTER          : String(10);
+     type INT_ORDER            : String(12);
+type REASON  : String(140);
+type VENDOR : String(10);
 type COMPANY          : String(4);
 type DOCNUM           : String(10);
 type SPECIAL_GL_IND   : String(1);
 type YEAR             : Decimal(4, 0);
-type DOC_ID           : Integer;
+type DOC_ID           : Decimal(3, 0);
+type DOC_ID_POS       : Decimal(3, 0);
 type DOCTYPE          : String(2);
 type ACCOUNT          : String(10);
 type REQUESTER        : String(10);
@@ -433,6 +451,7 @@ type ISMANAGER        : Boolean;
 type WDID             : String(50); //PERNR
 type SAPUSER          : String(15);
 type AMOUNT           : Decimal(13, 2) default null;
+type STEP_TO_END     : Integer default 0;
 
 @assert.range
 type StepStatusenum   : String(15) enum {

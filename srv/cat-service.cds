@@ -9,8 +9,6 @@ service O2PModelService @(requires: [
 ]) {
 
 
- 
-
     entity Request         as projection on KupitO2PModel.Request
                               order by
                                   REQUEST_ID desc;
@@ -89,6 +87,7 @@ service O2PModelService @(requires: [
     entity Orgunitreq      as projection on KupitO2PModel.Orgunitreq;
     entity Proclog         as projection on KupitO2PModel.Proclog;
     entity Tribreq         as projection on KupitO2PModel.Tribreq;
+    entity Trib            as projection on KupitO2PModel.Trib;
 
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -102,6 +101,31 @@ service O2PModelService @(requires: [
         left outer join ApprovalFlow as approvalFlow
             on  approvalFlow.REQUEST_ID = approvalHistory.to_Request.REQUEST_ID
             and approvalFlow.STEP       = approvalHistory.STEP
+        left outer join (
+            select distinct
+                key to_Request.REQUEST_ID as REQUEST_ID,
+                    AUTHORITY,
+                    DOC_YEAR,
+                    TRIBUTE
+            from Document as documentint
+        ) as document
+            on document.REQUEST_ID = request.REQUEST_ID
+
+        left outer join (
+            select
+                count( * ) as STEP_TO_END : KupitO2PModel.STEP_TO_END,
+                to_Request.REQUEST_ID,
+                VERSION
+            from ApprovalHistory as history
+            where
+                   To_StepStatus.STEP_STATUS = 'NOTASSIGNED'
+                or To_StepStatus.STEP_STATUS = 'READY'
+            group by
+                to_Request.REQUEST_ID,
+                VERSION
+        ) as approvalNotAssigned
+            on  approvalNotAssigned.REQUEST_ID = request.REQUEST_ID
+            and approvalNotAssigned.VERSION    = request.VERSION
 
         {
             key request.REQUEST_ID as REQID,
@@ -110,10 +134,19 @@ service O2PModelService @(requires: [
                 approvalFlow.MAIL,
                 approvalFlow.DESCROLE,
                 approvalFlow.FULLNAME,
-                virtual null       as PV : String
+                document.AUTHORITY,
+                document.DOC_YEAR,
+                document.TRIBUTE,
+                approvalHistory.ASSIGNED_AT,
+                approvalNotAssigned.STEP_TO_END,
+                approvalHistory.DAYS_SPENT,
+                approvalHistory.SHOW_ASSIGNED_AT,
+                virtual null       as PV  : String
+
         }
         order by
             request.REQUEST_ID desc;
+
 
     view ApprovalView as
         select from ApprovalFlow as approvalFlow
@@ -149,22 +182,59 @@ service O2PModelService @(requires: [
         };
 
 
-    function getTemplate()                                             returns getTemplateReturn;
-    function getLayout(REQUESTER : String, PAYMENT_MODE : String)      returns getLayoutReturn;
-    action   createProcess(REQUESTER : String)                         returns Message;
+    function getTemplate()                                              returns getTemplateReturn;
 
+    function getLayout(REQUESTER : String,
+                       PAYMENT_MODE : String,
+                       PRIORITY : Boolean,
+                       F24_ENTRATEL_TYPE : String)                      returns getLayoutReturn;
+
+    action   createProcess(REQUESTER : String)                          returns Message;
+    action   checkData(request : Request, document : array of Document) returns array of Message;
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                             STEPID : KupitO2PModel.STEP_ID,
-                            ACTION : KupitO2PModel.Actionenum, )       returns Message;
+                            ACTION : KupitO2PModel.Actionenum, )        returns Message;
 
 
     action   checkTaskCreated(REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                              WF_INSTACE_ID : String)                  returns Message;
+                              WF_INSTACE_ID : String)                   returns Message;
 
 
-    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID) returns Message;
-    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)      returns RejectInfo;
+    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns Message;
+    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns RejectInfo;
+
+    
+    action   fromDocumentToTree(DOCUMENT : array of Document)           returns DocTree;
+    action   fromRequestIdToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID) returns DocTree;
+    action   fromTreeToDocument(DOC_TREE : DocTree)                     returns array of Document;
+
+
+    type DocTree      : {
+        REQUEST_ID : KupitO2PModel.REQUEST_ID;
+        HEADER     : array of DocHead
+    }
+
+    type DocHead      : {
+
+        DOC_ID      : KupitO2PModel.DOC_ID;
+        VENDOR      : KupitO2PModel.VENDOR;
+        VENDOR_NAME : String(250);
+        REASON      : KupitO2PModel.REASON;
+        POSITION    : array of DocPos
+
+    }
+
+    type DocPos       : {
+
+        ID          : KupitO2PModel.DOC_ID_POS;
+        ACCOUNT     : KupitO2PModel.ACCOUNT;
+        COST_CENTER : KupitO2PModel.COST_CENTER;
+        INT_ORDER   : KupitO2PModel.INT_ORDER;
+        AMOUNT      : KupitO2PModel.AMOUNT;
+
+    }
+
 
     type Message      : {
         MTYPE         : MessageType;
@@ -204,8 +274,13 @@ service O2PModelService @(requires: [
     @open
     type getLayoutReturn {
 
-        VIS_PRIORITY     : Boolean;
-        VIS_ADD_CRO_MAIL : Boolean
+        VIS_PRIORITY                     : Boolean;
+        VIS_ADD_CRO_MAIL                 : Boolean;
+        VIS_EXPIRE_DATE                  : Boolean;
+        LAB_EXPIRE_DATE                  : String;
+        VIS_BENEFICIARY_DATE             : Boolean;
+        VIS_F24_ENTRATEL_TYPE            : Boolean;
+        VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT : Boolean;
 
     }
 

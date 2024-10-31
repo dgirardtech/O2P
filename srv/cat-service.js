@@ -2,8 +2,11 @@
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter } = require('./lib/createProcess');
-const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,  getLayout, updateRequest, getTemplate,  getRejectInfo } = require('./lib/Handler');
-const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument, emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
+const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,  getLayout,checkData,
+       updateRequest, getTemplate,  getRejectInfo ,formatMonitoring,
+        fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument } = require('./lib/Handler');
+const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument, 
+       emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
 
 
 module.exports = cds.service.impl(async function () {
@@ -16,13 +19,14 @@ module.exports = cds.service.impl(async function () {
 
     /////////////////////////////////////////////////////////////////////////////////////
 
-    const { Requester, Paymode,  AttachmentType, Attachments, Notes, ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView } = this.entities;
+    const { Requester, Paymode,  AttachmentType, Attachments, Notes, 
+            ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView } = this.entities;
     const { WorkDay } = this.entities;
     const {  UserTaskCounter } = this.entities;
-    const { Request } = this.entities;
+    const { Request, Document,Currencies,Accountreq,Bank ,Bankexc,Bankreq,Bankdefault, Clearacc,
+        Doclog,Docparam , Orgunitreq,Parameters, Proclog,Tribreq} = this.entities;
 
     global.ApprovalView = ApprovalView;
-    global.Paymode = Paymode;
     global.StepDescription = StepDescription;
     global.ApprovalFlow = ApprovalFlow;
     global.AttachmentType = AttachmentType;
@@ -33,8 +37,23 @@ module.exports = cds.service.impl(async function () {
     global.Request = Request;
     global.UserTaskCounter = UserTaskCounter;
     global.Requester = Requester
+    global.Paymode = Paymode;
+    global.Currencies = Currencies;
+    global.Accountreq = Accountreq;
+    global.Bank = Bank;
+    global.Bankexc = Bankexc;
+    global.Bankreq = Bankreq;
+    global.Clearacc = Clearacc;
+    global.Bankdefault = Bankdefault;
+    global.Document = Document;
+    global.Doclog = Doclog;
+    global.Docparam = Docparam;
+    global.Orgunitreq = Orgunitreq;
+    global.Parameters = Parameters;
+    global.Proclog = Proclog;
+    global.Tribreq = Tribreq;
 
-
+  
     /////////////////////////////////////////////////////////////////////////////////////
 
     this.after('READ', 'UserTaskCounter', userTaskCounter);
@@ -53,10 +72,7 @@ module.exports = cds.service.impl(async function () {
     //-------------ACTION RECUPERO URL BPA-------------------
     // this.on('checkTaskCreated', checkTaskCreated);
     this.on('checkTaskCreated', async (req) => {
-
-        let requestId = req.data.REQUEST_ID;
         return await checkTaskCreated(req)
-
     });
 
     //-------------ACTION AZIONI Approva\Rifiuta\Termina PROCESSO-------------------
@@ -86,7 +102,10 @@ module.exports = cds.service.impl(async function () {
  
     this.on('getTemplate', getTemplate);
 
- 
+    this.on('checkData', checkData);
+    
+    //-------------MONITORING--------------
+    this.after('READ', 'MonitorRequest', formatMonitoring);
 
     this.on('getMonitorTaskLink', async (req) => {
         let requestId = req.data.REQUEST_ID;
@@ -97,6 +116,10 @@ module.exports = cds.service.impl(async function () {
     //---------Function Reject info----
     this.on('getRejectInfo', getRejectInfo);
 
+
+    this.on('fromDocumentToTree',  fromDocumentToTree);
+    this.on('fromRequestIdToTree', fromRequestIdToTree);
+    this.on('fromTreeToDocument',  fromTreeToDocument);
 
 }
 ) 
