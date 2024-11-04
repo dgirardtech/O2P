@@ -24,7 +24,7 @@ module.exports = cds.service.impl(async function () {
     const { WorkDay } = this.entities;
     const {  UserTaskCounter } = this.entities;
     const { Request, Document,Currencies,Accountreq,Bank ,Bankexc,Bankreq,Bankdefault, Clearacc,
-        Doclog,Docparam , Orgunitreq,Parameters, Proclog,Tribreq} = this.entities;
+        Doclog,Docparam , Orgunitreq,Parameters, Proclog,Tribreq,Currency} = this.entities;
 
     global.ApprovalView = ApprovalView;
     global.StepDescription = StepDescription;
@@ -52,6 +52,7 @@ module.exports = cds.service.impl(async function () {
     global.Parameters = Parameters;
     global.Proclog = Proclog;
     global.Tribreq = Tribreq;
+    global.Currency = Currency;
 
   
     /////////////////////////////////////////////////////////////////////////////////////

@@ -2,12 +2,9 @@ namespace kupit.o2p;
 
 using {
   managed,
-  sap.common.CodeList,
-  sap.common.Currencies as Currencies,
+  sap.common.CodeList, 
 } from '@sap/cds/common';
-
-
-using from '@sap/cds-common-content';
+ 
 
 //ZFI_O2P_REQUEST
 entity Request : managed {
@@ -23,7 +20,7 @@ entity Request : managed {
       TITLE                          : String(100);
       AREA_CODE                      : String(10);
       PAYMENT_MODE                   : Association to one Paymode;
-      WAERS                          : Association to one Currencies;
+      WAERS                          : Association to one Currency;
       PRIORITY                       : Boolean default false;
       PRIORITY_CURR                  : String(10);
       PRIORITY_MOTIV                 : String(50);
@@ -190,7 +187,7 @@ entity Requester : managed {
   key CODE                : REQUESTER;
       REQUESTER_NAME      : String(50);
       BUKRS               : COMPANY;
-      WAERS               : Association to one Currencies;
+      WAERS               : Association to one Currency;
       SEND_TASK           : Boolean default false;
       MANAGE_SPECIAL_GL   : Boolean default false;
       MANAGE_ENTE_TRIBUTO : Boolean default false;
@@ -327,11 +324,7 @@ entity Document : managed {
       CLEARING_NUMBER      : DOCNUM;
       CONTABILE_NICKNAME   : String(10);
       CONTABILE_SEND_DATE  : Date;
-      NOTE                 : String(250);
-      LAST_MOD_USER        : String(12);
-      LAST_MOD_NAME        : String(7);
-      LAST_MOD_DATE        : Date;
-      LAST_MOD_TIME        : Time;
+      NOTE                 : String(250); 
       ATTRIBUZIONE         : String(18);
       RIFERIMENTO          : String(20);
       REFKEY2              : String(12);
@@ -378,7 +371,10 @@ entity Trib : managed {
       DESCRIPTION    : localized String(40);
 }
 
-
+entity Currency : managed { 
+  key CODE        : String(3);
+      DESCRIPTION    : String(40);
+}
 
 ////////////////////////////////////////////////////////////
 

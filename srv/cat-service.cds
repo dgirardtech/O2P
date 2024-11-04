@@ -88,6 +88,7 @@ service O2PModelService @(requires: [
     entity Proclog         as projection on KupitO2PModel.Proclog;
     entity Tribreq         as projection on KupitO2PModel.Tribreq;
     entity Trib            as projection on KupitO2PModel.Trib;
+    entity Currency        as projection on KupitO2PModel.Currency;
 
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -101,6 +102,11 @@ service O2PModelService @(requires: [
         left outer join ApprovalFlow as approvalFlow
             on  approvalFlow.REQUEST_ID = approvalHistory.to_Request.REQUEST_ID
             and approvalFlow.STEP       = approvalHistory.STEP
+
+        left outer join Orgunitreq as orgunitreq
+            on  orgunitreq.REQUESTER.CODE = request.REQUESTER.CODE
+            and orgunitreq.ORGUNIT        = request.AREA_CODE
+
         left outer join (
             select distinct
                 key to_Request.REQUEST_ID as REQUEST_ID,
@@ -131,6 +137,7 @@ service O2PModelService @(requires: [
             key request.REQUEST_ID as REQID,
                 request.*,
                 request.createdAt  as CREATEDAT_TO,
+                orgunitreq.NOTE    as AREA_DESC,
                 approvalFlow.MAIL,
                 approvalFlow.DESCROLE,
                 approvalFlow.FULLNAME,
@@ -203,8 +210,6 @@ service O2PModelService @(requires: [
 
     function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns Message;
     function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns RejectInfo;
-
-    
     action   fromDocumentToTree(DOCUMENT : array of Document)           returns DocTree;
     action   fromRequestIdToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID) returns DocTree;
     action   fromTreeToDocument(DOC_TREE : DocTree)                     returns array of Document;
@@ -227,6 +232,7 @@ service O2PModelService @(requires: [
 
     type DocPos       : {
 
+        PARENT_ID   : KupitO2PModel.DOC_ID;
         ID          : KupitO2PModel.DOC_ID_POS;
         ACCOUNT     : KupitO2PModel.ACCOUNT;
         COST_CENTER : KupitO2PModel.COST_CENTER;

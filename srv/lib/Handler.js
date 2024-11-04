@@ -612,6 +612,7 @@ async function fromDocumentToTree(iRequest) {
 
         oHeader.POSITION.push({
 
+            PARENT_ID: aDocument[i].DOC_ID,
             ID: aDocument[i].ID,
             ACCOUNT: aDocument[i].ACCOUNT,
             COST_CENTER: aDocument[i].COST_CENTER,
@@ -666,6 +667,7 @@ async function fromRequestIdToTree(iRequest) {
 
         oHeader.POSITION.push({
 
+            PARENT_ID: aDocument[i].DOC_ID,
             ID: aDocument[i].ID,
             ACCOUNT: aDocument[i].ACCOUNT,
             COST_CENTER: aDocument[i].COST_CENTER,
