@@ -5,13 +5,13 @@ exports.PATH_API_WF = "../external/modules/SPA_Workflow_Runtime";
 exports.API_WF_DESTINATION = "sap_process_automation_api";
 exports.WF_DEFINITION_ID = "eu10.cf-kupit-dev-yy6gs83h.kupito2p.o2PProcess";
 
-
+exports.firstId = "001"
 
 
 // --------------
-exports.SUCCESS = "S";
-exports.ERROR = "E";
-exports.WARNING = "W";
+exports.SUCCESS  = "S";
+exports.ERROR    = "E";
+exports.WARNING  = "W";
 exports.MOAERROR = "Error";
 
 //Staus BPA - O2P
@@ -62,10 +62,20 @@ exports.stepStatus = Object.freeze({
     NOTASSIGNED: 'NOTASSIGNED'
 });
 
+ 
+//exports.idProcessNotification = "O2PPROCESS"
+exports.idProcessNotification = "CIPREGAPPYEARLY" //per test
 
-// MAIL ID LIST
+//exports.idProcessMail = "O2PPROCESS"
+exports.idProcessMail = "CIPREGPROCESS"
 
-exports.mailId = "PROCESS_COMPLETED"
+ 
+
+exports.mailId = Object.freeze({
+    PROCESS_COMPLETED: "PROCESS_COMPLETED",
+    MODIFY_REQUEST:    "MODIFY_REQUEST",
+    MISSING_APPROVERS: "MISSING_APPROVERS"
+});
 
 /*
 exports.mailId = Object.freeze({

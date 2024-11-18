@@ -9,6 +9,7 @@ const { row, and } = require('mathjs');
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
 const { testmail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted,  mailTaskRejected, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
+const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
 
 async function saveUserAction(iRequest) {
 
@@ -19,13 +20,13 @@ async function saveUserAction(iRequest) {
     let response;
 
     try {
-        requestId = iRequest.data.REQUEST_ID;
-        stepID = iRequest.data.STEPID;
+        requestId     = iRequest.data.REQUEST_ID;
+        stepID        = iRequest.data.STEPID;
         bpaUserAction = iRequest.data.ACTION;
 
         switch (bpaUserAction) {
             case consts.bpaUserAction.START:
-                response = await userActionStart(requestId, stepID, iRequest);
+                response = await userActionStart(requestId, stepID, iRequest); 
                 break;
             case consts.bpaUserAction.APPROVE:
                 response = await handleUserAction(requestId, stepID, consts.UserAction.APPROVED, iRequest);
@@ -43,7 +44,8 @@ async function saveUserAction(iRequest) {
                 return iRequest;
         }
 
-        return response;
+         return response;
+        //return iRequest;
 
     } catch (error) {
         let errMEssage = "ERROR UserAction " + requestId + " :" + error.message;
@@ -468,6 +470,7 @@ async function getStatusProcessTerminated(iRequestId, iRequest) {
 
 async function userActionStart(iRequestId, iStepID, iRequest) {
 
+    const oBundle = getTextBundle(iRequest);
 
     let returnApproversControl = await approversControl(iRequestId, iStepID, iRequest);
     if (returnApproversControl.errors) {
@@ -513,7 +516,13 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
     }    
     */
 
-    return returnUpdate;
+   // return returnUpdate; 
+
+   let message = new Object();
+   message.MTYPE = consts.SUCCESS;
+   message.REQUESTID = iRequestId;
+   message.TEXT = oBundle.getText("ACTION_COMPLETED", [iRequestId]);
+   return message;
 }
 
 async function genereteDocument(iRequestId, iRequest, isSaveAttachment) {
@@ -943,6 +952,7 @@ async function getStepParams(iRequest) {
 async function updateApprovalHistory(iApprovalHistory, iRequest) {
     let aApprovalHistory = new Array();
     let updateResp;
+
     try {
         aApprovalHistory.push(iApprovalHistory);
         updateResp = await UPSERT.into(ApprovalHistory).entries(aApprovalHistory);
@@ -1031,13 +1041,25 @@ async function getStepDescritpion(iRequest) {
 
     stepDescription = stepDescription.replaceAll('<REQUEST_ID>', iRequest.data.REQUEST_ID);
 
+    //////////////////////////////////////////////////////////////
+    
+    if (rsRequest.PAYMENT_MODE_CODE) {
+        
+    let oPaymode = await SELECT.one.from(Paymode).
+    where({ CODE:  rsRequest.PAYMENT_MODE_CODE });
+    
+    stepDescription = stepDescription.replaceAll('<PAYMENT_MODE>', oPaymode.PAYMENT_NAME);
+
+    }
+
+    ////////////////////////////////////////////////////////////////
+
     let rsRequester = await SELECT.one.from(Requester).
     where({ CODE:  rsRequest.REQUESTER_CODE });
 
     stepDescription = stepDescription.replaceAll('<REQUESTER>', rsRequester.REQUESTER_NAME );
     
-    //stepDescription = stepDescription.replaceAll('<REQUEST_ID>', rsRequest.REQUEST_ID);
-    //stepDescription = stepDescription.replaceAll('<PROJECT_TITLE>', projectTitle);
+ 
 
     responseStepDescription.stepDescription = stepDescription;
     responseStepDescription.stepRo = rsStepDescription.STEP_RO;
@@ -1173,8 +1195,7 @@ function checkMailApprover(iMail) {
         return false;
     } else if (iMail === null) {
         return false;
-    } else if (iMail === undefined) {
-        select
+    } else if (iMail === undefined) { 
         return false;
     } else if (iMail === 'null') {
         return false;

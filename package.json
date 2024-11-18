@@ -12,13 +12,14 @@
     "@sap-cloud-sdk/odata-v2": "^3.22.2",
     "@sap-cloud-sdk/openapi": "^3.22.2",
     "@sap-cloud-sdk/openapi-generator": "^3.22.2",
-    "@sap/cds": "^8.4.0", 
+    "@sap/cds": "^8.4.0",
     "@sap/cds-hana": "^2.0.0",
     "@sap/cds-odata-v2-adapter-proxy": "^1.9.21",
     "@sap/hana-client": "^2.22.32",
     "@sap/textbundle": "^5.2.0",
     "@sap/xsenv": "^5.4.0",
     "@sap/xssec": "^4.2.6",
+    "cors": "^2.8.5",
     "express": "^4.21.1",
     "helmet": "^8.0.0",
     "in": "^0.19.0",
@@ -140,6 +141,7 @@
         "model": "srv/external/ZSI_SERV_STATION_DEALER_SRV",
         "csrf": true,
         "csrfInBatch": true,
+        "forwardAuthToken": true,
         "credentials": {
           "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZSI_SERV_STATION_DEALER_SRV",
@@ -155,6 +157,27 @@
           "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZSERVICE_STATION_SRV",
           "requestTimeout": 600000
+        }
+      },
+      "ZFI_O2P_COMMON_SRV": {
+        "kind": "odata-v2",
+        "model": "srv/external/ZFI_O2P_COMMON_SRV",
+        "csrf": true,
+        "csrfInBatch": true,
+        "credentials": {
+          "destination": "ECC",
+          "path": "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV"
+        }
+      },
+      
+      "ZFI_AFE_COMMON_SRV": {
+        "kind": "odata-v2",
+        "model": "srv/external/ZFI_AFE_COMMON_SRV",
+        "csrf": true,
+        "csrfInBatch": true,
+        "credentials": {
+          "destination": "ECC",
+          "path": "/sap/opu/odata/sap/ZFI_AFE_COMMON_SRV"
         }
       }
     }

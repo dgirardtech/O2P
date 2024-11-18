@@ -34,6 +34,25 @@
       "type": "node",
       "localRoot": "${workspaceFolder}",
       "remoteRoot": "/home/vcap/app"
+    },
+    {
+      "name": "ZFI_O2P_COMMON_SRV",
+      "runtimeExecutable": "cds",
+      "request": "launch",
+      "killBehavior": "polite",
+      "args": [
+        "watch",
+        "--open"
+      ],
+      "console": "internalConsole",
+      "internalConsoleOptions": "openOnSessionStart",
+      "type": "pwa-node",
+      "cwd": "${workspaceFolder}/gen/srv/",
+      "preLaunchTask": "dev-project-cap",
+      "envFile": "${workspaceFolder}/gen/srv/env/.env1",
+      "env": {
+        "run.config": "{\"handlerId\":\"lcap_run_config_handler_id\",\"runnableId\":\"{\\\"projectPath\\\":\\\"/home/user/projects/kupit-o2p/gen/srv/\\\",\\\"profileName\\\":\\\"\\\"}\"}"
+      }
     }
   ]
 }

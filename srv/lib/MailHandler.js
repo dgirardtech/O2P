@@ -5,8 +5,9 @@ const _ = require('underscore');
 const consts = require("./Constants");
 const { getRejectorName } = require('./Handler');
 const { getEnvParam, getTextBundle } = require('./Utils');
-const idProcess = "O2PPROCESS";
 const moment = require('moment');
+
+
 
 
 async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, iRequest) {
@@ -28,7 +29,8 @@ async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, i
     let oBody = {
         "toRecipients": iRecipients,
         "title": subject,
-        "message": content
+        "message": content,
+        "idapplication":  consts.idProcessNotification
     };
 
     let returnSendTeamsNotification = await sendTeamsNotification(iO2PRequest.REQUEST_ID, consts.notificationId.TASK_READY, oBody, iRequest);
@@ -71,7 +73,8 @@ async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iReques
     let oBody = {
         "toRecipients": iRecipients,
         "title": subject,
-        "message": content
+        "message": content,
+        "idapplication":  consts.idProcessNotification
     };
 
     let returnSendTeamsNotification = await sendTeamsNotification(iRequest.REQUEST_ID, consts.notificationId.TASK_READY, oBody, iRequest);
@@ -87,7 +90,7 @@ async function mailProcessCompleted(iRequestId, iO2Prequest, iRecipents, iAattac
 
  
 
-        returnBodyMail = await getBodyMail(iRequestId, consts.mailId, iRequest)
+        returnBodyMail = await getBodyMail(iRequestId, consts.mailId.PROCESS_COMPLETED, iRequest)
         if (returnBodyMail.errors) {
             return returnBodyMail;
         }
@@ -218,10 +221,8 @@ async function mailProcessDeleted(iRequestId, iRecipents, iFullName, iNotes, iRe
 
 async function mailMissingApprovers(iRequestData, iRequest) {
 
-
-   let idMail = "MISSING_APPROVERS";
-
-    let returnBodyMail = await getBodyMail(iRequestData.REQUEST_ID, idMail, iRequest)
+ 
+    let returnBodyMail = await getBodyMail(iRequestData.REQUEST_ID, consts.mailId.MISSING_APPROVERS, iRequest)
     if (returnBodyMail.errors) {
         return returnBodyMail;
     }
@@ -260,7 +261,7 @@ async function getBodyNotification(iRequestId, iIdTeams, iRequest) {
 
     try {
 
-        let request = "/Teams?$filter=idapplication eq '" + idProcess + "' and idteams eq '" + iIdTeams + "'";
+        let request = "/Teams?$filter=idapplication eq '" + consts.idProcessNotification + "' and idteams eq '" + iIdTeams + "'";
 
         getResponse = await MailHandler.send('GET', request);
 
@@ -286,7 +287,7 @@ async function getBodyMail(iRequestId, iIdMail, iRequest) {
 
     try {
 
-        let request = "/Mail?$filter=idapplication eq '" + idProcess + "' and idmail eq '" + iIdMail + "'";
+        let request = "/Mail?$filter=idapplication eq '" + consts.idProcessMail + "' and idmail eq '" + iIdMail + "'";
 
         getResponse = await MailHandler.send('GET', request);
 
@@ -340,9 +341,9 @@ async function sendMail(iRequestId, iIdMail, iMailBody, iRequest) {
             iMailBody = getFakeBody(iMailBody);
         }
 
-        sendMailResponse = await MailHandler.send('POST', '/sendMail', iMailBody);
+       // sendMailResponse = await MailHandler.send('POST', '/sendMail', iMailBody);
 
-        // sendMailResponse = await MailHandler.send('POST', '/sendMail',  { contentType: "HTML", content: iMailBody } );
+        //// sendMailResponse = await MailHandler.send('POST', '/sendMail',  { contentType: "HTML", content: iMailBody } );
 
 
     } catch (error) {
@@ -386,54 +387,10 @@ function getFakeBody(iMailBody) {
     return iMailBody;
 }
 
-async function testmail(iRequest) {
-
-    let idProcess = "O2P";
-    let idMail = "MISSING_APPROVERS";
-
-    let request = "/Mail?$filter=idapplication eq '" + idProcess + "' and idmail eq '" + idMail + "'";
-
-    let maiResponse = await MailHandler.send('GET', request);
-
-    let toRecipients = [];
-
-    toRecipients.push("flavio.quattrociocchi@avvale.com");
-    toRecipients.push("fl.quattrociocchi@gmail.com");
-    toRecipients.push("rolombar_consulente@q8.it");
-
-
-    let attach = await SELECT.one.from(Attachments).
-        where({
-            REQUEST_ID: 1000000124,
-            ID: 10
-        })
-
-    let aAttach = [];
-    let eAttach = {};
-
-    let sXmlBase64 = Buffer.from(attach.CONTENT, 'utf8').toString('base64');
-
-    eAttach.name = attach.FILENAME;
-    eAttach.contentType = attach.MEDIATYPE;
-    eAttach.contentBytes = sXmlBase64;
-    aAttach.push(eAttach);
-
-    let oBody = {
-        "subject": "Testo oggetto",
-        "content": "Testo mail",
-        "toRecipients": toRecipients,
-        "ccRecipients": [],
-        "aAttachment": aAttach
-    };
-
-    let maiResponsepost = await sendMail(1000000124, "idmail", oBody, iRequest);
-    return maiResponsepost;
-}
-
+ 
 
 
 module.exports = {
-    testmail,
     mailMissingApprovers,
     mailProcessDeleted,
     mailProcessCompleted, 

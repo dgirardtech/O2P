@@ -2,9 +2,9 @@ namespace kupit.o2p;
 
 using {
   managed,
-  sap.common.CodeList, 
+  sap.common.CodeList,
 } from '@sap/cds/common';
- 
+
 
 //ZFI_O2P_REQUEST
 entity Request : managed {
@@ -62,6 +62,44 @@ entity Request : managed {
                                          on to_ApprovalHistory.to_Request = $self;
       to_ApprovalFlow                : Composition of many ApprovalFlow
                                          on to_ApprovalFlow.to_Request = $self;
+      to_Document                    : Composition of many Document
+                                         on to_Document.to_Request = $self;
+}
+
+//ZFI_O2P_DOCUMENT
+entity Document : managed {
+  key to_Request           : Association to Request;
+  key DOC_ID               : DOC_ID;
+  key ID                   : DOC_ID_POS;
+      AUTHORITY            : String(40);
+      TRIBUTE              : Decimal(2, 0);
+      DOC_YEAR             : YEAR;
+      LOCATION             : LOCATION;
+      VENDOR               : VENDOR;
+      IBAN                 : IBAN;
+      PARTN_BNK_TYPE       : String(4);
+      REF_ID               : String(16);
+      SPECIAL_GL_IND       : SPECIAL_GL_IND;
+      ACCOUNT              : ACCOUNT;
+      ACCOUNT_ADVANCE      : Boolean default false;
+      REASON               : REASON;
+      AMOUNT               : AMOUNT;
+      TEXT                 : String(50);
+      COST_CENTER          : COST_CENTER;
+      INT_ORDER            : INT_ORDER;
+      DOCUMENT_COMP_CODE   : COMPANY;
+      DOCUMENT_FISCAL_YEAR : YEAR;
+      DOCUMENT_NUMBER      : DOCNUM;
+      CLEARING_NUMBER      : DOCNUM;
+      CONTABILE_NICKNAME   : String(10);
+      CONTABILE_SEND_DATE  : Date;
+      NOTE                 : String(250);
+      ATTRIBUZIONE         : String(18);
+      RIFERIMENTO          : String(20);
+      REFKEY2              : String(12);
+      VALUT                : Date;
+      IS_FROM_EXCEL        : Boolean default false;
+
 }
 
 //ZFI_O2P_APPRFLOW
@@ -172,13 +210,22 @@ entity AttachmentType {
 }
 
 
-// ZFI_O2P_PARAM
 entity Parameters : managed {
   key PARAMETER : String;
       DESCR     : String;
       VALUE     : String;
       ORDER     : Integer;
 }
+
+// ZFI_O2P_PARAM
+ 
+entity Param : managed {
+ key PARAMNAME  : String(50);
+ key VAL_INPUT  : String(50);
+ key PARAMNUM   : Decimal(2, 0);
+  VAL_OUTPUT : String(50);
+}
+
 
 ///////////////////////////////////////////////////////
 
@@ -270,7 +317,6 @@ entity Clearacc : managed {
       DESCRIPTION : String(200);
 }
 
- 
 
 // ZFI_O2P_DOC_LOG
 entity Doclog : managed {
@@ -297,41 +343,7 @@ entity Docparam : managed {
       DOC_PROC_TYPE   : String(1)
 }
 
-//ZFI_O2P_DOCUMENT
-entity Document : managed {
-  key to_Request           : Association to Request;
-  key DOC_ID               : DOC_ID;
-  key ID                   : DOC_ID_POS ;
-      AUTHORITY            : String(40);
-      TRIBUTE              : Decimal(2, 0);
-      DOC_YEAR             : YEAR;
-      LOCATION             : String(10);
-      VENDOR               : VENDOR;
-      IBAN                 : String(34);
-      PARTN_BNK_TYPE       : String(4);
-      REF_ID               : String(16);
-      SPECIAL_GL_IND       : SPECIAL_GL_IND;
-      ACCOUNT              : ACCOUNT;
-      ACCOUNT_ADVANCE      : Boolean default false;
-      REASON               : REASON;
-      AMOUNT               : AMOUNT;
-      TEXT                 : String(50);
-      COST_CENTER          : COST_CENTER;
-      INT_ORDER            : INT_ORDER   ;
-      DOCUMENT_COMP_CODE   : COMPANY;
-      DOCUMENT_FISCAL_YEAR : YEAR;
-      DOCUMENT_NUMBER      : DOCNUM;
-      CLEARING_NUMBER      : DOCNUM;
-      CONTABILE_NICKNAME   : String(10);
-      CONTABILE_SEND_DATE  : Date;
-      NOTE                 : String(250); 
-      ATTRIBUZIONE         : String(18);
-      RIFERIMENTO          : String(20);
-      REFKEY2              : String(12);
-      VALUT                : Date;
-      IS_FROM_EXCEL        : Boolean default false;
 
-}
 
 //ZFI_O2P_OU_REQ
 entity Orgunitreq : managed {
@@ -366,14 +378,14 @@ entity Tribreq : managed {
 ////////////////////////////////////////////////////////////
 
 //ZFI_O2P_TRIB_SPL
-entity Trib : managed { 
+entity Trib : managed {
   key CODE        : Decimal(2, 0);
-      DESCRIPTION    : localized String(40);
+      DESCRIPTION : localized String(40);
 }
 
-entity Currency : managed { 
+entity Currency : managed {
   key CODE        : String(3);
-      DESCRIPTION    : String(40);
+      DESCRIPTION : String(40);
 }
 
 ////////////////////////////////////////////////////////////
@@ -387,7 +399,6 @@ entity UpdateTaskId {
   key MAIL_LIST  : String(250)
 }
 */
-
 
 
 entity UserTaskCounter {
@@ -418,10 +429,10 @@ entity StepList {
 }
 
 
-     type COST_CENTER          : String(10);
-     type INT_ORDER            : String(12);
-type REASON  : String(140);
-type VENDOR : String(10);
+type COST_CENTER      : String(10);
+type INT_ORDER        : String(12);
+type REASON           : String(140);
+type VENDOR           : String(10);
 type COMPANY          : String(4);
 type DOCNUM           : String(10);
 type SPECIAL_GL_IND   : String(1);
@@ -447,7 +458,9 @@ type ISMANAGER        : Boolean;
 type WDID             : String(50); //PERNR
 type SAPUSER          : String(15);
 type AMOUNT           : Decimal(13, 2) default null;
-type STEP_TO_END     : Integer default 0;
+type STEP_TO_END      : Integer default 0;
+type LOCATION         : String(10);
+type IBAN             : String(34);
 
 @assert.range
 type StepStatusenum   : String(15) enum {

@@ -166,12 +166,12 @@ Authorization: Basic ale:ale
 ### ----------------------------------------------------------------------
 POST {{server}}/odata/v4/kupito2pmodel-srv/saveUserAction
 Content-Type: application/json;IEEE754Compatible=true
-Authorization: Basic ale:ale
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vdG9rZW5fa2V5cyIsImtpZCI6ImRlZmF1bHQtand0LWtleS0xOTU0MTAzNjIyIiwidHlwIjoiSldUIiwiamlkIjogImlhQ3BqTVV0VGlSYWFqNWJaRW9yRlgvSlliWWZrd1hBVjdyZ2hLeHEvZmM9In0.eyJqdGkiOiIwMGM4NTk2ZTBmODk0YWEzYjI5NzczNWYzZjAwMjhjMSIsImV4dF9hdHRyIjp7ImVuaGFuY2VyIjoiWFNVQUEiLCJzdWJhY2NvdW50aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJ6ZG4iOiJjZi1rdXBpdC1kZXYteXk2Z3M4M2gifSwic3ViIjoic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwiYXV0aG9yaXRpZXMiOlsidWFhLnJlc291cmNlIl0sInNjb3BlIjpbInVhYS5yZXNvdXJjZSJdLCJjbGllbnRfaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJjaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJhenAiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJncmFudF90eXBlIjoiY2xpZW50X2NyZWRlbnRpYWxzIiwicmV2X3NpZyI6IjM3ZjgyOGJjIiwiaWF0IjoxNzMxNjYxMTM0LCJleHAiOjE3MzE3MDQzMzQsImlzcyI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vb2F1dGgvdG9rZW4iLCJ6aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJhdWQiOlsic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwidWFhIl19.dnOfACFirQyAc7q_732gM3bsIukg0snGn16X68CyqrpnwSE0d6U_082s0SNKxQd2wRR_g0kopLn4aasUGegBIT0pNV7MpfJWZOeQ58IfO-4hNZyWmWy83yOFZDGzft6Dz15cvE8i3q-NQuuE3bYLi0QRlq9z19b9ZtJK9tKN7TAyNuUIiQJZZZ8fByerbn18HkmF0Fr8cA3FQAzuW91vJpwtvwxLUUGD47mpTW-FxuP7wDk0f8IDi207V5LACR8U02Q92Sn2cOXctT6rcjN7HvvmNXC4krzXYcF0xzIpUot_-aiicOC9qLBtpvXYyJXVynxKB6ibX4rXddMCr-ZgEA
 
 {    
-    "REQUEST_ID": 1000000041,
+    "REQUEST_ID": 1000000036,
     "STEPID": 10,
-    "ACTION": "A"
+    "ACTION": "S"
 }
 
  
@@ -317,11 +317,7 @@ Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LX
             "CLEARING_NUMBER": null,
             "CONTABILE_NICKNAME": null,
             "CONTABILE_SEND_DATE": null,
-            "NOTE": null,
-            "LAST_MOD_USER": null,
-            "LAST_MOD_NAME": null,
-            "LAST_MOD_DATE": null,
-            "LAST_MOD_TIME": null,
+            "NOTE": null, 
             "ATTRIBUZIONE": null,
             "RIFERIMENTO": null,
             "REFKEY2": null,
@@ -358,11 +354,7 @@ Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LX
             "CLEARING_NUMBER": null,
             "CONTABILE_NICKNAME": null,
             "CONTABILE_SEND_DATE": null,
-            "NOTE": null,
-            "LAST_MOD_USER": null,
-            "LAST_MOD_NAME": null,
-            "LAST_MOD_DATE": null,
-            "LAST_MOD_TIME": null,
+            "NOTE": null, 
             "ATTRIBUZIONE": null,
             "RIFERIMENTO": null,
             "REFKEY2": null,
@@ -399,11 +391,7 @@ Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LX
             "CLEARING_NUMBER": null,
             "CONTABILE_NICKNAME": null,
             "CONTABILE_SEND_DATE": null,
-            "NOTE": null,
-            "LAST_MOD_USER": null,
-            "LAST_MOD_NAME": null,
-            "LAST_MOD_DATE": null,
-            "LAST_MOD_TIME": null,
+            "NOTE": null, 
             "ATTRIBUZIONE": null,
             "RIFERIMENTO": null,
             "REFKEY2": null,
@@ -418,3 +406,20 @@ GET http://localhost:4004/odata/v4/kupito2pmodel-srv/MonitorRequest
 Content-Type: application/json;IEEE754Compatible=true
 Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vdG9rZW5fa2V5cyIsImtpZCI6ImRlZmF1bHQtand0LWtleS0xOTU0MTAzNjIyIiwidHlwIjoiSldUIiwiamlkIjogIlJ0cmZmaE15czVuaSsrekUzOFIrMXNHRXI3aHNnaG0wMU5WS1IrVXlvRzA9In0.eyJqdGkiOiI4NDIxM2RlNmNkODI0YmE3YmQzNzc3OWM4OWQxYmM0NyIsImV4dF9hdHRyIjp7ImVuaGFuY2VyIjoiWFNVQUEiLCJzdWJhY2NvdW50aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJ6ZG4iOiJjZi1rdXBpdC1kZXYteXk2Z3M4M2gifSwic3ViIjoic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwiYXV0aG9yaXRpZXMiOlsidWFhLnJlc291cmNlIl0sInNjb3BlIjpbInVhYS5yZXNvdXJjZSJdLCJjbGllbnRfaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJjaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJhenAiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJncmFudF90eXBlIjoiY2xpZW50X2NyZWRlbnRpYWxzIiwicmV2X3NpZyI6IjM3ZjgyOGJjIiwiaWF0IjoxNzMwNzE5NTA2LCJleHAiOjE3MzA3NjI3MDYsImlzcyI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vb2F1dGgvdG9rZW4iLCJ6aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJhdWQiOlsic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwidWFhIl19.RewPNu4DYt5NH7yNbX1sh2njdlhb7EZZ5M4xj42ZeqtpSXWg-G1yEsyBGWWIdZa0cB3l5zwAsXDyUzCJoB2LuyHHtAdIyOETHr1s5RUsekQJNXnrGWWtObEFnCqbmk3ThPpIRZFrB4_b3QAeuffsr-dpsknJSUjKCwRwUexTskHox6G2eKgtQzBYaFlOxM9Yshw4jdgo7tdNfh9VSnakMye0pvTvYp3mFDRoszK4AYkBb23e5-SOKXXxL5hfux9Xmh0s_-DdXe6tAVaLQGHUjdgD4HjUSEY9rKcjLcvH5eVbu_GqC40kx5JwgLJQKOVlkMT0EnmPSbrwW1ANqoCSLg
  
+
+
+### ----------------------------------------------------------------------
+POST http://localhost:4004/odata/v4/kupito2pmodel-srv/getDocPopupData
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vdG9rZW5fa2V5cyIsImtpZCI6ImRlZmF1bHQtand0LWtleS0xOTU0MTAzNjIyIiwidHlwIjoiSldUIiwiamlkIjogInRWYVhpR3R0bm5xVFg2MnU3VHVuZ0M3bW8wNUFXMWdKWWlFMmFyVEVqb1k9In0.eyJqdGkiOiJiMzVkOWViNjM5OTI0YmJkYmJjM2Y0NzU5YjkxNWEzZCIsImV4dF9hdHRyIjp7ImVuaGFuY2VyIjoiWFNVQUEiLCJzdWJhY2NvdW50aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJ6ZG4iOiJjZi1rdXBpdC1kZXYteXk2Z3M4M2gifSwic3ViIjoic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwiYXV0aG9yaXRpZXMiOlsidWFhLnJlc291cmNlIl0sInNjb3BlIjpbInVhYS5yZXNvdXJjZSJdLCJjbGllbnRfaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJjaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJhenAiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJncmFudF90eXBlIjoiY2xpZW50X2NyZWRlbnRpYWxzIiwicmV2X3NpZyI6IjM3ZjgyOGJjIiwiaWF0IjoxNzMwOTYxNDM4LCJleHAiOjE3MzEwMDQ2MzgsImlzcyI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vb2F1dGgvdG9rZW4iLCJ6aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJhdWQiOlsic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwidWFhIl19.BA8q2_bjBmZ2G4vAqv2HynFgMnF-Wp7_eUsgmOCVm3ngEhjn2pPeoi_eiZ4nOU6HTbwfAs4nnRb3Q-x3BfxP7VlkH3oSlNen1b1peZ_2AKKliern1qmBoQ-YcNZminICTFaZEffUs0B0ONUAcQ6hSxlsCZjSB5pgTICuzgtqD37M9F4D62Pg0VkE12VySXx2ZfmbPGthrL2UI-vYcqZvmKaV73Dpq0Ljf7pCoy1LcI8fWzG5HZlUJ54h3aGBzprGitkAvGFf1Nu0iSdAgC7K0KnfofIm0TvxdeA3bjQ7GzVcUN0SJIa7T5Si4we2U7aW1ANpK-EORL1gNYHu6hiTnw
+
+{ "REQUESTER" : "AMMVEND",
+  "PAYMODE" : "BONIFICO",
+  "REQUEST_ID" : 1000000024,
+  "DOC_ID" : "001",
+  "LOCATION" : "1",
+  "VENDOR" : "1",
+  "COST_CENTER" : "2",
+  "INT_ORDER" : "1",
+  "ACCOUNT" : "4000100000"
+    }

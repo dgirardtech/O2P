@@ -26,7 +26,10 @@ module.exports = cds.service.impl(async function () {
 
 
     this.on('UpdateTaskId', async (request) => {
-        return await sendTeamsNotification(request);
+        await sendTeamsNotification(request);
+        return  { "requestId" : request.data.REQUEST_ID,
+                  "stepID" : request.data.STEP,
+                  "mailList" : request.data.MAIL_LIST }
     });
 
     

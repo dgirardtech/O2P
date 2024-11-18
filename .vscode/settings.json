@@ -1,2 +1,6 @@
 {
+    "mdk.i18n": {
+        "displayLanguages": "i18n,i18n_en,i18n_it"
+    },
+    "breadcrumbs.enabled": false
 }

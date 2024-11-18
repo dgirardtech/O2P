@@ -3,8 +3,8 @@ const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,  getLayout,checkData,
-       updateRequest, getTemplate,  getRejectInfo ,formatMonitoring,
-        fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument } = require('./lib/Handler');
+       updateRequest, getTemplate,  getRejectInfo ,formatMonitoring,formatMonitoringDetail,getDocPopupData,
+        fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument,getEccServices } = require('./lib/Handler');
 const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument, 
        emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
 
@@ -16,15 +16,26 @@ module.exports = cds.service.impl(async function () {
     global.MailHandler = await cds.connect.to('MailHandler');
     global.MoaExtraction = await cds.connect.to('MoaExtraction');
     global.WorkDayProxy = await cds.connect.to('WorkDayProxy');
+    global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
 
     /////////////////////////////////////////////////////////////////////////////////////
 
     const { Requester, Paymode,  AttachmentType, Attachments, Notes, 
-            ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView } = this.entities;
+            ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView,
+            Request, Document,Currencies,Accountreq,Bank ,Bankexc,Bankreq,Bankdefault, Clearacc,
+            Doclog,Docparam , Orgunitreq,Parameters, Proclog,Tribreq,Currency,Param  } = this.entities;
     const { WorkDay } = this.entities;
-    const {  UserTaskCounter } = this.entities;
-    const { Request, Document,Currencies,Accountreq,Bank ,Bankexc,Bankreq,Bankdefault, Clearacc,
-        Doclog,Docparam , Orgunitreq,Parameters, Proclog,Tribreq,Currency} = this.entities;
+    const { UserTaskCounter } = this.entities;
+    const {  CostCenterTextSet,AfeLocationSet } = this.entities;
+    const {  VendorSet } = this.entities;
+    
+
+    
+   
+ 
+    global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
+    global.ZFI_O2P_COMMON_SRV = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+
 
     global.ApprovalView = ApprovalView;
     global.StepDescription = StepDescription;
@@ -53,6 +64,12 @@ module.exports = cds.service.impl(async function () {
     global.Proclog = Proclog;
     global.Tribreq = Tribreq;
     global.Currency = Currency;
+    global.Param = Param;
+
+    global.CostCenterTextSet = CostCenterTextSet;
+    global.AfeLocationSet = AfeLocationSet;
+
+    global.VendorSet = VendorSet
 
   
     /////////////////////////////////////////////////////////////////////////////////////
@@ -104,9 +121,16 @@ module.exports = cds.service.impl(async function () {
     this.on('getTemplate', getTemplate);
 
     this.on('checkData', checkData);
+
+    this.on('getDocPopupData', getDocPopupData);
     
     //-------------MONITORING--------------
     this.after('READ', 'MonitorRequest', formatMonitoring);
+
+   // this.after('READ', 'MonitorRequestDetail', formatMonitoringDetail);
+
+
+    
 
     this.on('getMonitorTaskLink', async (req) => {
         let requestId = req.data.REQUEST_ID;
@@ -122,5 +146,19 @@ module.exports = cds.service.impl(async function () {
     this.on('fromRequestIdToTree', fromRequestIdToTree);
     this.on('fromTreeToDocument',  fromTreeToDocument);
 
+    this.on('READ', CostCenterTextSet, async (request) => {
+        return await getEccServices(request,'ZFI_AFE_COMMON_SRV');
+    });
+
+    this.on('READ', AfeLocationSet, async (request) => {
+        return await getEccServices(request,'ZFI_AFE_COMMON_SRV');
+    });
+
+
+    this.on('READ', VendorSet, async (request) => {
+        return await getEccServices(request,'ZFI_O2P_COMMON_SRV');
+    });
+    
+    
 }
 ) 
