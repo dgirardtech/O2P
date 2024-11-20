@@ -11,6 +11,9 @@ const { row, forEach, not, number, and } = require('mathjs');
 const { RequestBuilder } = require('@sap-cloud-sdk/odata-v2');
 const { xDnsPrefetchControl } = require('helmet');
 const { updateMoaApprovers, insertApprovalHistory } = require('./createProcess');
+const { INSERT } = require('@sap/cds/lib/ql/cds-ql');
+const { resolve } = require('path');
+const { log } = require('console');
 
 
 
@@ -436,7 +439,7 @@ if (!oRequester) {
 
     }
 
-    if(oRequester.SEND_TASK === true){
+    if (oRequester.SEND_TASK === true) {
         visSendTaskBtn = true
     }
 
@@ -449,7 +452,7 @@ if (!oRequester) {
         VIS_BENEFICIARY_DATE: visBeneficiaryDate,
         VIS_F24_ENTRATEL_TYPE: visF24EntratelType,
         VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT: visF24EntratelTypeClAccount,
-        VIS_SEND_TASK_BTN : visSendTaskBtn 
+        VIS_SEND_TASK_BTN: visSendTaskBtn
 
     }
 
@@ -467,7 +470,7 @@ async function checkData(iRequest) {
 
 
 
-    if (!oRequest.TITLE || oRequest.TITLE === "" ) {
+    if (!oRequest.TITLE || oRequest.TITLE === "") {
 
         aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("TITLE_MAND") }) //"Title field is mandatory"
         // let errMEssage = oBundle.getText("TITLE_MAND") }) //"Title field is mandatory
@@ -586,36 +589,37 @@ async function formatMonitoring(iData, iRequest) {
 
 async function formatMonitoringDetail(iData, iRequest) {
 
-  /*  LOG.info("formatMonitoringDetail");
-    try {
-        let now = moment(new Date());
-        //let requestID = new Array();
+    /*
+     LOG.info("formatMonitoringDetail");
+      try {
+          let now = moment(new Date());
+          //let requestID = new Array();
+  
+          iData.forEach(data => {
+              let started = moment(data.ASSIGNED_AT);
+              let dayDiff = now.diff(started, 'days')
+              data.DAYS_SPENT = dayDiff;
+  
+              if (data.to_Status_code === consts.requestStatus.Refused ||
+                  data.to_Status_code === consts.requestStatus.Deleted ||
+                  data.to_Status_code === consts.requestStatus.Completed) {
+                  data.DAYS_SPENT = 0;
+                  data.STEP_TO_END = 0;
+                  data.SHOW_ASSIGNED_AT = false;
+              }
+  
+  
+          });
+  
+      } catch (error) {
+          let errMEssage = "ERROR monitoring detail: " + error.message;
+          iRequest.error(450, errMEssage, null, 450);
+          LOG.error(errMEssage);
+          return iRequest;
+      }
+         */
 
-        iData.forEach(data => {
-            let started = moment(data.ASSIGNED_AT);
-            let dayDiff = now.diff(started, 'days')
-            data.DAYS_SPENT = dayDiff;
 
-            if (data.to_Status_code === consts.requestStatus.Refused ||
-                data.to_Status_code === consts.requestStatus.Deleted ||
-                data.to_Status_code === consts.requestStatus.Completed) {
-                data.DAYS_SPENT = 0;
-                data.STEP_TO_END = 0;
-                data.SHOW_ASSIGNED_AT = false;
-            }
-
-
-        });
-
-    } catch (error) {
-        let errMEssage = "ERROR monitoring detail: " + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-        */
-
-    
 }
 
 async function transcodeDocumentToTree(iRequestId, aDocument) {
@@ -627,9 +631,6 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
 
     var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
     const { VendorSet } = EccServiceO2P.entities;
-
-
-
 
 
     oResult.HEADER = []
@@ -653,7 +654,7 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
                 SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
 
             if (aVendor.length > 0) {
-                 vendorDesc = aVendor[0].Name1 
+                vendorDesc = aVendor[0].Name1
             }
 
             oHeader = {
@@ -987,13 +988,13 @@ async function getDocPopupData(iRequest) {
     const { AfeSet } = EccServiceAfe.entities;
 
     let aOrder = await EccServiceAfe.run(
-        SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0')}));
+        SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0') }));
 
     if (aOrder.length > 0) {
         oResult.INT_ORDER_DESC = aOrder[0].OrderName
     }
 
-    
+
 
 
     /////////////////////////////////////////////////////////////////////////////
@@ -1021,23 +1022,25 @@ async function getDocPopupData(iRequest) {
     }
 
 
-///////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////
 
-let aAccountreq = await SELECT.from(Accountreq).
-where({
-    REQUESTER_CODE: iRequest.data.REQUESTER
-});
+    let aAccountreq = await SELECT.from(Accountreq).
+        where({
+            REQUESTER_CODE: iRequest.data.REQUESTER
+        });
 
-for (let i = 0; i < aAccountreq.length; i++) {
-    if (aAccountreq[i].ADVANCE_ACCOUNT === true && String(iRequest.data.ID.padStart(3, '0')) !== consts.firstId ) {
-        continue
-    } 
-    
-    oResult.ACCOUNT.push({ CODE :          aAccountreq[i].ACCOUNT,
-                           ACCOUNT:        aAccountreq[i].ACCOUNT_TEXT ,
-                           CONCAT_DESC : [ aAccountreq[i].ACCOUNT,  aAccountreq[i].ACCOUNT_TEXT ].join(' - ') })
- 
-}
+    for (let i = 0; i < aAccountreq.length; i++) {
+        if (aAccountreq[i].ADVANCE_ACCOUNT === true && String(iRequest.data.ID.padStart(3, '0')) !== consts.firstId) {
+            continue
+        }
+
+        oResult.ACCOUNT.push({
+            CODE: aAccountreq[i].ACCOUNT,
+            ACCOUNT: aAccountreq[i].ACCOUNT_TEXT,
+            CONCAT_DESC: [aAccountreq[i].ACCOUNT, aAccountreq[i].ACCOUNT_TEXT].join(' - ')
+        })
+
+    }
 
 
 
@@ -1102,6 +1105,224 @@ async function getEccServices(request, servName) {
 
 }
 
+async function createFIDocument(iRequest) {
+
+    //  var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+    //  const { AccDocPostSet } = EccServiceO2P.entities;
+
+
+    let aResult = []
+
+    try {
+
+        let oRequest = await SELECT.one.from(Request).
+            where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+
+        let aDocument = await SELECT.from(Document).
+            where({
+                to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                DOC_ID: iRequest.data.DOC_ID
+            }).orderBy('DOC_ID asc', 'ID asc');
+
+
+        let oRequester = await SELECT.one.from(Requester).
+            where({ CODE: oRequest.REQUESTER_CODE });
+
+
+      //  let oTree = await transcodeDocumentToTree(iRequest.data.REQUEST_ID, aDocument)
+
+        let initiator = ''
+
+        let oApproval = await SELECT.one.from(ApprovalHistory).
+            where({
+                REQUEST_ID: iRequest.data.REQUEST_ID,
+                VERSION: oRequest.VERSION,
+                To_Action_ACTION: 'STARTED'
+            });
+
+        if (oApproval) {
+
+            let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: oApproval.REAL_MAIL }));
+            if (oInfoWDPosition) {
+                initiator = oInfoWDPosition.UtenteSAP
+            }
+        }
+
+        //    Prima di valorizzare il tipo di documento che verrà creato (DOC_TYPE) ed il tipo di registrazione (PROC_DOC_TYPE), controllo se c'è un'eccezione per i conti utilizzati
+        //   Se esistono più conti con eccezioni diverse verrà considerata solo la prima eccezione trovata
+
+        let aAccountreq = await SELECT.from(Accountreq).
+            where({
+                REQUESTER_CODE: oRequest.REQUESTER_CODE
+            });
+
+        let exception_exist = false
+        let docType = ''
+        let docProcType = ''
+
+        for (let i = 0; i < aAccountreq.length; i++) {
+
+            let oDocparam = await SELECT.one.from(Docparam).
+                where({
+                    PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
+                    ACCOUNT: aAccountreq[i].ACCOUNT,
+                    STEP: '50',
+                    ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
+                    PRIORITY: oRequest.PRIORITY,
+                    URGENT: oRequest.URGENT
+                });
+
+            if (oDocparam && exception_exist === false) {
+
+                exception_exist = true
+                docType = oDocparam.DOC_TYPE
+                docProcType = oDocparam.DOC_PROC_TYPE
+
+            }
+
+        }
+
+        if (exception_exist === false) {
+            //   Non esiste nessuna eccezione quindi procedo alla valorizzazione classica
+
+
+            let oDocparam = await SELECT.one.from(Docparam).
+                where({
+                    PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
+                    ACCOUNT: '',
+                    STEP: '50',
+                    ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
+                    PRIORITY: oRequest.PRIORITY,
+                    URGENT: oRequest.URGENT
+                });
+
+            if (oDocparam) {
+                docType = oDocparam.DOC_TYPE
+                docProcType = oDocparam.DOC_PROC_TYPE
+            }
+        }
+
+
+        // 2024-11-20 08:39:12.948
+        let oDocumentHeader = {
+
+            BusAct: 'RFBU',
+            Username: initiator,
+            HeaderTxt: 'BPM' + iRequest.data.REQUEST_ID,
+            CompCode: oRequester.BUKRS,
+            DocDate: moment(oRequest.START_APPROVAL_FLOW).format('YYYYMMDD'), 
+            PstngDate: moment(new Date).format('YYYYMMDD'),
+            DocType: docType,
+            RefDocNo: aDocument[0].REF_ID,
+
+        }
+
+//////////////////////////////////////////////////////////////////////////
+
+let specialGLInd = ''
+let pmntTrms = ''
+let pymtMeth = ''
+
+let oAccountreq = await SELECT.one.from(Accountreq).
+where({
+    REQUESTER_CODE: oRequest.REQUESTER_CODE,
+    ACCOUNT:  aDocument[0].ACCOUNT,
+});
+
+if (oAccountreq && oAccountreq.SPECIAL_GL_IND) {
+    specialGLInd = oAccountreq.SPECIAL_GL_IND
+} else {
+    specialGLInd = aDocument[0].SPECIAL_GL_IND
+}
+
+if (specialGLInd == '') {
+    pmntTrms = '1000'
+}
+
+if (oRequest.PRIORITY === true && oRequest.URGENT === true) {
+    pymtMeth = 'C'
+} else {
+     pymtMeth = '['
+}
+
+ 
+        let aAccountPayable = [{ 
+            ItemnoAcc: '1',
+            VendorNo: aDocument[0].VENDOR,
+            CompCode: oRequester.BUKRS,
+            BlineDate: moment(new Date).format('YYYYMMDD'),
+            ItemText: aDocument[0].REASON,
+            SpGlInd: specialGLInd,
+            PartnerBk: aDocument[0].PARTN_BNK_TYPE,
+            AllocNmbr: moment(new Date).format('MM/YYYY'),
+            Pmnttrms: pmntTrms,       
+            PymtMeth: pymtMeth,
+
+}]
+
+////////////////////////////////////////////////////////////////
+
+
+
+
+ ///////////////////////////////////////////////////////////////  
+
+        oBodyReq = {
+            ObjKey: "",
+            Simulate: 'X',
+            ToDocumentHeader: oDocumentHeader,
+            ToAccountGL: [{ ItemnoAcc: '1' }, { ItemnoAcc: '2' }, { ItemnoAcc: '3' }],
+            ToAccountPayable: aAccountPayable,
+            ToAccReturn: []
+        }
+
+   
+
+      // non restituisce nulla
+      //  let aMessage = await EccServiceO2P.run(
+      //  INSERT.into(AccDocPostSet).entries(oBodyReq));
+
+
+      let oResponse = await new Promise(async (resolve, reject) => {
+
+                client.executeHttpRequest(
+                    { destinationName: 'ECC' },
+                    {
+                        method: 'POST',
+                        url: "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV/AccDocPostSet",
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "Accept": "application/json"
+                        },
+                        data: oBodyReq,
+                    }
+                ).then((result) => {
+                    resolve(result)
+                }).catch((err) => {
+                    reject(err)
+                })
+            })
+
+
+            let aMessage = oResponse.data.d.ToAccReturn.results
+            for (let i = 0; i < aMessage.length; i++) {
+                aResult.push({ TEXT: aMessage[i].Message })
+            }
+
+       
+
+
+    } catch (error) {
+        let errMEssage = "ERROR createFIDocument " + iRequest.data.REQUEST_ID + " :" + error.message;
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+    }
+
+
+    return aResult
+
+}
 
 
 module.exports = {
@@ -1125,6 +1346,7 @@ module.exports = {
     fromTreeToDocument,
     getDocPopupData,
     checkDocPopupData,
-    getEccServices
+    getEccServices,
+    createFIDocument
 
 }

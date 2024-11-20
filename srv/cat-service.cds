@@ -91,7 +91,7 @@ service O2PModelService @(requires: [
     entity Tribreq           as projection on KupitO2PModel.Tribreq;
     entity Trib              as projection on KupitO2PModel.Trib;
     entity Currency          as projection on KupitO2PModel.Currency;
-      entity Param          as projection on KupitO2PModel.Param; 
+    entity Param             as projection on KupitO2PModel.Param;
 
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -169,15 +169,21 @@ service O2PModelService @(requires: [
         order by
             request.REQUEST_ID desc;
 
-           
 
     ///////////////////////////////////////////////////////////////////////////////
 
- 
+
     view MonitorRequestDetail as
         select from Request as request
         inner join Document as document
             on document.to_Request.REQUEST_ID = request.REQUEST_ID
+        left outer join ApprovalHistory as approvalHistory
+            on  approvalHistory.to_Request.REQUEST_ID     = request.REQUEST_ID
+            and approvalHistory.VERSION                   = request.VERSION
+            and approvalHistory.To_StepStatus.STEP_STATUS = 'READY'
+        left outer join ApprovalFlow as approvalFlow
+            on  approvalFlow.REQUEST_ID = approvalHistory.to_Request.REQUEST_ID
+            and approvalFlow.STEP       = approvalHistory.STEP
         //  excluding {  document.createdAt , document.createdBy, document.modifiedAt,  document.modifiedBy }
         {
             key request.REQUEST_ID as REQID,
@@ -214,9 +220,11 @@ service O2PModelService @(requires: [
                 document.REFKEY2,
                 document.VALUT,
                 document.IS_FROM_EXCEL,
-                virtual null       as VENDOR_DESC : String,
-                virtual null       as VENDOR_IBAN : String,
-                virtual null       as PAYMODE_DESC : String
+                approvalFlow.FULLNAME,
+                virtual null       as VENDOR_DESC  : String,
+                virtual null       as VENDOR_IBAN  : String,
+                virtual null       as PAYMODE_DESC : String,
+                virtual null       as PV           : String
 
         }
 
@@ -225,7 +233,6 @@ service O2PModelService @(requires: [
             document.DOC_ID    asc ,
             document.ID        asc ;
 
- 
 
     ///////////////////////////////////////////////////////////////////////////////
     view ApprovalView as
@@ -262,33 +269,37 @@ service O2PModelService @(requires: [
         };
 
 
-    function getTemplate()                                              returns getTemplateReturn;
+    function getTemplate()                                                               returns getTemplateReturn;
 
     function getLayout(REQUESTER : String,
                        PAYMENT_MODE : String,
                        PRIORITY : Boolean,
-                       F24_ENTRATEL_TYPE : String)                      returns getLayoutReturn;
+                       F24_ENTRATEL_TYPE : String)                                       returns getLayoutReturn;
 
-    action   createProcess(REQUESTER : String)                          returns Message;
-    action   checkData(request : Request, document : array of Document) returns array of checkDataReturn;
+    action   createProcess(REQUESTER : String)                                           returns Message;
+    action   checkData(request : Request, document : array of Document)                  returns array of checkDataReturn;
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                             STEPID : KupitO2PModel.STEP_ID,
-                            ACTION : KupitO2PModel.Actionenum, )        returns Message;
+                            ACTION : KupitO2PModel.Actionenum, )                         returns Message;
 
 
     action   checkTaskCreated(REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                              WF_INSTACE_ID : String)                   returns Message;
+                              WF_INSTACE_ID : String)                                    returns Message;
 
 
-    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns Message;
-    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns RejectInfo;
+    action   createFIDocument(REQUEST_ID : KupitO2PModel.REQUEST_ID, 
+                              DOC_ID : KupitO2PModel.DOC_ID,
+                              SIMULATE : Boolean) returns array of createFIDocumentReturn;
+                              
+    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)                   returns Message;
+    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)                        returns RejectInfo;
 
     action   fromDocumentToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                                DOCUMENT : array of Document)           returns DocTree;
+                                DOCUMENT : array of Document)                            returns DocTree;
 
-    action   fromRequestIdToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID) returns DocTree;
-    action   fromTreeToDocument(DOC_TREE : DocTree)                     returns array of Document;
+    action   fromRequestIdToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID)                  returns DocTree;
+    action   fromTreeToDocument(DOC_TREE : DocTree)                                      returns array of Document;
 
     action   getDocPopupData(REQUESTER : String,
                              PAYMODE : String,
@@ -299,7 +310,7 @@ service O2PModelService @(requires: [
                              VENDOR : KupitO2PModel.VENDOR,
                              COST_CENTER : KupitO2PModel.COST_CENTER,
                              INT_ORDER : KupitO2PModel.INT_ORDER,
-                             ACCOUNT : KupitO2PModel.ACCOUNT)           returns getDocPopupDataReturn;
+                             ACCOUNT : KupitO2PModel.ACCOUNT)                            returns getDocPopupDataReturn;
 
     action   checkDocPopupData(REQUESTER : String,
                                PAYMODE : String,
@@ -310,10 +321,10 @@ service O2PModelService @(requires: [
                                VENDOR : KupitO2PModel.VENDOR,
                                COST_CENTER : KupitO2PModel.COST_CENTER,
                                INT_ORDER : KupitO2PModel.INT_ORDER,
-                               ACCOUNT : KupitO2PModel.ACCOUNT)         returns checkDataReturn;
+                               ACCOUNT : KupitO2PModel.ACCOUNT)                          returns checkDataReturn;
 
 
-    type getDocPopupDataReturn : {
+    type getDocPopupDataReturn  : {
         LOCATION_DESC    : String;
         VENDOR_DESC      : String;
         REF_ID           : String;
@@ -339,22 +350,22 @@ service O2PModelService @(requires: [
 
     }
 
-    type IBAN                  : {
+    type IBAN                   : {
         CODE : KupitO2PModel.IBAN
     }
 
-    type ACCOUNT               : {
+    type ACCOUNT                : {
         CODE        : KupitO2PModel.ACCOUNT;
         DESC        : String;
         CONCAT_DESC : String;
     }
 
-    type DocTree               : {
+    type DocTree                : {
         REQUEST_ID : KupitO2PModel.REQUEST_ID;
         HEADER     : array of DocHead
     }
 
-    type DocHead               : {
+    type DocHead                : {
         DOC_ID               : KupitO2PModel.DOC_ID;
         VENDOR               : KupitO2PModel.VENDOR;
         VENDOR_DESC          : String;
@@ -374,7 +385,7 @@ service O2PModelService @(requires: [
         POSITION             : array of DocPos
     }
 
-    type DocPos                : {
+    type DocPos                 : {
         PARENT_ID           : KupitO2PModel.DOC_ID;
         ID                  : KupitO2PModel.DOC_ID_POS;
         ACCOUNT             : KupitO2PModel.ACCOUNT;
@@ -396,13 +407,17 @@ service O2PModelService @(requires: [
     }
 
 
-    type checkDataReturn       : {
+    type checkDataReturn        : {
         MTYPE : MessageType;
         TEXT  : String;
     }
 
+    type createFIDocumentReturn : {
+        MTYPE : MessageType;
+        TEXT  : String;
+    }
 
-    type Message               : {
+    type Message                : {
         MTYPE         : MessageType;
         TEXT          : String(250);
         WF_INSTACE_ID : WfInstanceId;
@@ -412,20 +427,20 @@ service O2PModelService @(requires: [
         CONTENT       : String;
     };
 
-    type RejectInfo            : {
+    type RejectInfo             : {
         REJECTOR_NAME : String;
         MOTIVATION    : String;
     }
 
     @assert.range
-    type MessageType           : String enum {
+    type MessageType            : String enum {
         Error   = 'E';
         Warning = 'W';
         Info    = 'I';
         success = 'S'
     }
 
-    type WfInstanceId          : String(250);
+    type WfInstanceId           : String(250);
 
 
     @open

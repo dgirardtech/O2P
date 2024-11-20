@@ -335,6 +335,7 @@ entity Doclog : managed {
 // ZFI_O2P_DOCPARAM
 entity Docparam : managed {
   key PAYMENT_MODE    : Association to one Paymode;
+  key ACCOUNT         : ACCOUNT;
   key STEP            : STEP;
   key ACCOUNT_ADVANCE : Boolean default false;
   key PRIORITY        : Boolean default false;

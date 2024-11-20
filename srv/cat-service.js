@@ -4,7 +4,7 @@ const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,  getLayout,checkData,
        updateRequest, getTemplate,  getRejectInfo ,formatMonitoring,formatMonitoringDetail,getDocPopupData,
-        fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument,getEccServices } = require('./lib/Handler');
+        fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument,getEccServices,createFIDocument } = require('./lib/Handler');
 const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument, 
        emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
 
@@ -127,7 +127,7 @@ module.exports = cds.service.impl(async function () {
     //-------------MONITORING--------------
     this.after('READ', 'MonitorRequest', formatMonitoring);
 
-   // this.after('READ', 'MonitorRequestDetail', formatMonitoringDetail);
+     this.after('READ', 'MonitorRequestDetail', formatMonitoringDetail);
 
 
     
@@ -145,6 +145,10 @@ module.exports = cds.service.impl(async function () {
     this.on('fromDocumentToTree',  fromDocumentToTree);
     this.on('fromRequestIdToTree', fromRequestIdToTree);
     this.on('fromTreeToDocument',  fromTreeToDocument);
+
+    this.on('createFIDocument', createFIDocument)
+
+
 
     this.on('READ', CostCenterTextSet, async (request) => {
         return await getEccServices(request,'ZFI_AFE_COMMON_SRV');
