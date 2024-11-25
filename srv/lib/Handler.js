@@ -555,6 +555,29 @@ async function getTemplate(iRequest) {
 
 }
 
+async function formatDocument(iData, iRequest) {
+
+
+    var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+    const { VendorSet } = EccServiceO2P.entities;
+
+
+
+    for (let i = 0; i < iData.length; i++) {
+
+        let aVendor = await EccServiceO2P.run(
+            SELECT.from(VendorSet).where({ Lifnr: iData[i].VENDOR }));
+
+        if (aVendor.length > 0) {
+            iData[i].VENDOR_DESC = aVendor[0].Name1
+        }
+
+
+    }
+
+
+}
+
 
 async function formatMonitoring(iData, iRequest) {
     LOG.info("formatMonitorng");
@@ -567,9 +590,9 @@ async function formatMonitoring(iData, iRequest) {
             let dayDiff = now.diff(started, 'days')
             data.DAYS_SPENT = dayDiff;
 
-            if (data.to_Status_code === consts.requestStatus.Refused ||
-                data.to_Status_code === consts.requestStatus.Deleted ||
-                data.to_Status_code === consts.requestStatus.Completed) {
+            if (data.STATUS_code === consts.requestStatus.Refused ||
+                data.STATUS_code === consts.requestStatus.Deleted ||
+                data.STATUS_code === consts.requestStatus.Completed) {
                 data.DAYS_SPENT = 0;
                 data.STEP_TO_END = 0;
                 data.SHOW_ASSIGNED_AT = false;
@@ -600,9 +623,9 @@ async function formatMonitoringDetail(iData, iRequest) {
               let dayDiff = now.diff(started, 'days')
               data.DAYS_SPENT = dayDiff;
   
-              if (data.to_Status_code === consts.requestStatus.Refused ||
-                  data.to_Status_code === consts.requestStatus.Deleted ||
-                  data.to_Status_code === consts.requestStatus.Completed) {
+              if (data.STATUS_code === consts.requestStatus.Refused ||
+                  data.STATUS_code === consts.requestStatus.Deleted ||
+                  data.STATUS_code === consts.requestStatus.Completed) {
                   data.DAYS_SPENT = 0;
                   data.STEP_TO_END = 0;
                   data.SHOW_ASSIGNED_AT = false;
@@ -658,7 +681,6 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
             }
 
             oHeader = {
-
                 DOC_ID: aDocument[i].DOC_ID,
                 VENDOR: aDocument[i].VENDOR,
                 VENDOR_DESC: vendorDesc,
@@ -920,8 +942,9 @@ async function getDocPopupData(iRequest) {
     // fill data
 
 
-    oResult.REF_ID = 'BPM' + iRequest.data.REQUEST_ID + iRequest.data.DOC_ID
+    oResult.REF_ID = 'BPM' + iRequest.data.REQUEST_ID + String(iRequest.data.DOC_ID.padStart(3, '0'))
 
+    /*
     if (iRequest.data.LOCATION === "1") {
         oResult.LOCATION_DESC = 'Punto Vendita 1'
     }
@@ -961,6 +984,8 @@ async function getDocPopupData(iRequest) {
         oResult.INT_ORDER_DESC = 'Internal order 1'
     }
 
+
+    */
 
 
     var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
@@ -1105,6 +1130,94 @@ async function getEccServices(request, servName) {
 
 }
 
+async function getDocStatus(iRequest) {
+
+    let aResult = []
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+
+    let aDocument = await SELECT.from(Document).
+        where({
+            to_Request_REQUEST_ID: iRequest.data.REQUEST_ID
+        }).orderBy('to_Request_REQUEST_ID asc', 'DOC_ID asc', 'ID asc');
+
+    let aDocLog = await SELECT.from(Doclog).
+        where({
+            to_Request_REQUEST_ID: iRequest.data.REQUEST_ID
+        }).orderBy('to_Request_REQUEST_ID asc', 'DOC_ID asc', 'LOG_TIME desc');
+
+
+    let first001DocId = false
+    let oResult = {}
+    let lastId = ""
+    let amountTot = 0
+    let vendorDesc = ""
+    let docType = ''
+    let docNumber = ''
+    let status = ''
+    let statusText = ''
+
+    
+    var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+    const { VendorSet } = EccServiceO2P.entities;
+
+    for (let i = 0; i < aDocument.length; i++) {
+
+        if (aDocument[i].DOC_ID !== lastId) {
+
+            lastId = aDocument[i].DOC_ID
+
+
+            if (first001DocId === true) {
+                aResult.push(oResult)
+            }
+
+ 
+
+            let aVendor = await EccServiceO2P.run(
+                SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+
+            if (aVendor.length > 0) {
+                vendorDesc = aVendor[0].Name1
+            }
+
+            let oDocLog = aDocLog.find(oDocLog => oDocLog.DOC_ID === aDocument[i].DOC_ID)
+            if (oDocLog) {
+                docType = oDocLog.DOC_TYPE
+                docNumber = oDocLog.DOC_NUMBER
+                status = oDocLog.STATUS
+                statusText = oDocLog.STATUS_TEXT
+            }
+
+            oResult = {
+                REQUEST_ID: iRequest.data.REQUEST_ID,
+                DOC_ID: aDocument[i].DOC_ID,
+                VENDOR: aDocument[i].VENDOR,
+                VENDOR_DESC: vendorDesc,
+                DOC_TYPE: docType,
+                DOC_NUMBER: docNumber,
+                STATUS: status,
+                STATUS_TEXT: statusText
+
+            }
+
+            first001DocId = true
+
+        }
+
+        amountTot = Number(amountTot) + Number(aDocument[i].AMOUNT)
+        oResult.AMOUNT_TOT = amountTot
+
+        if (i === aDocument.length - 1) {
+            aResult.push(oResult)
+        }
+    }
+
+    return aResult
+
+}
+
 async function createFIDocument(iRequest) {
 
     //  var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
@@ -1129,7 +1242,7 @@ async function createFIDocument(iRequest) {
             where({ CODE: oRequest.REQUESTER_CODE });
 
 
-      //  let oTree = await transcodeDocumentToTree(iRequest.data.REQUEST_ID, aDocument)
+        //  let oTree = await transcodeDocumentToTree(iRequest.data.REQUEST_ID, aDocument)
 
         let initiator = ''
 
@@ -1202,114 +1315,412 @@ async function createFIDocument(iRequest) {
             }
         }
 
+        let oAccountreq = await SELECT.one.from(Accountreq).
+            where({
+                REQUESTER_CODE: oRequest.REQUESTER_CODE,
+                ACCOUNT: aDocument[0].ACCOUNT,
+            });
 
-        // 2024-11-20 08:39:12.948
-        let oDocumentHeader = {
+        ////////////////////////////////////////////////////////////////////////////////
 
-            BusAct: 'RFBU',
-            Username: initiator,
-            HeaderTxt: 'BPM' + iRequest.data.REQUEST_ID,
-            CompCode: oRequester.BUKRS,
-            DocDate: moment(oRequest.START_APPROVAL_FLOW).format('YYYYMMDD'), 
-            PstngDate: moment(new Date).format('YYYYMMDD'),
-            DocType: docType,
-            RefDocNo: aDocument[0].REF_ID,
+        let oDocumentHeader = {}
+
+        // if (docType === consts.documentType.KA || docType === consts.documentType.KB ) {
+
+        if (Boolean(aDocument[0].DOCUMENT_NUMBER &&
+            oRequest.PAYMENT_MODE_CODE === consts.Paymode.ENTRATEL)) {
+
+        } else {
+
+            oDocumentHeader = {
+
+                BusAct: 'RFBU',
+                Username: initiator,
+                HeaderTxt: ['BPM', iRequest.data.REQUEST_ID].join(' '),
+                CompCode: oRequester.BUKRS,
+                DocDate: moment(oRequest.START_APPROVAL_FLOW).format('YYYYMMDD'),
+                PstngDate: moment(new Date).format('YYYYMMDD'),
+                DocType: docType,
+                RefDocNo: aDocument[0].REF_ID,
+            }
+
+        }
+        // }
+
+
+        //////////////////////////////////////////////////////////////////////////
+
+        let aAccountPayable = []
+        let specialGLInd = ''
+        let pmntTrms = ''
+        let pymtMeth = ''
+        let pmntBlock = ''
+        let partnBnkType = ''
+        let aAccountGL = []
+        let aCurrencyAmount = []
+        let itemNo = 1
+        let itemText = ''
+        let allocNmbr = ''
+        let valueDate = ''
+        let refKey1 = ''
+        let totAmount = 0
+
+
+
+        for (let i = 0; i < aDocument.length; i++) {
+
+            totAmount = Number(totAmount) + Number(aDocument[i].AMOUNT)
+            totAmount = totAmount.toFixed(2)
 
         }
 
-//////////////////////////////////////////////////////////////////////////
 
-let specialGLInd = ''
-let pmntTrms = ''
-let pymtMeth = ''
-
-let oAccountreq = await SELECT.one.from(Accountreq).
-where({
-    REQUESTER_CODE: oRequest.REQUESTER_CODE,
-    ACCOUNT:  aDocument[0].ACCOUNT,
-});
-
-if (oAccountreq && oAccountreq.SPECIAL_GL_IND) {
-    specialGLInd = oAccountreq.SPECIAL_GL_IND
-} else {
-    specialGLInd = aDocument[0].SPECIAL_GL_IND
-}
-
-if (specialGLInd == '') {
-    pmntTrms = '1000'
-}
-
-if (oRequest.PRIORITY === true && oRequest.URGENT === true) {
-    pymtMeth = 'C'
-} else {
-     pymtMeth = '['
-}
-
- 
-        let aAccountPayable = [{ 
-            ItemnoAcc: '1',
-            VendorNo: aDocument[0].VENDOR,
-            CompCode: oRequester.BUKRS,
-            BlineDate: moment(new Date).format('YYYYMMDD'),
-            ItemText: aDocument[0].REASON,
-            SpGlInd: specialGLInd,
-            PartnerBk: aDocument[0].PARTN_BNK_TYPE,
-            AllocNmbr: moment(new Date).format('MM/YYYY'),
-            Pmnttrms: pmntTrms,       
-            PymtMeth: pymtMeth,
-
-}]
-
-////////////////////////////////////////////////////////////////
+        if (oRequest.PRIORITY === true && oRequest.URGENT === true) {
+            pymtMeth = 'C'
+        } else {
+            pymtMeth = '['
+        }
 
 
 
 
- ///////////////////////////////////////////////////////////////  
+        if (docType === consts.documentType.KA || docType === consts.documentType.KB) {
+
+            if (Boolean(oAccountreq.SPECIAL_GL_IND)) {
+                specialGLInd = oAccountreq.SPECIAL_GL_IND
+            } else {
+                if (Boolean(aDocument[0].SPECIAL_GL_IND)) {
+                    specialGLInd = aDocument[0].SPECIAL_GL_IND
+                }
+            }
+
+
+            if (Boolean(aDocument[0].PARTN_BNK_TYPE)) {
+                partnBnkType = aDocument[0].PARTN_BNK_TYPE
+            }
+
+
+            if (docProcType === 'V') {
+
+                if (oRequest.PRIORITY === true) {
+                    pmntBlock = 'A'
+                }
+
+
+                if (aDocument[0].ACCOUNT === '4000100000' || docType === consts.documentType.KB) {
+
+
+                    aAccountPayable.push({
+                        ItemnoAcc: '1',
+                        VendorNo: aDocument[0].VENDOR,
+                        CompCode: oRequester.BUKRS,
+                        BlineDate: moment(new Date).format('YYYYMMDD'),
+                        ItemText: aDocument[0].REASON,
+                        SpGlInd: specialGLInd,
+                        PartnerBk: partnBnkType,
+                        AllocNmbr: moment(new Date).format('MM/YYYY'),
+                        PmntBlock: pmntBlock
+                    })
+
+
+
+                } else { // gestione KA
+
+
+                }
+
+
+                aAccountPayable.push({
+                    ItemnoAcc: '2',
+                    VendorNo: aDocument[0].VENDOR,
+                    CompCode: oRequester.BUKRS,
+                    BlineDate: moment(new Date).format('YYYYMMDD'),
+                    ItemText: aDocument[0].REASON,
+                    PartnerBk: partnBnkType,
+                    AllocNmbr: moment(new Date).format('MM/YYYY'),
+                    Pmnttrms: '1000',
+                    PymtMeth: pymtMeth,
+
+                })
+
+
+
+                let totAmountString = totAmount.toString()
+
+                aCurrencyAmount.push({
+                    ItemnoAcc: '1',
+                    Currency: oRequest.WAERS_CODE,
+                    AmtDoccur: totAmountString,
+                    AmtBase: totAmountString
+                })
+
+
+                totAmountString = '-' + totAmountString
+
+                aCurrencyAmount.push({
+                    ItemnoAcc: '2',
+                    Currency: oRequest.WAERS_CODE,
+                    AmtDoccur: totAmountString,
+                    AmtBase: totAmountString
+                })
+
+
+
+
+            } else { // gestione docProcType blank 
+
+
+                if (!Boolean(docProcType)) {
+
+                    if (specialGLInd === '') {
+                        pmntTrms = '1000'
+                    }
+
+                    if (docType !== consts.documentType.KB) {
+                        pymtMeth = ''
+                    }
+
+
+                    aAccountPayable.push({
+                        ItemnoAcc: '1',
+                        VendorNo: aDocument[0].VENDOR,
+                        CompCode: oRequester.BUKRS,
+                        BlineDate: moment(new Date).format('YYYYMMDD'),
+                        ItemText: aDocument[0].REASON,
+                        SpGlInd: specialGLInd,
+                        PartnerBk: partnBnkType,
+                        AllocNmbr: moment(new Date).format('MM/YYYY'),
+                        Pmnttrms: pmntTrms,
+                        PymtMeth: pymtMeth
+                    })
+
+
+                    ////////////////////////////////////////////////////////////////
+
+
+
+                    if (oRequest.REQUESTER_CODE === 'COMMIS') {
+                        refKey1 = aDocument[0].LOCATION
+                    }
+
+
+                    for (let i = 0; i < aDocument.length; i++) {
+
+                        if (Boolean(aDocument[i].TEXT)) {
+                            itemText = aDocument[i].TEXT
+                        } else {
+                            if (Boolean(aDocument[i].REASON)) {
+                                itemText = aDocument[i].REASON
+                            }
+                        }
+
+                        if (Boolean(aDocument[i].ATTRIBUZIONE)) {
+                            allocNmbr = aDocument[i].ATTRIBUZIONE
+                        } else {
+                            allocNmbr = moment(new Date).format('MM/YYYY')
+                        }
+
+
+                        if (docType === consts.documentType.KA) {
+                            valueDate = moment(oRequest.EXPIRY_DATE).format('YYYYMMDD')
+                        } else {
+                            if (Boolean(aDocument[i].VALUT)) {
+                                valueDate = moment(aDocument[i].VALUT).format('YYYYMMDD')
+                            }
+                        }
+
+                        itemNo = itemNo + 1
+                        let itemNoString = itemNo.toString()
+
+                        let riferimento = ''
+                        if (Boolean(aDocument[i].RIFERIMENTO)) {
+                            riferimento = aDocument[i].RIFERIMENTO
+                        }
+
+                        let refKey2 = ''
+                        if (Boolean(aDocument[i].REFKEY2)) {
+                            refKey2 = aDocument[i].REFKEY2
+                        }
+
+
+                        // PstngDate: moment(new Date).format('YYYYMMDD'),
+
+                        aAccountGL.push({
+                            ItemnoAcc: itemNoString,
+                            GlAccount: aDocument[i].ACCOUNT,
+                            ItemText: itemText,
+                            TaxCode: 'XX',
+                            Costcenter: aDocument[i].COST_CENTER,
+                            ValueDate: valueDate,
+                            Orderid: aDocument[i].INT_ORDER,
+                            AllocNmbr: allocNmbr,
+                            RefKey3: riferimento,
+                            RefKey2: refKey2,
+                            RefKey1: refKey1,
+
+                        })
+
+                        aCurrencyAmount.push({
+                            ItemnoAcc: itemNoString,
+                            Currency: oRequest.WAERS_CODE,
+                            AmtDoccur: aDocument[i].AMOUNT,
+                            AmtBase: aDocument[i].AMOUNT
+                        })
+
+
+
+                    }
+
+                    ///////////////////////////////////////////////////////////////  
+
+
+                    let totAmountString = totAmount.toString()
+                    totAmountString = '-' + totAmountString
+
+                    aCurrencyAmount.push({
+                        ItemnoAcc: '1',
+                        Currency: oRequest.WAERS_CODE,
+                        AmtDoccur: totAmountString,
+                        AmtBase: totAmountString
+                    })
+
+                }
+
+
+            }
+
+
+
+
+        } else { //   docType diverso da KA e docType KB
+
+
+
+        }
+
+
+
+        ///////////////////////////////////////////////////////////////  
 
         oBodyReq = {
             ObjKey: "",
-            Simulate: 'X',
+            Simulate: iRequest.data.SIMULATE,
             ToDocumentHeader: oDocumentHeader,
-            ToAccountGL: [{ ItemnoAcc: '1' }, { ItemnoAcc: '2' }, { ItemnoAcc: '3' }],
+            ToAccountGL: aAccountGL,
             ToAccountPayable: aAccountPayable,
+            ToCurrencyAmount: aCurrencyAmount,
             ToAccReturn: []
         }
 
-   
-
-      // non restituisce nulla
-      //  let aMessage = await EccServiceO2P.run(
-      //  INSERT.into(AccDocPostSet).entries(oBodyReq));
 
 
-      let oResponse = await new Promise(async (resolve, reject) => {
+        // non restituisce nulla
+        //  let aMessage = await EccServiceO2P.run(
+        //  INSERT.into(AccDocPostSet).entries(oBodyReq));
 
-                client.executeHttpRequest(
-                    { destinationName: 'ECC' },
-                    {
-                        method: 'POST',
-                        url: "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV/AccDocPostSet",
-                        headers: {
-                            "Content-Type": "application/json; charset=utf-8",
-                            "Accept": "application/json"
-                        },
-                        data: oBodyReq,
-                    }
-                ).then((result) => {
-                    resolve(result)
-                }).catch((err) => {
-                    reject(err)
-                })
+
+        let oResponse = await new Promise(async (resolve, reject) => {
+
+            client.executeHttpRequest(
+                { destinationName: 'ECC' },
+                {
+                    method: 'POST',
+                    url: "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV/AccDocPostSet",
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Accept": "application/json"
+                    },
+                    data: oBodyReq,
+                }
+            ).then((result) => {
+                resolve(result)
+            }).catch((err) => {
+                reject(err)
             })
+        })
 
+
+        let aDocLog = []
+        let error = false
+        let errorText
+
+
+        if (oResponse.data.d.ToAccReturn.results.length !== 0) {
 
             let aMessage = oResponse.data.d.ToAccReturn.results
             for (let i = 0; i < aMessage.length; i++) {
-                aResult.push({ TEXT: aMessage[i].Message })
+
+                aResult.push({
+                    MTYPE: consts.ERROR,
+                    TEXT: aMessage[i].Message
+                })
+
+                if (!Boolean(errorText) &&
+                    aMessage[i].Id !== 'RW' &&
+                    aMessage[i].Number !== '609') {
+
+                    errorText = aMessage[i].Message
+
+                }
+
             }
 
-       
+            error = true
+
+        }
+
+        if (!Boolean(iRequest.data.SIMULATE)) {
+
+            if (error = false) { // success log
+
+                let compCode = oResponse.data.d.ObjKey.substring(14, 10);
+                let docNumber = oResponse.data.d.ObjKey.substring(0, 10);
+                let fiscYear = oResponse.data.d.ObjKey.substring(18, 14);
+
+                for (let i = 0; i < aDocument.length; i++) {
+                    aDocument[i].DOCUMENT_COMP_CODE = compCode
+                    aDocument[i].DOCUMENT_NUMBER = docNumber
+                    aDocument[i].DOCUMENT_FISCAL_YEAR = fiscYear
+                }
+
+                let upsertDocument = await UPSERT.into(Document).entries(aDocument);
+
+                aDocLog.push({
+
+                    to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                    DOC_ID: iRequest.data.DOC_ID,
+                    LOG_TIME: new Date().toISOString(),
+                    CREATOR_USER: initiator,
+                    DOC_TYPE: docType,
+                    DOC_NUMBER: docNumber,
+                    COMPANY_CODE: compCode,
+                    FISCAL_YEAR: fiscYear,
+                    STATUS: 'C'
+                })
+
+                let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
+
+
+            } else // error log
+            {
+
+                aDocLog.push({
+
+                    to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                    DOC_ID: iRequest.data.DOC_ID,
+                    LOG_TIME: new Date().toISOString(),
+                    CREATOR_USER: initiator,
+                    DOC_TYPE: docType,
+                    STATUS: 'E',
+                    STATUS_TEXT: errorText
+                })
+
+                let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
+
+            }
+
+
+        }
 
 
     } catch (error) {
@@ -1341,12 +1752,14 @@ module.exports = {
     checkData,
     formatMonitoring,
     formatMonitoringDetail,
+    formatDocument,
     fromDocumentToTree,
     fromRequestIdToTree,
     fromTreeToDocument,
     getDocPopupData,
     checkDocPopupData,
     getEccServices,
-    createFIDocument
+    createFIDocument,
+    getDocStatus
 
 }

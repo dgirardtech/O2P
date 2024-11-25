@@ -108,6 +108,44 @@ service O2PModelService @(requires: [
 
     //////////////////////////////////////////////////////////////////////////////////
 
+    /*
+        view DocStatus as
+            select from Document as document
+            left outer join (
+                select
+                      key  to_Request.REQUEST_ID as REQUEST_ID,
+                      key  DOC_ID,
+                           LOG_TIME,
+                           DOC_TYPE,
+                           DOC_NUMBER,
+                           COMPANY_CODE,
+                           FISCAL_YEAR,
+                           STATUS,
+                           STATUS_TEXT
+
+               from Doclog  order by REQUEST_ID asc, DOC_ID asc , LOG_TIME desc  limit 1
+
+
+            ) as doclog
+                on doclog.REQUEST_ID = document.to_Request.REQUEST_ID and
+                   doclog.DOC_ID     = document.DOC_ID
+
+            {
+                key document.to_Request.REQUEST_ID as REQUEST_ID,
+                key document.DOC_ID as DOC_ID,
+                    doclog.LOG_TIME,
+                    doclog.DOC_TYPE,
+                    doclog.DOC_NUMBER,
+                    doclog.COMPANY_CODE,
+                    doclog.FISCAL_YEAR,
+                    doclog.STATUS,
+                    doclog.STATUS_TEXT
+
+            }  order by  REQUEST_ID, DOC_ID   ;
+
+            */
+
+
     view MonitorRequest as
         select from Request as request
         left outer join ApprovalHistory as approvalHistory
@@ -269,37 +307,40 @@ service O2PModelService @(requires: [
         };
 
 
-    function getTemplate()                                                               returns getTemplateReturn;
+    function getTemplate()                                              returns getTemplateReturn;
 
     function getLayout(REQUESTER : String,
                        PAYMENT_MODE : String,
                        PRIORITY : Boolean,
-                       F24_ENTRATEL_TYPE : String)                                       returns getLayoutReturn;
+                       F24_ENTRATEL_TYPE : String)                      returns getLayoutReturn;
 
-    action   createProcess(REQUESTER : String)                                           returns Message;
-    action   checkData(request : Request, document : array of Document)                  returns array of checkDataReturn;
+    action   createProcess(REQUESTER : String)                          returns Message;
+    action   checkData(request : Request, document : array of Document) returns array of checkDataReturn;
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                             STEPID : KupitO2PModel.STEP_ID,
-                            ACTION : KupitO2PModel.Actionenum, )                         returns Message;
+                            ACTION : KupitO2PModel.Actionenum, )        returns Message;
 
 
     action   checkTaskCreated(REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                              WF_INSTACE_ID : String)                                    returns Message;
+                              WF_INSTACE_ID : String)                   returns Message;
 
 
-    action   createFIDocument(REQUEST_ID : KupitO2PModel.REQUEST_ID, 
+    action   createFIDocument(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                               DOC_ID : KupitO2PModel.DOC_ID,
-                              SIMULATE : Boolean) returns array of createFIDocumentReturn;
-                              
-    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)                   returns Message;
-    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)                        returns RejectInfo;
+                              SIMULATE : String(1))                     returns array of createFIDocumentReturn;
+
+    function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns Message;
+    function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns RejectInfo;
+    function getDocStatus(REQUEST_ID : KupitO2PModel.REQUEST_ID)        returns getDocStatusReturn;
 
     action   fromDocumentToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                                DOCUMENT : array of Document)                            returns DocTree;
+                                DOCUMENT : array of Document)           returns DocTree;
 
-    action   fromRequestIdToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID)                  returns DocTree;
-    action   fromTreeToDocument(DOC_TREE : DocTree)                                      returns array of Document;
+    action   fromRequestIdToTree(REQUEST_ID : KupitO2PModel.REQUEST_ID) returns DocTree;
+
+    action   fromTreeToDocument(REQUEST_ID : KupitO2PModel.REQUEST_ID,
+                                DOC_TREE : DocTree)                     returns array of Document;
 
     action   getDocPopupData(REQUESTER : String,
                              PAYMODE : String,
@@ -310,7 +351,7 @@ service O2PModelService @(requires: [
                              VENDOR : KupitO2PModel.VENDOR,
                              COST_CENTER : KupitO2PModel.COST_CENTER,
                              INT_ORDER : KupitO2PModel.INT_ORDER,
-                             ACCOUNT : KupitO2PModel.ACCOUNT)                            returns getDocPopupDataReturn;
+                             ACCOUNT : KupitO2PModel.ACCOUNT)           returns getDocPopupDataReturn;
 
     action   checkDocPopupData(REQUESTER : String,
                                PAYMODE : String,
@@ -321,7 +362,20 @@ service O2PModelService @(requires: [
                                VENDOR : KupitO2PModel.VENDOR,
                                COST_CENTER : KupitO2PModel.COST_CENTER,
                                INT_ORDER : KupitO2PModel.INT_ORDER,
-                               ACCOUNT : KupitO2PModel.ACCOUNT)                          returns checkDataReturn;
+                               ACCOUNT : KupitO2PModel.ACCOUNT)         returns checkDataReturn;
+
+
+    type getDocStatusReturn     : {
+        REQUEST_ID  : KupitO2PModel.REQUEST_ID;
+        DOC_ID      : KupitO2PModel.DOC_ID;
+        VENDOR      : KupitO2PModel.VENDOR;
+        VENDOR_DESC : String;
+        AMOUNT_TOT  : KupitO2PModel.AMOUNT;
+        DOC_TYPE    : KupitO2PModel.DOCTYPE;
+        DOC_NUMBER  : KupitO2PModel.DOCNUM;
+        STATUS      : String;
+        STATUS_TEXT : String 
+    }
 
 
     type getDocPopupDataReturn  : {

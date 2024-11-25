@@ -43,11 +43,14 @@ async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, i
 
 async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iRequest) {
 
+ 
     let returnBodyNotification = await getBodyNotification(iO2PRequest.REQUEST_ID, consts.notificationId.TASK_READY, iRequest)
     if (returnBodyNotification.errors) {
         return returnBodyNotification;
     }
+        
 
+  
 
     let fullNameCompiler = "";
     let approvalH = await SELECT.one.from(ApprovalHistory).

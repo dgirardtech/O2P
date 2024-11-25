@@ -98,6 +98,13 @@ exports.notificationId = Object.freeze({
     TASK_REJECTED: "REJECTNOTIFICATION",
 });
 
+exports.documentType  = Object.freeze({
+ KB : "KB",
+ KA : "KA",
+ KY : "KY",
+ KZ : "KZ"
+});
+
 // SOSTITUTION PATTERNS 
 exports.mailPatterns = Object.freeze({
     DATA: "<<DATA>>",

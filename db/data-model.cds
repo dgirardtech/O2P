@@ -99,6 +99,7 @@ entity Document : managed {
       REFKEY2              : String(12);
       VALUT                : Date;
       IS_FROM_EXCEL        : Boolean default false;
+      virtual VENDOR_DESC  : String;
 
 }
 
@@ -322,13 +323,13 @@ entity Clearacc : managed {
 entity Doclog : managed {
   key to_Request   : Association to Request;
   key DOC_ID       : DOC_ID;
-  key LOG_TIME     : String(22);
+  key LOG_TIME     : String;
       CREATOR_USER : String(22);
       DOC_TYPE     : DOCTYPE;
       DOC_NUMBER   : DOCNUM;
       COMPANY_CODE : COMPANY;
       FISCAL_YEAR  : YEAR;
-      STATUS       : String(10);
+      STATUS       : String;
       STATUS_TEXT  : String;
 }
 

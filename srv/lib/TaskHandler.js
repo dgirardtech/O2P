@@ -83,10 +83,14 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
             retUpdateRequestStatus = consts.requestStatus.Refused
         }
 
+        /*
+
         let retsendProcessMail = await sendProcessMail(iRequestId, retUpdateRequestStatus, iUserAction, iRequest);
         if (retsendProcessMail.errors) {
             return retsendProcessMail;
         }
+
+        */
 
     }
 
@@ -1135,10 +1139,12 @@ async function approversControl(iRequestId, iStepID, iRequest) {
     let userCompiler = returnRequestData.createdBy;
 
     //Aggiornamento approvatori MOA
+    /*
     let returnUpdateMoa = await updateMoaApprovers(iRequestId, userCompiler, iRequest);
     if (returnUpdateMoa.errors) {
         return returnUpdateMoa;
     }
+        */
 
     let returnGetApprovers = await getNextApprovers(iRequestId, iStepID, iRequest);
     if (returnGetApprovers.errors) {
@@ -1346,7 +1352,7 @@ async function sendTeamsNotification(iRequest) {
 
         //Notifica di richiesta rifiutata
         if (stepID === 10 && aRequestData.VERSION > 1) {
-            return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+         //   return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
         }
 
         //Sul primo step non mandiamo la notifica
@@ -1355,10 +1361,12 @@ async function sendTeamsNotification(iRequest) {
         }
 
 
+        /*
         retTeamsTaskNotification = await teamsTaskNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
         if (retTeamsTaskNotification.errors) {
             return retTeamsTaskNotification;
         }
+            */
 
 
     } catch (error) {
