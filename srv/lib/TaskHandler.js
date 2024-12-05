@@ -931,6 +931,7 @@ async function getStepParams(iRequest) {
         resp.MAIL_LIST = mailList;
         resp.STEP_DESCRIPTION = returnStepDescription.stepDescription;
         resp.STEP_RO = returnStepDescription.stepRo;
+        resp.PAYMODE = aRequest.PAYMENT_MODE_CODE
 
         //update approvalHistory  
         let approvalHistory = {};
@@ -1139,12 +1140,12 @@ async function approversControl(iRequestId, iStepID, iRequest) {
     let userCompiler = returnRequestData.createdBy;
 
     //Aggiornamento approvatori MOA
-    /*
+ 
     let returnUpdateMoa = await updateMoaApprovers(iRequestId, userCompiler, iRequest);
     if (returnUpdateMoa.errors) {
         return returnUpdateMoa;
     }
-        */
+     
 
     let returnGetApprovers = await getNextApprovers(iRequestId, iStepID, iRequest);
     if (returnGetApprovers.errors) {
@@ -1434,7 +1435,7 @@ async function assignApprover(iRequest) {
             return iRequest;
         }
 
-        const cdsTx = cds.tx(); //-> creo la transaction
+         const cdsTx = cds.tx(); //-> creo la transaction
 
         //Aggiornamento dei campi relativi al vecchio compilatore utilizzato da Fiori per visualizzare il messaggio di warning
         let oldApprover = await SELECT.one.from(ApprovalFlow).
@@ -1443,25 +1444,25 @@ async function assignApprover(iRequest) {
                 STEP: history.STEP
             });
         if (oldApprover !== null && oldApprover !== undefined) {
-            let updateRequest = UPDATE(Request).set({
+            let updateRequest = await UPDATE(Request).set({
                 OLD_COMPILER_MAIL: oldApprover.MAIL,
                 OLD_COMPILER_FULLNAME: oldApprover.FULLNAME
             }).where({
                 REQUEST_ID: requestID
             });
-            let updateRequestResponse = await cdsTx.run(updateRequest);
+          // let updateRequestResponse = await cdsTx.run(updateRequest);
         }
         //OLD_COMPILER
         updatecompiler = await updateReqApprovers(iRequest, requestID, eMail, history.STEP, cdsTx)
         if (updatecompiler.errors) {
-            await cdsTx.rollback();
+           //  await cdsTx.rollback();
             return assign;
         }
 
         if (note !== undefined && note != '') {
             let responseNote = await saveNove(iRequest, requestID, note, cdsTx);
             if (responseNote.errors) {
-                await cdsTx.rollback();
+             //  await cdsTx.rollback();
                 return assign;
             }
 
@@ -1472,7 +1473,7 @@ async function assignApprover(iRequest) {
             return assign;
         }
 
-        await cdsTx.commit();
+       // await cdsTx.commit();
 
         const oBundle = getTextBundle(iRequest);
         let message = new Object();
@@ -1519,10 +1520,12 @@ async function saveNove(iRequest, iRequestId, iNote, iCdsTx) {
         note.VERSION = requestdb.VERSION;
         note.NOTE = iNote;
         note.CREATOR_FULLNAME = creator;
-        let insertRequest = INSERT.into(Notes).entries(note);
-        let insertRequestResponse = await iCdsTx.run(insertRequest);
+        let insertRequest = await INSERT.into(Notes).entries(note);
+        //let insertRequestResponse = await iCdsTx.run(insertRequest);
 
-        return insertRequestResponse;
+        //return insertRequestResponse;
+       return insertRequest
+
     } catch (error) {
         iRequest.error(450, error.message, null, 450);
         LOG.error(error.message);
@@ -1555,13 +1558,13 @@ async function updateReqApprovers(iRequest, iRequestId, iEmail, iStepFlow, iCdsT
             return iRequest;
         }
 
-        let respDelete = DELETE.from(ApprovalFlow).
+        let respDelete = await DELETE.from(ApprovalFlow).
             where({
                 to_Request_REQUEST_ID: iRequestId,
                 STEP: iStepFlow
             });
 
-        let deleteResponse = await iCdsTx.run(respDelete);
+        // let deleteResponse = await iCdsTx.run(respDelete);
 
         let approver = new Object();
         let approversEntries = new Array();
@@ -1578,10 +1581,11 @@ async function updateReqApprovers(iRequest, iRequestId, iEmail, iStepFlow, iCdsT
         approver.DESCROLE = oldApprover.DESCROLE;
         approver.ISMANAGER = oInfoWDPosition.IsManager;
         approversEntries.push(approver);
-        let insertRequest = INSERT.into(ApprovalFlow).entries(approversEntries);
-        let insertRequestResponse = await iCdsTx.run(insertRequest);
+        let insertRequest = await INSERT.into(ApprovalFlow).entries(approversEntries);
+       // let insertRequestResponse = await iCdsTx.run(insertRequest);
 
-        return insertRequestResponse;
+        return insertRequest;
+        //return insertRequestResponse;
     } catch (error) {
         iRequest.error(450, error.message, null, 450);
         LOG.error(error.message);

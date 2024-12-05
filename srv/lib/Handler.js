@@ -557,21 +557,25 @@ async function getTemplate(iRequest) {
 
 async function formatDocument(iData, iRequest) {
 
+    let callECC = getEnvParam("CALL_ECC", false);
+    if (callECC === "true") {
 
-    var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-    const { VendorSet } = EccServiceO2P.entities;
+        var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+        const { VendorSet } = EccServiceO2P.entities;
 
 
 
-    for (let i = 0; i < iData.length; i++) {
+        for (let i = 0; i < iData.length; i++) {
 
-        let aVendor = await EccServiceO2P.run(
-            SELECT.from(VendorSet).where({ Lifnr: iData[i].VENDOR }));
+            let aVendor = await EccServiceO2P.run(
+                SELECT.from(VendorSet).where({ Lifnr: iData[i].VENDOR }));
 
-        if (aVendor.length > 0) {
-            iData[i].VENDOR_DESC = aVendor[0].Name1
+            if (aVendor.length > 0) {
+                iData[i].VENDOR_DESC = aVendor[0].Name1
+            }
+
+
         }
-
 
     }
 
@@ -652,6 +656,7 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
     let first001DocId = false
     let lastId = ""
 
+
     var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
     const { VendorSet } = EccServiceO2P.entities;
 
@@ -673,11 +678,16 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
 
             let vendorDesc = ""
 
-            let aVendor = await EccServiceO2P.run(
-                SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+            let callECC = getEnvParam("CALL_ECC", false);
+            if (callECC === "true") {
 
-            if (aVendor.length > 0) {
-                vendorDesc = aVendor[0].Name1
+                let aVendor = await EccServiceO2P.run(
+                    SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+
+                if (aVendor.length > 0) {
+                    vendorDesc = aVendor[0].Name1
+                }
+
             }
 
             oHeader = {
@@ -831,32 +841,36 @@ async function fromTreeToDocument(iRequest) {
 
 async function getDocPopupData(iRequest) {
 
-    let oResult = {}
+    let oResult = {
 
-    oResult.IBAN = []
-    oResult.ACCOUNT = []
+        IBAN: [],
+        ACCOUNT: [],
+        REF_ID: "",
+        LOCATION_DESC: "",
+        VENDOR_DESC: "",
+        COST_CENTER_DESC: "",
+        INT_ORDER_DESC: "",
+        REQ_LOCATION: false,
+        VIS_COGE: false,
+        VIS_TRIBUTO: false,
+        VIS_COST_CENTER: false,
+        REQ_COST_CENTER: false,
+        VIS_INT_ORDER: false,
+        REQ_INT_ORDER: false,
+        VIS_CDC_DUMMY: false,
+        VIS_NOTE: false,
+        REQ_NOTE: false,
+        VIS_REFKEY2: false,
+        VIS_RIFERIMENTO: false,
+        VIS_ATTRIBUZIONE: false,
+        REQ_IBAN: false,
+        VIS_IBAN: false
 
-    oResult.REF_ID = ""
-    oResult.LOCATION_DESC = ""
-    oResult.VENDOR_DESC = ""
-    oResult.COST_CENTER_DESC = ""
-    oResult.INT_ORDER_DESC = ""
+    }
 
-    oResult.REQ_LOCATION = false
-    oResult.VIS_COGE = false
-    oResult.VIS_TRIBUTO = false
-    oResult.VIS_COST_CENTER = false
-    oResult.REQ_COST_CENTER = false
-    oResult.VIS_INT_ORDER = false
-    oResult.REQ_INT_ORDER = false
-    oResult.VIS_CDC_DUMMY = false
-    oResult.VIS_NOTE = false
-    oResult.REQ_NOTE = false
-    oResult.VIS_REFKEY2 = false
-    oResult.VIS_RIFERIMENTO = false
-    oResult.VIS_ATTRIBUZIONE = false
-    oResult.REQ_IBAN = false
-    oResult.VIS_IBAN = false
+
+
+
 
 
     ///////////////////////////////////////////////////
@@ -887,6 +901,7 @@ async function getDocPopupData(iRequest) {
         where({
             REQUESTER_CODE: iRequest.data.REQUESTER,
             ACCOUNT: iRequest.data.ACCOUNT
+
         });
 
 
@@ -923,11 +938,10 @@ async function getDocPopupData(iRequest) {
 
 
 
-    if (oAccountreq && oAccountreq.REQUEST_CDC &&
+    if (Boolean(oAccountreq) && oAccountreq.REQUEST_CDC &&
         oRequester && oRequester.DUMMY_CDC === true) {
         oResult.VIS_CDC_DUMMY = true
     }
-
 
 
     if (iRequest.data.PAYMODE === consts.Paymode.BONIFICO) {
@@ -936,56 +950,12 @@ async function getDocPopupData(iRequest) {
     }
 
 
-
-
     //////////////////////////////////////////////////////
     // fill data
 
 
     oResult.REF_ID = 'BPM' + iRequest.data.REQUEST_ID + String(iRequest.data.DOC_ID.padStart(3, '0'))
 
-    /*
-    if (iRequest.data.LOCATION === "1") {
-        oResult.LOCATION_DESC = 'Punto Vendita 1'
-    }
-
-    if (iRequest.data.VENDOR === "1") {
-        oResult.VENDOR_DESC = 'Fornitore 1'
-
-        oResult.IBAN.push({ CODE: "IT0011" })
-        oResult.IBAN.push({ CODE: "IT0012" })
-        oResult.IBAN.push({ CODE: "IT0013" })
-
-        oResult.ACCOUNT.push({ CODE: "ACC011" })
-        oResult.ACCOUNT.push({ CODE: "ACC012" })
-        oResult.ACCOUNT.push({ CODE: "ACC013" })
-
-
-    }
-
-    if (iRequest.data.VENDOR === "2") {
-        oResult.VENDOR_DESC = 'Fornitore 2'
-
-        oResult.IBAN.push({ CODE: "IT0021" })
-
-        oResult.ACCOUNT.push({ CODE: "ACC021" })
-
-    }
-
-    if (iRequest.data.VENDOR === "3") {
-        oResult.VENDOR_DESC = 'Fornitore 3'
-    }
-
-    if (iRequest.data.COST_CENTER === "1") {
-        oResult.COST_CENTER_DESC = 'Cost Center 1'
-    }
-
-    if (iRequest.data.INT_ORDER === "1") {
-        oResult.INT_ORDER_DESC = 'Internal order 1'
-    }
-
-
-    */
 
 
     var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
@@ -993,59 +963,63 @@ async function getDocPopupData(iRequest) {
     const { CostCenterTextSet } = EccServiceAfe.entities;
 
 
-    let aCostCenter = await EccServiceAfe.run(
-        SELECT.from(CostCenterTextSet).where({ Kostl: iRequest.data.COST_CENTER.padStart(10, '0') }));
+    let callECC = getEnvParam("CALL_ECC", false);
+    if (callECC === "true") {
 
-    if (aCostCenter.length > 0) {
-        oResult.COST_CENTER_DESC = aCostCenter[0].Ltext
+        let aCostCenter = await EccServiceAfe.run(
+            SELECT.from(CostCenterTextSet).where({ Kostl: iRequest.data.COST_CENTER.padStart(10, '0') }));
+
+        if (aCostCenter.length > 0) {
+            oResult.COST_CENTER_DESC = aCostCenter[0].Ltext
+        }
+
+        const { AfeLocationSet } = EccServiceAfe.entities;
+
+        let aLocation = await EccServiceAfe.run(
+            SELECT.from(AfeLocationSet).where({ Kunnr: iRequest.data.LOCATION, Objpos: '001' }));
+
+        if (aLocation.length > 0) {
+            oResult.LOCATION_DESC = aLocation[0].Stras
+        }
+
+
+        const { AfeSet } = EccServiceAfe.entities;
+
+        let aOrder = await EccServiceAfe.run(
+            SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0') }));
+
+        if (aOrder.length > 0) {
+            oResult.INT_ORDER_DESC = aOrder[0].OrderName
+        }
+
+
+
+
+        /////////////////////////////////////////////////////////////////////////////
+
+        var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+        const { VendorSet } = EccServiceO2P.entities;
+
+
+        let aVendor = await EccServiceO2P.run(
+            SELECT.from(VendorSet).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
+
+        if (aVendor.length > 0) {
+            oResult.VENDOR_DESC = aVendor[0].Name1
+        }
+
+
+        const { VendorBankSet } = EccServiceO2P.entities;
+
+
+        let aVendorBank = await EccServiceO2P.run(
+            SELECT.from(VendorBankSet).where({ Lifnr: iRequest.data.VENDOR }));
+
+        for (let i = 0; i < aVendorBank.length; i++) {
+            oResult.IBAN.push({ CODE: aVendorBank[i].Iban })
+        }
+
     }
-
-    const { AfeLocationSet } = EccServiceAfe.entities;
-
-    let aLocation = await EccServiceAfe.run(
-        SELECT.from(AfeLocationSet).where({ Kunnr: iRequest.data.LOCATION, Objpos: '001' }));
-
-    if (aLocation.length > 0) {
-        oResult.LOCATION_DESC = aLocation[0].Stras
-    }
-
-
-    const { AfeSet } = EccServiceAfe.entities;
-
-    let aOrder = await EccServiceAfe.run(
-        SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0') }));
-
-    if (aOrder.length > 0) {
-        oResult.INT_ORDER_DESC = aOrder[0].OrderName
-    }
-
-
-
-
-    /////////////////////////////////////////////////////////////////////////////
-
-    var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-    const { VendorSet } = EccServiceO2P.entities;
-
-
-    let aVendor = await EccServiceO2P.run(
-        SELECT.from(VendorSet).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
-
-    if (aVendor.length > 0) {
-        oResult.VENDOR_DESC = aVendor[0].Name1
-    }
-
-
-    const { VendorBankSet } = EccServiceO2P.entities;
-
-
-    let aVendorBank = await EccServiceO2P.run(
-        SELECT.from(VendorBankSet).where({ Lifnr: iRequest.data.VENDOR }));
-
-    for (let i = 0; i < aVendorBank.length; i++) {
-        oResult.IBAN.push({ CODE: aVendorBank[i].Iban })
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////
 
@@ -1090,14 +1064,17 @@ async function checkDocPopupData(iRequest) {
 
         const { CostCenterTextSet } = EccServiceAfe.entities;
 
+        let callECC = getEnvParam("CALL_ECC", false);
+        if (callECC === "true") {
 
-        let aCostCenter = await EccServiceAfe.run(
-            SELECT.from(CostCenterTextSet).where({ Kostl: iRequest.data.COST_CENTER.padStart(10, '0') }));
+            let aCostCenter = await EccServiceAfe.run(
+                SELECT.from(CostCenterTextSet).where({ Kostl: iRequest.data.COST_CENTER.padStart(10, '0') }));
 
-        if (aCostCenter.length = 0) {
-            aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("COST_CENTER_NVAL") }) //"Cost Center is not valid"
+            if (aCostCenter.length = 0) {
+                aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("COST_CENTER_NVAL") }) //"Cost Center is not valid"
+            }
+
         }
-
     }
 
 
@@ -1107,11 +1084,15 @@ async function checkDocPopupData(iRequest) {
 
         const { AfeLocationSet } = EccServiceAfe.entities;
 
-        let aLocation = await EccServiceAfe.run(
-            SELECT.from(AfeLocationSet).where({ Kunnr: iRequest.data.LOCATION, Objpos: '001' }));
+        let callECC = getEnvParam("CALL_ECC", false);
+        if (callECC === "true") {
 
-        if (aLocation.length = 0) {
-            aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("LOCATION_NVAL") }) //"Location is not valid
+            let aLocation = await EccServiceAfe.run(
+                SELECT.from(AfeLocationSet).where({ Kunnr: iRequest.data.LOCATION, Objpos: '001' }));
+
+            if (aLocation.length = 0) {
+                aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("LOCATION_NVAL") }) //"Location is not valid
+            }
         }
 
     }
@@ -1158,7 +1139,7 @@ async function getDocStatus(iRequest) {
     let status = ''
     let statusText = ''
 
-    
+
     var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
     const { VendorSet } = EccServiceO2P.entities;
 
@@ -1173,14 +1154,18 @@ async function getDocStatus(iRequest) {
                 aResult.push(oResult)
             }
 
- 
 
-            let aVendor = await EccServiceO2P.run(
-                SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+            let callECC = getEnvParam("CALL_ECC", false);
+            if (callECC === "true") {
 
-            if (aVendor.length > 0) {
-                vendorDesc = aVendor[0].Name1
+                let aVendor = await EccServiceO2P.run(
+                    SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+
+                if (aVendor.length > 0) {
+                    vendorDesc = aVendor[0].Name1
+                }
             }
+
 
             let oDocLog = aDocLog.find(oDocLog => oDocLog.DOC_ID === aDocument[i].DOC_ID)
             if (oDocLog) {
@@ -1188,6 +1173,10 @@ async function getDocStatus(iRequest) {
                 docNumber = oDocLog.DOC_NUMBER
                 status = oDocLog.STATUS
                 statusText = oDocLog.STATUS_TEXT
+            } else {
+
+                // let oDocProp = await getDocumentProp(iRequest, iRequest.data.STEPID) 
+
             }
 
             oResult = {
@@ -1218,234 +1207,480 @@ async function getDocStatus(iRequest) {
 
 }
 
-async function createFIDocument(iRequest) {
+async function checkBeforeFIDocument(oDocumentHeader, aAccountPayable, aCurrencyAmount) {
 
-    //  var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-    //  const { AccDocPostSet } = EccServiceO2P.entities;
+    let callECC = getEnvParam("CALL_ECC", false);
+    if (callECC === "true") {
 
+        let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
 
-    let aResult = []
-
-    try {
-
-        let oRequest = await SELECT.one.from(Request).
-            where({ REQUEST_ID: iRequest.data.REQUEST_ID });
-
-        let aDocument = await SELECT.from(Document).
-            where({
-                to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
-                DOC_ID: iRequest.data.DOC_ID
-            }).orderBy('DOC_ID asc', 'ID asc');
+        const { AccDocHeaderSet } = EccServiceO2P.entities;
+        const { AccDocPositionSet } = EccServiceO2P.entities;
+        const { VendorSet } = EccServiceO2P.entities;
 
 
-        let oRequester = await SELECT.one.from(Requester).
-            where({ CODE: oRequest.REQUESTER_CODE });
+        if (Boolean(aAccountPayable[0].VendorNo)) {
 
+            let aVendor = await EccServiceO2P.run(
+                SELECT.from(VendorSet).where({
+                    Lifnr: aAccountPayable[0].VendorNo,
+                    Bukrs: aAccountPayable[0].CompCode
+                }));
 
-        //  let oTree = await transcodeDocumentToTree(iRequest.data.REQUEST_ID, aDocument)
+            if (aVendor.length > 0 && aVendor[0].Reprf === 'X') {
 
-        let initiator = ''
+                for (let i = 0; i < aCurrencyAmount.length; i++) {
 
-        let oApproval = await SELECT.one.from(ApprovalHistory).
-            where({
-                REQUEST_ID: iRequest.data.REQUEST_ID,
-                VERSION: oRequest.VERSION,
-                To_Action_ACTION: 'STARTED'
-            });
+                    let aAccDocHeader = await EccServiceO2P.run(
+                        SELECT.from(AccDocHeaderSet).where({
+                            Bldat: oDocumentHeader.DocDate,
+                            Bukrs: oDocumentHeader.CompCode,
+                            Xblnr: oDocumentHeader.RefDocNo.toUpperCase(),
+                            Waers: aCurrencyAmount[i].Currency
+                        }));
 
-        if (oApproval) {
+                    for (let x = 0; x < aAccDocHeader.length; x++) {
 
-            let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: oApproval.REAL_MAIL }));
-            if (oInfoWDPosition) {
-                initiator = oInfoWDPosition.UtenteSAP
-            }
-        }
+                        let shkzg = ''
+                        let wrbtr = ''
 
-        //    Prima di valorizzare il tipo di documento che verrà creato (DOC_TYPE) ed il tipo di registrazione (PROC_DOC_TYPE), controllo se c'è un'eccezione per i conti utilizzati
-        //   Se esistono più conti con eccezioni diverse verrà considerata solo la prima eccezione trovata
+                        if (aCurrencyAmount[i].AmtDoccur < 0) {
+                            shkzg = 'H'
+                            wrbtr = '-' + aCurrencyAmount[i].AmtDoccur.toString()
+                        } else {
+                            shkzg = 'S'
+                            wrbtr = aCurrencyAmount[i].AmtDoccur.toString()
+                        }
 
-        let aAccountreq = await SELECT.from(Accountreq).
-            where({
-                REQUESTER_CODE: oRequest.REQUESTER_CODE
-            });
+                        let aAccDocPosition = await EccServiceO2P.run(
+                            SELECT.from(AccDocPositionSet).where({
+                                Bukrs: aAccDocHeader[x].Bukrs,
+                                Gjahr: aAccDocHeader[x].Gjahr,
+                                // Koart: 'K',
+                                Lifnr: aAccountPayable[0].VendorNo,
+                                Wrbtr: wrbtr,
+                                Shkzg: shkzg
+                            }));
 
-        let exception_exist = false
-        let docType = ''
-        let docProcType = ''
+                        if (aAccDocPosition.length > 0) {
+                            let previousDoc = [aAccDocPosition[0].Bukrs, aAccDocPosition[0].Belnr, aAccDocPosition[0].Gjahr].join(' ')
+                            return ['Check whether document has already been entered under number', previousDoc].join(' ')
+                        }
 
-        for (let i = 0; i < aAccountreq.length; i++) {
-
-            let oDocparam = await SELECT.one.from(Docparam).
-                where({
-                    PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
-                    ACCOUNT: aAccountreq[i].ACCOUNT,
-                    STEP: '50',
-                    ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
-                    PRIORITY: oRequest.PRIORITY,
-                    URGENT: oRequest.URGENT
-                });
-
-            if (oDocparam && exception_exist === false) {
-
-                exception_exist = true
-                docType = oDocparam.DOC_TYPE
-                docProcType = oDocparam.DOC_PROC_TYPE
+                    }
+                }
 
             }
-
         }
+    }
 
-        if (exception_exist === false) {
-            //   Non esiste nessuna eccezione quindi procedo alla valorizzazione classica
+}
+
+async function getDocumentProp(iRequest, iStep) {
+
+    let exception_exist = false
+
+    let oResult = { docType: "", docProcType: "" }
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+
+    let aDocument = await SELECT.from(Document).
+        where({
+            to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+            DOC_ID: iRequest.data.DOC_ID
+        }).orderBy('DOC_ID asc', 'ID asc');
 
 
-            let oDocparam = await SELECT.one.from(Docparam).
-                where({
-                    PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
-                    ACCOUNT: '',
-                    STEP: '50',
-                    ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
-                    PRIORITY: oRequest.PRIORITY,
-                    URGENT: oRequest.URGENT
-                });
+    //    Prima di valorizzare il tipo di documento che verrà creato (DOC_TYPE) ed il tipo di registrazione (PROC_DOC_TYPE), controllo se c'è un'eccezione per i conti utilizzati
+    //   Se esistono più conti con eccezioni diverse verrà considerata solo la prima eccezione trovata
 
-            if (oDocparam) {
-                docType = oDocparam.DOC_TYPE
-                docProcType = oDocparam.DOC_PROC_TYPE
-            }
-        }
+    let aAccountreq = await SELECT.from(Accountreq).
+        where({
+            REQUESTER_CODE: oRequest.REQUESTER_CODE
+        });
 
-        let oAccountreq = await SELECT.one.from(Accountreq).
+
+    for (let i = 0; i < aAccountreq.length; i++) {
+
+        let oDocparam = await SELECT.one.from(Docparam).
             where({
-                REQUESTER_CODE: oRequest.REQUESTER_CODE,
-                ACCOUNT: aDocument[0].ACCOUNT,
+                PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
+                ACCOUNT: aAccountreq[i].ACCOUNT,
+                STEP: iStep,
+                ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
+                PRIORITY: oRequest.PRIORITY,
+                URGENT: oRequest.URGENT
             });
 
-        ////////////////////////////////////////////////////////////////////////////////
+        if (oDocparam && exception_exist === false) {
 
-        let oDocumentHeader = {}
+            exception_exist = true
+            oResult.docType = oDocparam.DOC_TYPE
+            oResult.docProcType = oDocparam.DOC_PROC_TYPE
 
-        // if (docType === consts.documentType.KA || docType === consts.documentType.KB ) {
+        }
 
-        if (Boolean(aDocument[0].DOCUMENT_NUMBER &&
-            oRequest.PAYMENT_MODE_CODE === consts.Paymode.ENTRATEL)) {
+    }
 
+    if (exception_exist === false) {
+        //   Non esiste nessuna eccezione quindi procedo alla valorizzazione classica
+
+        let oDocparam = await SELECT.one.from(Docparam).
+            where({
+                PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
+                ACCOUNT: '',
+                STEP: iStep,
+                ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
+                PRIORITY: oRequest.PRIORITY,
+                URGENT: oRequest.URGENT
+            });
+
+        if (oDocparam) {
+            oResult.docType = oDocparam.DOC_TYPE
+            oResult.docProcType = oDocparam.DOC_PROC_TYPE
+        }
+    }
+
+    return oResult
+
+}
+
+
+async function fillTableFIDocument(iRequest, iDocProp) {
+
+    let initiator = ''
+
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+
+    let aDocument = await SELECT.from(Document).
+        where({
+            to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+            DOC_ID: iRequest.data.DOC_ID
+        }).orderBy('DOC_ID asc', 'ID asc');
+
+
+    let oRequester = await SELECT.one.from(Requester).
+        where({ CODE: oRequest.REQUESTER_CODE });
+
+
+    //  let oTree = await transcodeDocumentToTree(iRequest.data.REQUEST_ID, aDocument)
+
+
+
+    let oApproval = await SELECT.one.from(ApprovalHistory).
+        where({
+            REQUEST_ID: iRequest.data.REQUEST_ID,
+            VERSION: oRequest.VERSION,
+            To_Action_ACTION: 'STARTED'
+        });
+
+    if (oApproval) {
+
+        let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: oApproval.REAL_MAIL }));
+        if (oInfoWDPosition) {
+            // initiator = oInfoWDPosition.UtenteSAP
+        }
+    }
+
+
+    let oAccountreq = await SELECT.one.from(Accountreq).
+        where({
+            REQUESTER_CODE: oRequest.REQUESTER_CODE,
+            ACCOUNT: aDocument[0].ACCOUNT,
+        });
+
+
+    let oDocProp = await getDocumentProp(iRequest, "50")
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Header
+
+    let oDocumentHeader = {}
+
+
+    // if (oDocProp.docType === consts.documentType.KA || oDocProp.docType === consts.documentType.KB ) {
+
+    if (Boolean(aDocument[0].DOCUMENT_NUMBER &&
+        oRequest.PAYMENT_MODE_CODE === consts.Paymode.ENTRATEL)) {
+
+    } else {
+
+        oDocumentHeader = {
+
+            BusAct: 'RFBU',
+            Username: initiator,
+            HeaderTxt: ['BPM', iRequest.data.REQUEST_ID].join(' '),
+            CompCode: oRequester.BUKRS,
+            DocDate: moment(oRequest.START_APPROVAL_FLOW).format('YYYYMMDD'),
+            PstngDate: moment(new Date).format('YYYYMMDD'),
+            TransDate: '00000000',
+            DocType: oDocProp.docType,
+            RefDocNo: aDocument[0].REF_ID,
+            Vatdate: moment(new Date).format('YYYYMMDD'),
+        }
+
+    }
+    // }
+
+
+    //////////////////////////////////////////////////////////////////////////
+    // Tables
+
+    let aAccountPayable = []
+    let aAccountGL = []
+    let aCurrencyAmount = []
+
+    let specialGLInd = ''
+    let pmntTrms = ''
+    let pymtMeth = ''
+    let pmntBlock = ''
+    let partnBnkType = ''
+    let itemNo = 1
+    let itemText = ''
+    let allocNmbr = ''
+    let valueDate = ''
+    let refKey1 = ''
+    let totAmount = 0
+
+
+
+    for (let i = 0; i < aDocument.length; i++) {
+
+        totAmount = Number(totAmount) + Number(aDocument[i].AMOUNT)
+        totAmount = totAmount.toFixed(2)
+
+    }
+
+
+    if (oRequest.PRIORITY === true && oRequest.URGENT === true) {
+        pymtMeth = 'C'
+    } else {
+        pymtMeth = '['
+    }
+
+
+    if (oDocProp.docType === consts.documentType.KA || oDocProp.docType === consts.documentType.KB) {
+
+        if (Boolean(oAccountreq.SPECIAL_GL_IND)) {
+            specialGLInd = oAccountreq.SPECIAL_GL_IND
         } else {
-
-            oDocumentHeader = {
-
-                BusAct: 'RFBU',
-                Username: initiator,
-                HeaderTxt: ['BPM', iRequest.data.REQUEST_ID].join(' '),
-                CompCode: oRequester.BUKRS,
-                DocDate: moment(oRequest.START_APPROVAL_FLOW).format('YYYYMMDD'),
-                PstngDate: moment(new Date).format('YYYYMMDD'),
-                DocType: docType,
-                RefDocNo: aDocument[0].REF_ID,
+            if (Boolean(aDocument[0].SPECIAL_GL_IND)) {
+                specialGLInd = aDocument[0].SPECIAL_GL_IND
             }
-
-        }
-        // }
-
-
-        //////////////////////////////////////////////////////////////////////////
-
-        let aAccountPayable = []
-        let specialGLInd = ''
-        let pmntTrms = ''
-        let pymtMeth = ''
-        let pmntBlock = ''
-        let partnBnkType = ''
-        let aAccountGL = []
-        let aCurrencyAmount = []
-        let itemNo = 1
-        let itemText = ''
-        let allocNmbr = ''
-        let valueDate = ''
-        let refKey1 = ''
-        let totAmount = 0
-
-
-
-        for (let i = 0; i < aDocument.length; i++) {
-
-            totAmount = Number(totAmount) + Number(aDocument[i].AMOUNT)
-            totAmount = totAmount.toFixed(2)
-
         }
 
 
-        if (oRequest.PRIORITY === true && oRequest.URGENT === true) {
-            pymtMeth = 'C'
-        } else {
-            pymtMeth = '['
+        if (Boolean(aDocument[0].PARTN_BNK_TYPE)) {
+            partnBnkType = aDocument[0].PARTN_BNK_TYPE
         }
 
 
+        if (oDocProp.docProcType === 'V') {
 
-
-        if (docType === consts.documentType.KA || docType === consts.documentType.KB) {
-
-            if (Boolean(oAccountreq.SPECIAL_GL_IND)) {
-                specialGLInd = oAccountreq.SPECIAL_GL_IND
-            } else {
-                if (Boolean(aDocument[0].SPECIAL_GL_IND)) {
-                    specialGLInd = aDocument[0].SPECIAL_GL_IND
-                }
+            if (oRequest.PRIORITY === true) {
+                pmntBlock = 'A'
             }
 
 
-            if (Boolean(aDocument[0].PARTN_BNK_TYPE)) {
-                partnBnkType = aDocument[0].PARTN_BNK_TYPE
-            }
-
-
-            if (docProcType === 'V') {
-
-                if (oRequest.PRIORITY === true) {
-                    pmntBlock = 'A'
-                }
-
-
-                if (aDocument[0].ACCOUNT === '4000100000' || docType === consts.documentType.KB) {
-
-
-                    aAccountPayable.push({
-                        ItemnoAcc: '1',
-                        VendorNo: aDocument[0].VENDOR,
-                        CompCode: oRequester.BUKRS,
-                        BlineDate: moment(new Date).format('YYYYMMDD'),
-                        ItemText: aDocument[0].REASON,
-                        SpGlInd: specialGLInd,
-                        PartnerBk: partnBnkType,
-                        AllocNmbr: moment(new Date).format('MM/YYYY'),
-                        PmntBlock: pmntBlock
-                    })
-
-
-
-                } else { // gestione KA
-
-
-                }
+            if (aDocument[0].ACCOUNT === '4000100000' || oDocProp.docType === consts.documentType.KB) {
 
 
                 aAccountPayable.push({
-                    ItemnoAcc: '2',
+                    ItemnoAcc: '1',
                     VendorNo: aDocument[0].VENDOR,
                     CompCode: oRequester.BUKRS,
                     BlineDate: moment(new Date).format('YYYYMMDD'),
                     ItemText: aDocument[0].REASON,
+                    SpGlInd: specialGLInd,
                     PartnerBk: partnBnkType,
                     AllocNmbr: moment(new Date).format('MM/YYYY'),
-                    Pmnttrms: '1000',
-                    PymtMeth: pymtMeth,
-
+                    PmntBlock: pmntBlock
                 })
 
 
 
+            } else { // gestione KA
+
+
+            }
+
+
+            aAccountPayable.push({
+                ItemnoAcc: '2',
+                VendorNo: aDocument[0].VENDOR,
+                CompCode: oRequester.BUKRS,
+                BlineDate: moment(new Date).format('YYYYMMDD'),
+                ItemText: aDocument[0].REASON,
+                PartnerBk: partnBnkType,
+                AllocNmbr: moment(new Date).format('MM/YYYY'),
+                Pmnttrms: '1000',
+                PymtMeth: pymtMeth,
+
+            })
+
+
+
+            let totAmountString = totAmount.toString()
+
+            aCurrencyAmount.push({
+                ItemnoAcc: '1',
+                Currency: oRequest.WAERS_CODE,
+                AmtDoccur: totAmountString,
+                AmtBase: totAmountString
+            })
+
+
+            totAmountString = '-' + totAmountString
+
+            aCurrencyAmount.push({
+                ItemnoAcc: '2',
+                Currency: oRequest.WAERS_CODE,
+                AmtDoccur: totAmountString,
+                AmtBase: totAmountString
+            })
+
+
+
+
+        } else { // gestione docProcType blank 
+
+
+            if (!Boolean(oDocProp.docProcType)) {
+
+                if (specialGLInd === '') {
+                    pmntTrms = '1000'
+                }
+
+                if (oDocProp.docType !== consts.documentType.KB) {
+                    pymtMeth = ''
+                }
+
+
+                aAccountPayable.push({
+                    ItemnoAcc: '1',
+                    VendorNo: aDocument[0].VENDOR,
+                    CompCode: oRequester.BUKRS,
+                    BlineDate: moment(new Date).format('YYYYMMDD'),
+                    ItemText: aDocument[0].REASON,
+                    SpGlInd: specialGLInd,
+                    PartnerBk: partnBnkType,
+                    AllocNmbr: moment(new Date).format('MM/YYYY'),
+                    Pmnttrms: pmntTrms,
+                    PymtMeth: pymtMeth
+                })
+
+
+                ////////////////////////////////////////////////////////////////
+
+
+
+                if (oRequest.REQUESTER_CODE === 'COMMIS') {
+                    refKey1 = aDocument[0].LOCATION
+                }
+
+
+                for (let i = 0; i < aDocument.length; i++) {
+
+                    if (Boolean(aDocument[i].TEXT)) {
+                        itemText = aDocument[i].TEXT
+                    } else {
+                        if (Boolean(aDocument[i].REASON)) {
+                            itemText = aDocument[i].REASON
+                        }
+                    }
+
+                    if (Boolean(aDocument[i].ATTRIBUZIONE)) {
+                        allocNmbr = aDocument[i].ATTRIBUZIONE
+                    } else {
+                        allocNmbr = moment(new Date).format('MM/YYYY')
+                    }
+
+
+                    if (oDocProp.docType === consts.documentType.KA) {
+                        valueDate = moment(oRequest.EXPIRY_DATE).format('YYYYMMDD')
+                    } else {
+                        if (Boolean(aDocument[i].VALUT)) {
+                            valueDate = moment(aDocument[i].VALUT).format('YYYYMMDD')
+                        }
+                    }
+
+                    itemNo = itemNo + 1
+                    let itemNoString = itemNo.toString()
+
+                    let riferimento = ''
+                    if (Boolean(aDocument[i].RIFERIMENTO)) {
+                        riferimento = aDocument[i].RIFERIMENTO
+                    }
+
+                    let refKey2 = ''
+                    if (Boolean(aDocument[i].REFKEY2)) {
+                        refKey2 = aDocument[i].REFKEY2
+                    }
+
+
+                    let taxCode = 'XX'
+
+                    var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+                    const { GlAccountCompanySet } = EccServiceO2P.entities;
+
+
+                    let aGlAccountCompany = await EccServiceO2P.run(SELECT.from(GlAccountCompanySet).where({
+                        Saknr: aDocument[i].ACCOUNT,
+                        Bukrs: oRequester.BUKRS
+                    }))
+
+                    if (aGlAccountCompany > 0 &&
+                        !Boolean(aGlAccountCompany[0].Mitkz) &&
+                        !Boolean(aGlAccountCompany[0].Mwskz)) {
+                        taxCode = ''
+                    }
+
+                    let costCenter = ''
+                    let orderId = ''
+
+                    if (Boolean(aDocument[i].COST_CENTER)) { // 10 
+                        costCenter = aDocument[i].COST_CENTER.padStart(10, '0')
+                    }
+
+                    if (Boolean(aDocument[i].INT_ORDER)) { // 12
+                        orderId = aDocument[i].INT_ORDER.padStart(12, '0')
+                    }
+
+                    aAccountGL.push({
+                        ItemnoAcc: itemNoString,
+                        GlAccount: aDocument[i].ACCOUNT,
+                        ItemText: itemText,
+                        TaxCode: taxCode,
+                        Costcenter: costCenter,
+                        PstngDate: moment(new Date).format('YYYYMMDD'),
+                        ValueDate: valueDate,
+                        Orderid: orderId,
+                        AllocNmbr: allocNmbr,
+                        RefKey3: riferimento,
+                        RefKey2: refKey2,
+                        RefKey1: refKey1,
+
+                    })
+
+                    aCurrencyAmount.push({
+                        ItemnoAcc: itemNoString,
+                        Currency: oRequest.WAERS_CODE,
+                        AmtDoccur: aDocument[i].AMOUNT,
+                        AmtBase: aDocument[i].AMOUNT
+                    })
+
+
+                }
+
+                ///////////////////////////////////////////////////////////////  
+
+
                 let totAmountString = totAmount.toString()
+                totAmountString = '-' + totAmountString
 
                 aCurrencyAmount.push({
                     ItemnoAcc: '1',
@@ -1454,136 +1689,366 @@ async function createFIDocument(iRequest) {
                     AmtBase: totAmountString
                 })
 
+            }
 
-                totAmountString = '-' + totAmountString
+        }
 
-                aCurrencyAmount.push({
-                    ItemnoAcc: '2',
-                    Currency: oRequest.WAERS_CODE,
-                    AmtDoccur: totAmountString,
-                    AmtBase: totAmountString
+    } else { //   docType diverso da KA e docType KB
+
+    }
+
+    oResult = {
+        ObjKey: "",
+        Simulate: iRequest.data.SIMULATE,
+        ToDocumentHeader: oDocumentHeader,
+        ToAccountGL: aAccountGL,
+        ToAccountPayable: aAccountPayable,
+        ToCurrencyAmount: aCurrencyAmount,
+        ToAccReturn: []
+    }
+
+    return oResult
+
+}
+
+
+async function fillTableClearFIDocument(iRequest, iDocProp) {
+
+    let valut = '00000000'
+    //let wrbtr = '0.00'
+    let vendorReg = ''
+    let doctoclear1 = ''
+    let totAmount = 0
+    let kontoXref1 = ''
+    let sgtxt = ''
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+
+    let aDocument = await SELECT.from(Document).
+        where({
+            to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+            DOC_ID: iRequest.data.DOC_ID
+        }).orderBy('DOC_ID asc', 'ID asc');
+
+
+    let oAccountreq = await SELECT.one.from(Accountreq).
+        where({
+            REQUESTER_CODE: oRequest.REQUESTER_CODE,
+            ACCOUNT: aDocument[0].ACCOUNT,
+        });
+
+    let oRequester = await SELECT.one.from(Requester).
+        where({ CODE: oRequest.REQUESTER_CODE });
+
+    let oPayMode = await SELECT.one.from(Paymode).
+        where({ CODE: oRequest.PAYMENT_MODE_CODE });
+
+
+    let oDocProp = await getDocumentProp(iRequest, "60")
+
+    if (Boolean(oRequest.VALUE_DATE)) {
+        valut = moment(oRequest.VALUE_DATE).format('YYYYMMDD')
+    } else {
+        valut = moment(new Date).format('YYYYMMDD')
+    }
+
+
+
+
+    for (let i = 0; i < aDocument.length; i++) {
+
+        totAmount = Number(totAmount) + Number(aDocument[i].AMOUNT)
+        totAmount = totAmount.toFixed(2)
+
+    }
+
+
+    if (oDocProp.docType === 'KZ' && oDocProp.docProcType === 'V') {
+        vendorReg = 'X'
+    }
+
+
+    if (oDocProp.docType === 'KA' || oDocProp.docType === 'KB') {
+        if (oDocProp.docProcType === '') {
+
+        }
+
+        if (oDocProp.docProcType === 'V') {
+            if (Boolean(oAccountreq.SPECIAL_GL_IND)) {
+                specialGLInd = oAccountreq.SPECIAL_GL_IND
+            } else {
+                if (Boolean(aDocument[0].SPECIAL_GL_IND)) {
+                    specialGLInd = aDocument[0].SPECIAL_GL_IND
+                }
+            }
+
+        }
+    }
+
+
+    if (oDocProp.docType === 'KZ' || oDocProp.docType === 'KY') {
+        if (oDocProp.docProcType === '' || oDocProp.docProcType === 'V') {
+
+            let aDocLog = await SELECT.from(Doclog).
+                where({
+                    to_Request_REQUEST_ID: iRequest.data.REQUEST_ID, DOC_ID: iRequest.data.DOC_ID, STATUS: 'C'
+                }).orderBy('to_Request_REQUEST_ID asc', 'DOC_ID asc', 'LOG_TIME desc');
+            if (aDocLog.length > 0) {
+                doctoclear1 = aDocLog[0].DOC_NUMBER
+            }
+
+            if (oRequest.PRIORITY_CURR === 'Y') {
+                kontoXref1 = 'URGENTE'
+            }
+
+            if (Boolean(oRequest.BENEFICIARY_DATE)) {
+                sgtxt = oPayMode.TREASURY_CODE + moment(oRequest.BENEFICIARY_DATE).format('MMYYYY')
+            } else {
+
+                sgtxt = oPayMode.TREASURY_CODE + moment(valut).format('MMYYYY')
+            }
+
+        }
+
+        if (oDocProp.docProcType === 'S') { }
+    }
+
+
+
+
+    let oDocumentHeader = {
+        Bldat: moment(new Date).format('YYYYMMDD'),
+        Budat: moment(new Date).format('YYYYMMDD'),
+        Blart: oDocProp.docType,
+        Bukrs: oRequester.BUKRS,
+        Waers: oRequest.WAERS_CODE,
+        Konto: oRequest.BANK_ACCOUNT,
+        Wrbtr: totAmount.toString(),
+        Valut: valut,
+        Augtx: '',
+        Sgtxt: sgtxt,
+        Xblnr: 'BPM' + iRequest.data.REQUEST_ID + String(iRequest.data.DOC_ID.padStart(3, '0')),
+        Bktxt: 'BPM' + iRequest.data.REQUEST_ID,
+        Gsber: '',
+        Prctr: '',
+        Zuonr: oPayMode.TREASURY_CODE,
+        Agkon: aDocument[0].VENDOR,
+        Agkoa: 'K',
+        Doctoclear1: doctoclear1,
+        Doctoclear2: '',
+        Doctoclear3: '',
+        KontoXref1: kontoXref1,
+        KontoXref2: '',
+        ObjKey: '',
+        VendorReg: vendorReg
+    }
+
+
+
+
+    oResult = {
+        ObjKey: "",
+        ToDocumentHeader: oDocumentHeader,
+        ToAccReturn: []
+    }
+
+    return oResult
+
+}
+
+
+async function createFIDocument(iRequest) {
+
+
+    let aResult = []
+    let aDocLog = []
+    let error = false
+    let errorText
+    let oBodyReq = {}
+    let urlPost = ""
+
+    let callECC = getEnvParam("CALL_ECC", false);
+    if (callECC === "true") {
+
+        try {
+
+            let oDocProp = await getDocumentProp(iRequest, iRequest.data.STEPID)
+
+            if (Boolean(iRequest.data.CLEARING)) {
+
+                urlPost = "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV/ClearAccDocPostSet"
+
+                oBodyReq = await fillTableClearFIDocument(iRequest, oDocProp)
+
+            } else {
+
+                urlPost = "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV/AccDocPostSet"
+
+                oBodyReq = await fillTableFIDocument(iRequest, oDocProp)
+
+                ////////////////////////////////////////////////////////////////////////
+
+                /*
+                let errPreviousDoc = await checkBeforeFIDocument(oDocumentHeader, aAccountPayable, aCurrencyAmount)
+                if (Boolean(errPreviousDoc)) {
+                    aResult.push({
+                        MTYPE: consts.ERROR,
+                        TEXT: errPreviousDoc
+                    })
+        
+                    return aResult
+                }
+                    */
+
+                ///////////////////////////////////////////////////////////////  
+
+            }
+
+
+
+
+            let oResponse = await new Promise(async (resolve, reject) => {
+
+                client.executeHttpRequest(
+                    { destinationName: 'ECC' },
+                    {
+                        method: 'POST',
+                        url: urlPost,
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "Accept": "application/json"
+                        },
+                        data: oBodyReq,
+                    }
+                ).then((result) => {
+                    resolve(result)
+                }).catch((err) => {
+                    reject(err)
                 })
+            })
 
 
+            let aDocLog = []
+            let error = false
+            let errorText
 
 
-            } else { // gestione docProcType blank 
+            if (oResponse.data.d.ToAccReturn.results.length !== 0) {
 
+                let aMessage = oResponse.data.d.ToAccReturn.results
+                for (let i = 0; i < aMessage.length; i++) {
 
-                if (!Boolean(docProcType)) {
-
-                    if (specialGLInd === '') {
-                        pmntTrms = '1000'
-                    }
-
-                    if (docType !== consts.documentType.KB) {
-                        pymtMeth = ''
-                    }
-
-
-                    aAccountPayable.push({
-                        ItemnoAcc: '1',
-                        VendorNo: aDocument[0].VENDOR,
-                        CompCode: oRequester.BUKRS,
-                        BlineDate: moment(new Date).format('YYYYMMDD'),
-                        ItemText: aDocument[0].REASON,
-                        SpGlInd: specialGLInd,
-                        PartnerBk: partnBnkType,
-                        AllocNmbr: moment(new Date).format('MM/YYYY'),
-                        Pmnttrms: pmntTrms,
-                        PymtMeth: pymtMeth
+                    aResult.push({
+                        MTYPE: consts.ERROR,
+                        TEXT: aMessage[i].Message
                     })
 
+                    if (!Boolean(errorText) &&
+                        aMessage[i].Id !== 'RW' &&
+                        aMessage[i].Number !== '609') {
 
-                    ////////////////////////////////////////////////////////////////
+                        errorText = aMessage[i].Message
 
-
-
-                    if (oRequest.REQUESTER_CODE === 'COMMIS') {
-                        refKey1 = aDocument[0].LOCATION
                     }
+
+                }
+
+                error = true
+
+            }
+
+            if (!Boolean(iRequest.data.SIMULATE)) {
+
+                if (error === false) { // success log
+
+                    let compCode = oResponse.data.d.ObjKey.substring(14, 10);
+                    let docNumber = oResponse.data.d.ObjKey.substring(0, 10);
+                    let fiscYear = oResponse.data.d.ObjKey.substring(18, 14);
+
+
+
+                    let aDocument = await SELECT.from(Document).
+                        where({
+                            to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                            DOC_ID: iRequest.data.DOC_ID
+                        }).orderBy('DOC_ID asc', 'ID asc');
 
 
                     for (let i = 0; i < aDocument.length; i++) {
 
-                        if (Boolean(aDocument[i].TEXT)) {
-                            itemText = aDocument[i].TEXT
+                        if (Boolean(iRequest.data.CLEARING)) {
+                            aDocument[i].CLEARING_NUMBER = docNumber
+
+                            let upsertDocument = await UPSERT.into(Document).entries(aDocument);
+
+                            aDocLog.push({
+
+                                to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                                DOC_ID: iRequest.data.DOC_ID,
+                                LOG_TIME: new Date().toISOString(),
+                                CREATOR_USER: oBodyReq.ToDocumentHeader.Username,
+                                DOC_TYPE: oBodyReq.ToDocumentHeader.DocType,
+                                DOC_NUMBER: docNumber,
+                                //COMPANY_CODE: "",
+                               // FISCAL_YEAR: "",
+                                STATUS: 'C',
+                                STATUS_TEXT: ''
+                            })
+        
+                            let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
+
                         } else {
-                            if (Boolean(aDocument[i].REASON)) {
-                                itemText = aDocument[i].REASON
-                            }
+
+                
+                            aDocument[i].DOCUMENT_COMP_CODE = compCode
+                            aDocument[i].DOCUMENT_NUMBER = docNumber
+                            aDocument[i].DOCUMENT_FISCAL_YEAR = fiscYear
+
+                            let upsertDocument = await UPSERT.into(Document).entries(aDocument);
+
+                            aDocLog.push({
+
+                                to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                                DOC_ID: iRequest.data.DOC_ID,
+                                LOG_TIME: new Date().toISOString(),
+                                CREATOR_USER: oBodyReq.ToDocumentHeader.Username,
+                                DOC_TYPE: oBodyReq.ToDocumentHeader.DocType,
+                                DOC_NUMBER: docNumber,
+                                COMPANY_CODE: compCode,
+                                FISCAL_YEAR: fiscYear,
+                                STATUS: 'C',
+                                STATUS_TEXT: ''
+                            })
+        
+                            let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
+
                         }
-
-                        if (Boolean(aDocument[i].ATTRIBUZIONE)) {
-                            allocNmbr = aDocument[i].ATTRIBUZIONE
-                        } else {
-                            allocNmbr = moment(new Date).format('MM/YYYY')
-                        }
-
-
-                        if (docType === consts.documentType.KA) {
-                            valueDate = moment(oRequest.EXPIRY_DATE).format('YYYYMMDD')
-                        } else {
-                            if (Boolean(aDocument[i].VALUT)) {
-                                valueDate = moment(aDocument[i].VALUT).format('YYYYMMDD')
-                            }
-                        }
-
-                        itemNo = itemNo + 1
-                        let itemNoString = itemNo.toString()
-
-                        let riferimento = ''
-                        if (Boolean(aDocument[i].RIFERIMENTO)) {
-                            riferimento = aDocument[i].RIFERIMENTO
-                        }
-
-                        let refKey2 = ''
-                        if (Boolean(aDocument[i].REFKEY2)) {
-                            refKey2 = aDocument[i].REFKEY2
-                        }
-
-
-                        // PstngDate: moment(new Date).format('YYYYMMDD'),
-
-                        aAccountGL.push({
-                            ItemnoAcc: itemNoString,
-                            GlAccount: aDocument[i].ACCOUNT,
-                            ItemText: itemText,
-                            TaxCode: 'XX',
-                            Costcenter: aDocument[i].COST_CENTER,
-                            ValueDate: valueDate,
-                            Orderid: aDocument[i].INT_ORDER,
-                            AllocNmbr: allocNmbr,
-                            RefKey3: riferimento,
-                            RefKey2: refKey2,
-                            RefKey1: refKey1,
-
-                        })
-
-                        aCurrencyAmount.push({
-                            ItemnoAcc: itemNoString,
-                            Currency: oRequest.WAERS_CODE,
-                            AmtDoccur: aDocument[i].AMOUNT,
-                            AmtBase: aDocument[i].AMOUNT
-                        })
-
-
-
                     }
 
-                    ///////////////////////////////////////////////////////////////  
+                   
 
 
-                    let totAmountString = totAmount.toString()
-                    totAmountString = '-' + totAmountString
 
-                    aCurrencyAmount.push({
-                        ItemnoAcc: '1',
-                        Currency: oRequest.WAERS_CODE,
-                        AmtDoccur: totAmountString,
-                        AmtBase: totAmountString
+         
+
+
+                } else // error log
+                {
+
+                    aDocLog.push({
+
+                        to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                        DOC_ID: iRequest.data.DOC_ID,
+                        LOG_TIME: new Date().toISOString(),
+                        CREATOR_USER: oBodyReq.ToDocumentHeader.Username,
+                        DOC_TYPE: oBodyReq.ToDocumentHeader.DocType,
+                        STATUS: 'E',
+                        STATUS_TEXT: errorText
                     })
 
+                    let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
+
                 }
 
 
@@ -1592,148 +2057,61 @@ async function createFIDocument(iRequest) {
 
 
 
-        } else { //   docType diverso da KA e docType KB
-
-
-
+        } catch (error) {
+            let errMEssage = "ERROR createFIDocument " + iRequest.data.REQUEST_ID + " :" + error.message;
+            iRequest.error(450, errMEssage, null, 450);
+            LOG.error(errMEssage);
+            return iRequest;
         }
 
-
-
-        ///////////////////////////////////////////////////////////////  
-
-        oBodyReq = {
-            ObjKey: "",
-            Simulate: iRequest.data.SIMULATE,
-            ToDocumentHeader: oDocumentHeader,
-            ToAccountGL: aAccountGL,
-            ToAccountPayable: aAccountPayable,
-            ToCurrencyAmount: aCurrencyAmount,
-            ToAccReturn: []
-        }
-
-
-
-        // non restituisce nulla
-        //  let aMessage = await EccServiceO2P.run(
-        //  INSERT.into(AccDocPostSet).entries(oBodyReq));
-
-
-        let oResponse = await new Promise(async (resolve, reject) => {
-
-            client.executeHttpRequest(
-                { destinationName: 'ECC' },
-                {
-                    method: 'POST',
-                    url: "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV/AccDocPostSet",
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "Accept": "application/json"
-                    },
-                    data: oBodyReq,
-                }
-            ).then((result) => {
-                resolve(result)
-            }).catch((err) => {
-                reject(err)
-            })
-        })
-
-
-        let aDocLog = []
-        let error = false
-        let errorText
-
-
-        if (oResponse.data.d.ToAccReturn.results.length !== 0) {
-
-            let aMessage = oResponse.data.d.ToAccReturn.results
-            for (let i = 0; i < aMessage.length; i++) {
-
-                aResult.push({
-                    MTYPE: consts.ERROR,
-                    TEXT: aMessage[i].Message
-                })
-
-                if (!Boolean(errorText) &&
-                    aMessage[i].Id !== 'RW' &&
-                    aMessage[i].Number !== '609') {
-
-                    errorText = aMessage[i].Message
-
-                }
-
-            }
-
-            error = true
-
-        }
-
-        if (!Boolean(iRequest.data.SIMULATE)) {
-
-            if (error = false) { // success log
-
-                let compCode = oResponse.data.d.ObjKey.substring(14, 10);
-                let docNumber = oResponse.data.d.ObjKey.substring(0, 10);
-                let fiscYear = oResponse.data.d.ObjKey.substring(18, 14);
-
-                for (let i = 0; i < aDocument.length; i++) {
-                    aDocument[i].DOCUMENT_COMP_CODE = compCode
-                    aDocument[i].DOCUMENT_NUMBER = docNumber
-                    aDocument[i].DOCUMENT_FISCAL_YEAR = fiscYear
-                }
-
-                let upsertDocument = await UPSERT.into(Document).entries(aDocument);
-
-                aDocLog.push({
-
-                    to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
-                    DOC_ID: iRequest.data.DOC_ID,
-                    LOG_TIME: new Date().toISOString(),
-                    CREATOR_USER: initiator,
-                    DOC_TYPE: docType,
-                    DOC_NUMBER: docNumber,
-                    COMPANY_CODE: compCode,
-                    FISCAL_YEAR: fiscYear,
-                    STATUS: 'C'
-                })
-
-                let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
-
-
-            } else // error log
-            {
-
-                aDocLog.push({
-
-                    to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
-                    DOC_ID: iRequest.data.DOC_ID,
-                    LOG_TIME: new Date().toISOString(),
-                    CREATOR_USER: initiator,
-                    DOC_TYPE: docType,
-                    STATUS: 'E',
-                    STATUS_TEXT: errorText
-                })
-
-                let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
-
-            }
-
-
-        }
-
-
-    } catch (error) {
-        let errMEssage = "ERROR createFIDocument " + iRequest.data.REQUEST_ID + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
     }
 
 
     return aResult
 
 }
+
+
+async function getAssignInfo(iRequest) {
+    LOG.info("getAssignInfo");
+
+    let reqData = await SELECT.one.from(Request).
+        where({
+            REQUEST_ID: iRequest.data.REQUEST_ID
+        });
+
+    if (reqData === null || reqData == undefined) {
+        let errMEssage = "ERROR get request " + iRequest.data.REQUEST_ID + ". Request not found";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+    }
+
+    let returninfo = {};
+    returninfo.COMPILER_NAME = "";
+    returninfo.MOTIVATION = "";
+
+    if (reqData.OLD_COMPILER_FULLNAME) {
+        returninfo.COMPILER_NAME = reqData.OLD_COMPILER_FULLNAME;
+    } else {
+        return returninfo;
+    }
+
+    let reqNote = await SELECT.one.from(Notes).
+        where({
+            to_Request_REQUEST_ID: reqData.REQUEST_ID,
+            VERSION: reqData.VERSION,
+            createdBy: reqData.OLD_COMPILER_MAIL
+        });
+
+    if (reqNote !== undefined && reqNote.NOTE !== null) {
+        returninfo.MOTIVATION = reqNote.NOTE;
+    }
+
+    return returninfo;
+}
+
+
 
 
 module.exports = {
@@ -1760,6 +2138,7 @@ module.exports = {
     checkDocPopupData,
     getEccServices,
     createFIDocument,
-    getDocStatus
+    getDocStatus,
+    getAssignInfo
 
 }

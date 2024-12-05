@@ -92,7 +92,7 @@ async function createProcess(iRequest) {
         //Create Approvers history
 
         let firstVersion = 1;
-        //  let returnApprovalHistory = await insertApprovalHistory(iRequest, returnRequestId, firstVersion);
+ 
         let returnApprovalHistory = await insertApprovalHistory(iRequest, returnRequestId, returnSaveMoaApprovers, firstVersion);
         if (returnApprovalHistory.errors) {
             return returnApprovalHistory;
@@ -191,7 +191,6 @@ async function checkTaskCreated(iRequest) {
 
 async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersion) {
 
-    //async function insertApprovalHistory(iRequest, iRequestId, iVersion) {
 
     let aApprovalHistory = new Array();
     let insertRequest;
@@ -243,6 +242,9 @@ async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersi
 
                }
 */
+
+stepCheck = 10
+
         }
 
 
@@ -278,15 +280,31 @@ async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersi
             }
 
 
-        } else {
+        } else { //
+
+            let aApprovalDb = await SELECT.from(ApprovalHistory).
+            where({
+                REQUEST_ID: iRequestId,
+                VERSION: iVersion
+            }).orderBy('STEP asc');
+
+
 
             for (let a = 0; a < iMoaApprovers.length; a++) {
+
+                let oApprovalDb = aApprovalDb.find(oApprovalDb => oApprovalDb.STEP === Number(iMoaApprovers[a].STEP)  ) 
+
+                if (oApprovalDb && Boolean(oApprovalDb.BPA_TASKID_ID)) {
+                    aApprovalHistory.push(oApprovalDb)
+                } else {
+                
                 aApprovalHistory.push({
                     to_Request_REQUEST_ID: iRequestId,
                     STEP: iMoaApprovers[a].STEP,
                     VERSION: iVersion,
                     To_StepStatus_STEP_STATUS: consts.stepStatus.NOTASSIGNED
                 })
+            }
             }
 
         }
@@ -311,7 +329,9 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
     let moaResponse;
     var result = []
 
-    // let reqData = await SELECT.one.from(Request).where({ REQUEST_ID: iRequestID });
+    let oRequest = await SELECT.one.from(Request).where({ REQUEST_ID: iRequestID });
+
+
 
     try {
 
@@ -340,11 +360,21 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
             result.push({ INDEX: "20", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });  // o Uffcio Attività Fisse
             result.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore", ISMANAGER: "false" });
             result.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
-            result.push({ INDEX: "42", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false" });
-            result.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
+
+            if (oRequest && Boolean(oRequest.EXTRA_MANAGER_REQUIRED)) {
+                //oRequest.EXTRA_MANAGER_NAME
+                result.push({ INDEX: "42", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false" });
+             }
+          
+            // result.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
             result.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
-        //    result.push({ INDEX: "60", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza ", ISMANAGER: "false" }); // o Addetto Cassa o Controller
-        //    result.push({ INDEX: "70", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
+      
+            
+            if (oRequest && Boolean(oRequest.PAYMENT_MODE_CODE) && oRequest.PAYMENT_MODE_CODE === consts.Paymode.F24 ) {
+            result.push({ INDEX: "60", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza ", ISMANAGER: "false" }); // o Addetto Cassa o Controller
+            }
+       
+            //    result.push({ INDEX: "70", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
         //    result.push({ INDEX: "80", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Compilatore", ISMANAGER: "false" });
             
         }
@@ -818,8 +848,8 @@ async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest) {
         }
 
         //Delete OLD MOA Approvers
-        //   let deleteApprovers = DELETE.from(ApprovalFlow).where({ to_Request_REQUEST_ID : iRequest.data.REQUEST_ID });
-        //   let deleteResponse = await cdsTx.run(deleteApprovers);
+          let deleteApprovers = DELETE.from(ApprovalFlow).where({ to_Request_REQUEST_ID : iRequest.data.REQUEST_ID });
+          let deleteResponse = await cdsTx.run(deleteApprovers);
 
 
         //Save MOA Approvers
@@ -836,9 +866,12 @@ async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest) {
           } */
 
         //Create Approvers history
-        let firstVersion = 1;
-        //let returnApprovalHistory = await insertApprovalHistory(iRequest, iRequest.data.REQUEST_ID, newHistorySteps, firstVersion, cdsTx);
-        let returnApprovalHistory = await insertApprovalHistory(iRequest, iRequest.data.REQUEST_ID, returnSaveMoaApprovers, firstVersion, cdsTx);
+       // let firstVersion = 1;
+
+       let returnData = await getRequestData(iRequestId, iRequest);
+       let actualVersion = returnData.VERSION;
+     
+        let returnApprovalHistory = await insertApprovalHistory(iRequest, iRequest.data.REQUEST_ID, returnSaveMoaApprovers, actualVersion, cdsTx);
 
         if (returnApprovalHistory.errors) {
             return returnApprovalHistory;

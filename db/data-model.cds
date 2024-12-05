@@ -47,7 +47,11 @@ entity Request : managed {
       //EXPIRY_DATE_F23
       //---> tutti gli expire date unico campo
 
+        OLD_COMPILER_MAIL:       MAIL;
+  OLD_COMPILER_FULLNAME:   FULLNAME;
+
       EXPIRY_DATE                    : Date;
+      PAYMENT_NOTE                   : String;
       SKIP_COORD                     : Boolean default false;
       TYPE_F24_ENTRATEL              : String(10); // forse associata a tabella F24_ENTRATEL dominio ZFI_O2P_D_F24_ENTRATEL_TYPE
       F24_ENTRATEL_CLEARING_ACCOUNT  : String(10);
@@ -417,6 +421,7 @@ entity StepParams {
       MAIL_LIST        : String(150); //USERID
       STEP_DESCRIPTION : STEP_DESCRIPTION;
       STEP_RO          : Boolean;
+      PAYMODE          : String;
 }
 
 @cds.persistence.skip

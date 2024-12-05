@@ -4,7 +4,7 @@ const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote, getLayout, checkData,
     updateRequest, getTemplate, getRejectInfo, formatMonitoring, formatMonitoringDetail, formatDocument, getDocPopupData,getDocStatus,
-    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument } = require('./lib/Handler');
+    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument,getAssignInfo } = require('./lib/Handler');
 const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument,
     emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
 
@@ -27,7 +27,7 @@ module.exports = cds.service.impl(async function () {
     const { WorkDay } = this.entities;
     const { UserTaskCounter } = this.entities;
     const { CostCenterTextSet, AfeLocationSet } = this.entities;
-    const { VendorSet } = this.entities;
+    const { VendorSet,AccDocHeaderSet, AccDocPositionSet,GlAccountCompanySet} = this.entities;
 
 
 
@@ -71,6 +71,10 @@ module.exports = cds.service.impl(async function () {
 
     global.VendorSet = VendorSet
 
+    global.AccDocHeaderSet = AccDocHeaderSet
+    global.AccDocPositionSet = AccDocPositionSet
+    global.GlAccountCompanySet = GlAccountCompanySet
+
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -105,6 +109,9 @@ module.exports = cds.service.impl(async function () {
         return await genereteDocument(requestId, req, false);
     });
 
+       //---------Function Assign info----
+   this.on('getAssignInfo', getAssignInfo);   
+  
 
     //-------------ATTACHMENTS-------------------
     this.before('CREATE', 'Attachments', createAttachment);
@@ -151,6 +158,8 @@ module.exports = cds.service.impl(async function () {
 
     this.on('createFIDocument', createFIDocument)
 
+    //-------------ACTION AZIONE ASSEGNAZIONE NUOVO UTENTE-------------------
+    this.on('assignApprover', assignApprover);
 
 
     this.on('READ', CostCenterTextSet, async (request) => {
@@ -166,6 +175,20 @@ module.exports = cds.service.impl(async function () {
         return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
     });
 
+    this.on('READ', AccDocHeaderSet, async (request) => {
+        return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
+    });
+
+
+    this.on('READ', AccDocPositionSet, async (request) => {
+        return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
+    });
+
+    this.on('READ', GlAccountCompanySet, async (request) => {
+        return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
+    });
+
+    
 
 }
 ) 
