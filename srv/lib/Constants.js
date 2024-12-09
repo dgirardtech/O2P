@@ -50,7 +50,9 @@ exports.Paymode = Object.freeze({
     F23: 'F23',
     FRECCIA: 'FRECCIA',
     FLBONIFIC: 'FLBONIFIC',
-    ENTRATEL: 'ENTRATEL'
+    ENTRATEL: 'ENTRATEL',
+    PAGOPA: "PAGOPA",
+    MAE : "MAE"
 
 });
 

@@ -1,10 +1,10 @@
 
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
-const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter } = require('./lib/createProcess');
+const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter,getMOAParams } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote, getLayout, checkData,
     updateRequest, getTemplate, getRejectInfo, formatMonitoring, formatMonitoringDetail, formatDocument, getDocPopupData,getDocStatus,
-    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument,getAssignInfo } = require('./lib/Handler');
+    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument,getAssignInfo,isCreationStep } = require('./lib/Handler');
 const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument,
     emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
 
@@ -18,6 +18,8 @@ module.exports = cds.service.impl(async function () {
     global.WorkDayProxy = await cds.connect.to('WorkDayProxy');
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
 
+    global.MOADataModel = await cds.connect.to('MOADataModel');
+
     /////////////////////////////////////////////////////////////////////////////////////
 
     const { Requester, Paymode, AttachmentType, Attachments, Notes,
@@ -30,12 +32,12 @@ module.exports = cds.service.impl(async function () {
     const { VendorSet,AccDocHeaderSet, AccDocPositionSet,GlAccountCompanySet} = this.entities;
 
 
-
+    const { PostionsMapping } = this.entities
 
 
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
     global.ZFI_O2P_COMMON_SRV = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-
+global.MOADataModel = await cds.connect.to('MOADataModel');
 
     global.ApprovalView = ApprovalView;
     global.StepDescription = StepDescription;
@@ -75,6 +77,8 @@ module.exports = cds.service.impl(async function () {
     global.AccDocPositionSet = AccDocPositionSet
     global.GlAccountCompanySet = GlAccountCompanySet
 
+    global.PostionsMapping = PostionsMapping
+
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -111,6 +115,11 @@ module.exports = cds.service.impl(async function () {
 
        //---------Function Assign info----
    this.on('getAssignInfo', getAssignInfo);   
+
+   this.on('getMOAParams', async (req) => {
+    let requestId = req.data.REQUEST_ID;
+    return await getMOAParams(requestId);
+});
   
 
     //-------------ATTACHMENTS-------------------
@@ -132,6 +141,9 @@ module.exports = cds.service.impl(async function () {
     this.on('getDocPopupData', getDocPopupData);
 
     this.on('getDocStatus', getDocStatus);
+
+    this.on('isCreationStep', isCreationStep);
+    
 
     //-------------MONITORING--------------
     this.after('READ', 'MonitorRequest', formatMonitoring);

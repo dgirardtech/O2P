@@ -178,6 +178,15 @@
           "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZFI_AFE_COMMON_SRV"
         }
+      },
+
+      "MOADataModel": {
+        "kind": "odata-v2",
+        "model": "srv/external/MOADataModel",
+        "credentials": {
+          "destination": "kupit-moa-data-model-dest-api",
+          "path": "/odata/v2/catalog/"
+        }
       }
     }
   }

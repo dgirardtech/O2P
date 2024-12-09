@@ -1,0 +1,2622 @@
+{
+ "meta": {
+  "creator": "cds-dk 8.4.2"
+ },
+ "$version": "2.0",
+ "definitions": {
+  "MOADataModel": {
+   "kind": "service",
+   "@cds.external": true,
+   "@m.IsDefaultEntityContainer": "true"
+  },
+  "MOADataModel.MoaHierarchy": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "@sap.hierarchy.node.for": "true",
+     "notNull": true
+    },
+    "OBJPARENT": {
+     "key": true,
+     "type": "cds.Integer",
+     "@sap.hierarchy.parent.node.for": "true",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "OBJLEVEL": {
+     "type": "cds.Integer",
+     "@sap.hierarchy.level.for": "true"
+    },
+    "DRILLSTATE": {
+     "type": "cds.LargeString",
+     "@sap.hierarchy.drill.state.for": "true"
+    },
+    "SEQNR": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "BEGDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "ENDDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "ACTIVE": {
+     "type": "cds.Boolean",
+     "notNull": true
+    },
+    "DBORDER": {
+     "type": "cds.Integer",
+     "notNull": true
+    }
+   }
+  },
+  "MOADataModel.ObjAttributes": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "TEXT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "INHERITED": {
+     "type": "cds.Boolean"
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjFilters": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "OPERATOR_OPERATOR": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 150
+    },
+    "VALUE_TYPE": {
+     "type": "cds.String",
+     "length": 1
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    },
+    "OPERATOR": {
+     "type": "cds.Association",
+     "target": "MOADataModel.FiltersOperator",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjDataHead": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "OBJTYPE_OBJTYPE": {
+     "type": "cds.String",
+     "length": 25
+    },
+    "SUBOBJTYPE_SUBOBJTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ISLEAF": {
+     "type": "cds.Boolean"
+    },
+    "OBJTYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ObjType",
+     "keys": []
+    },
+    "SUBOBJTYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.SubObjType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjType": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJTYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 25,
+     "notNull": true
+    },
+    "TEXT_TYPE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "IMAGE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "EXPANDED": {
+     "type": "cds.Boolean"
+    },
+    "BECREATED": {
+     "type": "cds.Boolean"
+    },
+    "ERASABLE": {
+     "type": "cds.Boolean"
+    },
+    "EDITABLE": {
+     "type": "cds.Boolean"
+    },
+    "ORDERABLE": {
+     "type": "cds.Boolean"
+    },
+    "CLONEABLE": {
+     "type": "cds.Boolean"
+    },
+    "TESTPROCESS": {
+     "type": "cds.Boolean"
+    },
+    "ADDELEMENT": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.SubObjType": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "SUBOBJTYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 10,
+     "notNull": true
+    },
+    "TEXT_TYPE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    }
+   }
+  },
+  "MOADataModel.AttributeType": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "TEXTATTRIBUTE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DATATYPE_DATATYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "NUMERICTYPE_NUMERICTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "TONORMALIZE": {
+     "type": "cds.Boolean"
+    },
+    "READ_ONLY": {
+     "type": "cds.Boolean"
+    },
+    "UIVISIBLE": {
+     "type": "cds.Boolean"
+    },
+    "UI_TYPE_UI_TYPE": {
+     "type": "cds.String",
+     "length": 50
+    },
+    "HERITABLE": {
+     "type": "cds.Boolean"
+    },
+    "REQUIRED": {
+     "type": "cds.Boolean"
+    },
+    "DATATYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.DataType",
+     "keys": []
+    },
+    "NUMERICTYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.NumericType",
+     "keys": []
+    },
+    "UI_TYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeUiType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.FilterOrder": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "FILTERORDER": {
+     "type": "cds.Integer"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.FiltersOperator": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OPERATOR": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    }
+   }
+  },
+  "MOADataModel.ObjectAttributeMapping": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJTYPE_OBJTYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 25,
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "TECHNICAL_ATT": {
+     "type": "cds.Boolean"
+    },
+    "DEFAULT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "HERITABLE": {
+     "type": "cds.Boolean"
+    },
+    "OBJTYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ObjType",
+     "keys": []
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.PostionsMapping": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "LBLPOSITION": {
+     "key": true,
+     "type": "cds.String",
+     "length": 50,
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "WDPOSITION": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "FULLNAME": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "NOTES": {
+     "type": "cds.String",
+     "length": 70
+    }
+   }
+  },
+  "MOADataModel.ObjSuffix": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJSUFFIX": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "OBJDESCRIPTION": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "texts": {
+     "type": "cds.Composition",
+     "target": "MOADataModel.ObjSuffix_texts",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    },
+    "localized": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ObjSuffix_texts",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjSuffixAprrover": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY_OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "OBJSUFFIX_OBJSUFFIX": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "ACTIVE": {
+     "type": "cds.Boolean",
+     "notNull": true
+    },
+    "OBJKEY": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ObjDataHead",
+     "keys": []
+    },
+    "OBJSUFFIX": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ObjSuffix",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ApproverId": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "APPROVERID": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "APPROVERDESCRIPTION": {
+     "type": "cds.String",
+     "length": 70
+    },
+    "texts": {
+     "type": "cds.Composition",
+     "target": "MOADataModel.ApproverId_texts",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    },
+    "localized": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ApproverId_texts",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.Approvers": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "APPROVERID_APPROVERID": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "APPROVERID": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ApproverId",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.BusinessProcess": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "BPROCESSDESCRIPTION": {
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "ORDER": {
+     "type": "cds.Integer"
+    },
+    "texts": {
+     "type": "cds.Composition",
+     "target": "MOADataModel.BusinessProcess_texts",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    },
+    "localized": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess_texts",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.Delegations": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "UUID": {
+     "key": true,
+     "type": "cds.UUID",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "USER": {
+     "type": "cds.LargeString"
+    },
+    "WDEIDUSER": {
+     "type": "cds.LargeString"
+    },
+    "SAPUSER": {
+     "type": "cds.LargeString"
+    },
+    "BPROCESS_BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "SEQNR": {
+     "type": "cds.Integer"
+    },
+    "ROLE": {
+     "type": "cds.String",
+     "length": 50
+    },
+    "DELEGATE": {
+     "type": "cds.String",
+     "length": 50
+    },
+    "WDEIDDELEGATE": {
+     "type": "cds.LargeString"
+    },
+    "SAPDELEGATE": {
+     "type": "cds.LargeString"
+    },
+    "FROMDATE": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date"
+    },
+    "TODATE": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date"
+    },
+    "SENDMAIL": {
+     "type": "cds.Boolean"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.Templates": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "ID": {
+     "key": true,
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "language": {
+     "key": true,
+     "type": "cds.String",
+     "length": 3,
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "content": {
+     "type": "cds.LargeString"
+    }
+   }
+  },
+  "MOADataModel.DataType": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "DATATYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 10,
+     "notNull": true
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 50
+    }
+   }
+  },
+  "MOADataModel.NumericType": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "NUMERICTYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 10,
+     "notNull": true
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 50
+    }
+   }
+  },
+  "MOADataModel.AttributeValues": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "UI_VALUE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 100,
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "TEXT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    }
+   }
+  },
+  "MOADataModel.BprocessParameters": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "DEFAULT_VALUE": {
+     "type": "cds.LargeString"
+    },
+    "READ_ONLY": {
+     "type": "cds.Boolean"
+    },
+    "NOT_REQUIRED": {
+     "type": "cds.Boolean"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.BprocessParametersVersion": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "VERSION": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "DEFAULT_VALUE": {
+     "type": "cds.LargeString"
+    },
+    "READ_ONLY": {
+     "type": "cds.Boolean"
+    },
+    "NOT_REQUIRED": {
+     "type": "cds.Boolean"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.BprocessVersion": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "VERSION": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "ACTIVE": {
+     "type": "cds.Boolean"
+    },
+    "DESCRIPTION": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "EXP_TO_TEST": {
+     "type": "cds.Boolean"
+    },
+    "EXP_TO_PRD": {
+     "type": "cds.Boolean"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.MoaHierarchyVersion": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "OBJPARENT": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "VERSION": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "OBJLEVEL": {
+     "type": "cds.Integer"
+    },
+    "DRILLSTATE": {
+     "type": "cds.LargeString"
+    },
+    "SEQNR": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "BEGDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "ENDDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "ACTIVE": {
+     "type": "cds.Boolean",
+     "notNull": true
+    },
+    "DBORDER": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjDataHeadVersion": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "VERSION": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "OBJTYPE_OBJTYPE": {
+     "type": "cds.String",
+     "length": 25
+    },
+    "SUBOBJTYPE_SUBOBJTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ISLEAF": {
+     "type": "cds.Boolean"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "OBJTYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ObjType",
+     "keys": []
+    },
+    "SUBOBJTYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.SubObjType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjAttributesVersion": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "VERSION": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "TEXT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "INHERITED": {
+     "type": "cds.Boolean"
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjFiltersVersion": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "VERSION": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "OPERATOR_OPERATOR": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 150
+    },
+    "VALUE_TYPE": {
+     "type": "cds.String",
+     "length": 1
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "OPERATOR": {
+     "type": "cds.Association",
+     "target": "MOADataModel.FiltersOperator",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.FilterOrderVersion": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "VERSION": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "FILTERORDER": {
+     "type": "cds.Integer"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.ObjTypeCategory": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "CATEGORY_CATEGORY": {
+     "key": true,
+     "type": "cds.String",
+     "length": 50,
+     "notNull": true
+    },
+    "OBJTYPE_OBJTYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 25,
+     "notNull": true
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "CATEGORY": {
+     "type": "cds.Association",
+     "target": "MOADataModel.CategoryType",
+     "keys": []
+    },
+    "OBJTYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.ObjType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.CategoryType": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "CATEGORY": {
+     "key": true,
+     "type": "cds.String",
+     "length": 50,
+     "notNull": true
+    },
+    "CATEGORY_DESC": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    }
+   }
+  },
+  "MOADataModel.ExtendedAttributes": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.VersionActionsEnabled": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "ID": {
+     "key": true,
+     "type": "cds.UUID",
+     "notNull": true
+    },
+    "CREATEVERSION": {
+     "type": "cds.Boolean"
+    },
+    "EXPORTVERSION": {
+     "type": "cds.Boolean"
+    },
+    "LOADVERSION": {
+     "type": "cds.Boolean"
+    },
+    "DELETEVERSION": {
+     "type": "cds.Boolean"
+    },
+    "SHOWTRANSPORTSTATUS": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.HierachyActionsEnabled": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "ID": {
+     "key": true,
+     "type": "cds.UUID",
+     "notNull": true
+    },
+    "CREATEOBJECT": {
+     "type": "cds.Boolean"
+    },
+    "SHOWACTIONS": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.AttributeUiType": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "UI_TYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 50,
+     "notNull": true
+    },
+    "UI_TYPE_TEXT": {
+     "type": "cds.String",
+     "length": 100
+    }
+   }
+  },
+  "MOADataModel.RoleByBusinessProcess": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "ROLE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 50,
+     "notNull": true
+    },
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "ROLEDESCRIPTION": {
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "ORDER": {
+     "type": "cds.Integer"
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    },
+    "texts": {
+     "type": "cds.Composition",
+     "target": "MOADataModel.RoleByBusinessProcess_texts",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    },
+    "localized": {
+     "type": "cds.Association",
+     "target": "MOADataModel.RoleByBusinessProcess_texts",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.V_OBJTYPECATEGORY": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "CATEGORY": {
+     "key": true,
+     "type": "cds.String",
+     "length": 50,
+     "notNull": true
+    },
+    "OBJTYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 25,
+     "notNull": true
+    },
+    "CATEGORY_DESC": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "CATEGORY_ORDER": {
+     "type": "cds.Integer"
+    },
+    "OBJBYCATEGORY_ORDER": {
+     "type": "cds.Integer"
+    },
+    "TEXT_TYPE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "OBJTYPEORDER": {
+     "type": "cds.Integer"
+    },
+    "IMAGE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "EXPANDED": {
+     "type": "cds.Boolean"
+    },
+    "BECREATED": {
+     "type": "cds.Boolean"
+    },
+    "ERASABLE": {
+     "type": "cds.Boolean"
+    },
+    "EDITABLE": {
+     "type": "cds.Boolean"
+    },
+    "ORDERABLE": {
+     "type": "cds.Boolean"
+    },
+    "CLONEABLE": {
+     "type": "cds.Boolean"
+    },
+    "TESTPROCESS": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.V_BPROCESSPARAMETERS": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "SEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "DEFAULT_VALUE": {
+     "type": "cds.LargeString"
+    },
+    "NOT_REQUIRED": {
+     "type": "cds.Boolean"
+    },
+    "READ_ONLY": {
+     "type": "cds.Boolean"
+    },
+    "TEXTATTRIBUTE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DATATYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "NUMERICTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "UI_TYPE": {
+     "type": "cds.String",
+     "length": 50
+    }
+   }
+  },
+  "MOADataModel.V_OBJECTATTRIBUTEMAPPING": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJTYPE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 25,
+     "notNull": true
+    },
+    "IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "TECHNICAL_ATT": {
+     "type": "cds.Boolean"
+    },
+    "DEFAULT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "HERITABLE": {
+     "type": "cds.Boolean"
+    },
+    "TEXTATTRIBUTE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DATATYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "NUMERICTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "TONORMALIZE": {
+     "type": "cds.Boolean"
+    },
+    "READ_ONLY": {
+     "type": "cds.Boolean"
+    },
+    "UIVISIBLE": {
+     "type": "cds.Boolean"
+    },
+    "UI_TYPE_UI_TYPE": {
+     "type": "cds.String",
+     "length": 50
+    },
+    "UI_VALUE": {
+     "type": "cds.LargeString"
+    },
+    "UI_TYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeUiType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.V_DOAOBJATT": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "A_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "B_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "C_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    }
+   }
+  },
+  "MOADataModel.V_PROCESSOBJAT": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "ATTSEQNR": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "A_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "B_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "C_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "TEXT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "INHERITED": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.V_HIERARCHYBYATTR": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "@sap.hierarchy.node.for": "true",
+     "notNull": true
+    },
+    "OBJPARENT": {
+     "type": "cds.Integer",
+     "@sap.hierarchy.parent.node.for": "true",
+     "notNull": true
+    },
+    "SEQNR": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "OBJLEVEL": {
+     "type": "cds.Integer",
+     "@sap.hierarchy.level.for": "true"
+    },
+    "OBJTYPE": {
+     "type": "cds.String",
+     "length": 25
+    },
+    "SUBOBJTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "IDATTRIBUTE": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "ATTSEQNR": {
+     "type": "cds.Integer"
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "A_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "B_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "C_ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "INHERITED": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.V_ATTRIBUTE_DETAILS": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "IDATTRIBUTE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "OBJKEY": {
+     "type": "cds.Integer"
+    },
+    "SEQNR": {
+     "type": "cds.Integer"
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "TEXT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "INHERITED": {
+     "type": "cds.Boolean"
+    },
+    "TEXTATTRIBUTE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DATATYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "NUMERICTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "READ_ONLY": {
+     "type": "cds.Boolean"
+    },
+    "UIVISIBLE": {
+     "type": "cds.Boolean"
+    },
+    "UI_TYPE_UI_TYPE": {
+     "type": "cds.String",
+     "length": 50
+    },
+    "HERITABLE": {
+     "type": "cds.Boolean"
+    },
+    "UI_TYPE": {
+     "type": "cds.Association",
+     "target": "MOADataModel.AttributeUiType",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.V_MOAHIERARCHY": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "@sap.hierarchy.node.for": "true",
+     "notNull": true
+    },
+    "OBJPARENT": {
+     "type": "cds.Integer",
+     "@sap.hierarchy.parent.node.for": "true",
+     "notNull": true
+    },
+    "SEQNR": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "OBJLEVEL": {
+     "type": "cds.Integer",
+     "@sap.hierarchy.level.for": "true"
+    },
+    "DRILLSTATE": {
+     "type": "cds.LargeString",
+     "@sap.hierarchy.drill.state.for": "true"
+    },
+    "ACTIVE": {
+     "type": "cds.Boolean",
+     "notNull": true
+    },
+    "OBJTYPE": {
+     "type": "cds.String",
+     "length": 25
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "BEGDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "ENDDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "IMAGE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "EXPANDED": {
+     "type": "cds.Boolean"
+    },
+    "ERASABLE": {
+     "type": "cds.Boolean"
+    },
+    "EDITABLE": {
+     "type": "cds.Boolean"
+    },
+    "ORDERABLE": {
+     "type": "cds.Boolean"
+    },
+    "CLONEABLE": {
+     "type": "cds.Boolean"
+    },
+    "TESTPROCESS": {
+     "type": "cds.Boolean"
+    },
+    "ADDELEMENT": {
+     "type": "cds.Boolean"
+    },
+    "ISLEAF": {
+     "type": "cds.Boolean"
+    },
+    "TEXT_TYPE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "DBORDER": {
+     "type": "cds.Integer",
+     "notNull": true
+    }
+   }
+  },
+  "MOADataModel.V_APPROVERS": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "APPROVERID": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "DESCRIPTION": {
+     "type": "cds.String",
+     "length": 70
+    },
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    }
+   }
+  },
+  "MOADataModel.V_OBJECTNOTINHIERACHY": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OBJKEY": {
+     "key": true,
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "OBJTYPE": {
+     "type": "cds.String",
+     "length": 25
+    },
+    "HIEROBJKEY": {
+     "type": "cds.Integer",
+     "@sap.hierarchy.node.for": "true"
+    },
+    "SUBOBJTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 100
+    }
+   }
+  },
+  "MOADataModel.V_BPROCESSVERSIONHEAD": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "BPROCESSDESCRIPTION": {
+     "type": "cds.LargeString",
+     "notNull": true
+    }
+   }
+  },
+  "MOADataModel.ObjSuffix_texts": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "locale": {
+     "key": true,
+     "type": "cds.String",
+     "length": 14,
+     "notNull": true
+    },
+    "OBJSUFFIX": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "OBJDESCRIPTION": {
+     "type": "cds.String",
+     "length": 100
+    }
+   }
+  },
+  "MOADataModel.ApproverId_texts": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "locale": {
+     "key": true,
+     "type": "cds.String",
+     "length": 14,
+     "notNull": true
+    },
+    "APPROVERID": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "APPROVERDESCRIPTION": {
+     "type": "cds.String",
+     "length": 70
+    }
+   }
+  },
+  "MOADataModel.BusinessProcess_texts": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "locale": {
+     "key": true,
+     "type": "cds.String",
+     "length": 14,
+     "notNull": true
+    },
+    "BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "BPROCESSDESCRIPTION": {
+     "type": "cds.LargeString",
+     "notNull": true
+    }
+   }
+  },
+  "MOADataModel.RoleByBusinessProcess_texts": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "locale": {
+     "key": true,
+     "type": "cds.String",
+     "length": 14,
+     "notNull": true
+    },
+    "BPROCESS_BPROCESS": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "ROLE": {
+     "key": true,
+     "type": "cds.String",
+     "length": 50,
+     "notNull": true
+    },
+    "ROLEDESCRIPTION": {
+     "type": "cds.LargeString",
+     "notNull": true
+    },
+    "BPROCESS": {
+     "type": "cds.Association",
+     "target": "MOADataModel.BusinessProcess",
+     "keys": []
+    }
+   }
+  },
+  "MOADataModel.bProcessVersion": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "BPROCESS_DESCRIPTION": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "VERSION_DESCRIPTION": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "MOAHIERARCHYVERSION": {
+     "items": {
+      "type": "MOADataModel.moaHierarchyVersionType"
+     }
+    },
+    "OBJDATAHEADVERSION": {
+     "items": {
+      "type": "MOADataModel.objDataHeadVersionType"
+     }
+    },
+    "OBJATTRIBUTESVERSION": {
+     "items": {
+      "type": "MOADataModel.objAttributesVersionType"
+     }
+    },
+    "OBJFILTERSVERSION": {
+     "items": {
+      "type": "MOADataModel.objFiltersVersionType"
+     }
+    },
+    "FILTERORDERVERSION": {
+     "items": {
+      "type": "MOADataModel.filterOrderVersionType"
+     }
+    },
+    "BPROCESSPARAMETERSVERSION": {
+     "items": {
+      "type": "MOADataModel.bProcessParametersVersionType"
+     }
+    }
+   }
+  },
+  "MOADataModel.moaHierarchyVersionType": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "OBJKEY": {
+     "type": "cds.Integer"
+    },
+    "OBJPARENT": {
+     "type": "cds.Integer"
+    },
+    "BPROCESS_BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "OBJLEVEL": {
+     "type": "cds.Integer"
+    },
+    "DRILLSTATE": {
+     "type": "cds.LargeString"
+    },
+    "SEQNR": {
+     "type": "cds.Integer"
+    },
+    "BEGDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "ENDDA": {
+     "type": "cds.Date",
+     "@sap.display.format": "Date",
+     "notNull": true
+    },
+    "ACTIVE": {
+     "type": "cds.Boolean",
+     "notNull": true
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    }
+   }
+  },
+  "MOADataModel.objDataHeadVersionType": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "createdAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "createdBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "modifiedAt": {
+     "type": "cds.Timestamp",
+     "@odata.Type": "Edm.DateTimeOffset",
+     "@odata.Precision": 7
+    },
+    "modifiedBy": {
+     "type": "cds.String",
+     "length": 255
+    },
+    "OBJKEY": {
+     "type": "cds.Integer"
+    },
+    "BPROCESS_BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "OBJTYPE_OBJTYPE": {
+     "type": "cds.String",
+     "length": 25
+    },
+    "SUBOBJTYPE_SUBOBJTYPE": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ISLEAF": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.objAttributesVersionType": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "OBJKEY": {
+     "type": "cds.Integer"
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "SEQNR": {
+     "type": "cds.Integer"
+    },
+    "BPROCESS_BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ATTRIBUTEVALUE": {
+     "type": "cds.String",
+     "length": 120
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    },
+    "TEXT_VALUE": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "INHERITED": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.objFiltersVersionType": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "OBJKEY": {
+     "type": "cds.Integer"
+    },
+    "SEQNR": {
+     "type": "cds.Integer"
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "BPROCESS_BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "OPERATOR_OPERATOR": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VALUE": {
+     "type": "cds.String",
+     "length": 150
+    },
+    "VALUE_TYPE": {
+     "type": "cds.String",
+     "length": 1
+    },
+    "DBORDER": {
+     "type": "cds.Integer"
+    }
+   }
+  },
+  "MOADataModel.filterOrderVersionType": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "FILTERORDER": {
+     "type": "cds.Integer"
+    }
+   }
+  },
+  "MOADataModel.bProcessParametersVersionType": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "BPROCESS_BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "IDATTRIBUTE_IDATTRIBUTE": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "SEQNR": {
+     "type": "cds.Integer"
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "DEFAULT_VALUE": {
+     "type": "cds.LargeString"
+    },
+    "READ_ONLY": {
+     "type": "cds.Boolean"
+    },
+    "NOT_REQUIRED": {
+     "type": "cds.Boolean"
+    }
+   }
+  },
+  "MOADataModel.kupit_moa_datamodel_MessageVersioning": {
+   "kind": "type",
+   "@cds.external": true,
+   "elements": {
+    "MTYPE": {
+     "type": "cds.LargeString"
+    },
+    "TEXT": {
+     "type": "cds.String",
+     "length": 150
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    }
+   }
+  },
+  "MOADataModel.testRemoteAction": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "input": {
+     "type": "cds.LargeString"
+    }
+   },
+   "returns": {
+    "type": "cds.LargeString"
+   }
+  },
+  "MOADataModel.loadBprocessVersion": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    }
+   },
+   "returns": {
+    "type": "MOADataModel.kupit_moa_datamodel_MessageVersioning"
+   }
+  },
+  "MOADataModel.createBprocessVersion": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "DESCRIPTION": {
+     "type": "cds.String",
+     "length": 100
+    }
+   },
+   "returns": {
+    "type": "MOADataModel.kupit_moa_datamodel_MessageVersioning"
+   }
+  },
+  "MOADataModel.updateBprocessVersion": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    }
+   },
+   "returns": {
+    "type": "MOADataModel.kupit_moa_datamodel_MessageVersioning"
+   }
+  },
+  "MOADataModel.exportBprocessVersion": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    },
+    "VERSION_DESCRIPTION": {
+     "type": "cds.String",
+     "length": 100
+    },
+    "ENVIRONMENT": {
+     "type": "cds.String",
+     "length": 10
+    }
+   },
+   "returns": {
+    "type": "MOADataModel.kupit_moa_datamodel_MessageVersioning"
+   }
+  },
+  "MOADataModel.importBprocessVersion": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "BPROCESS_VERSION": {
+     "type": "MOADataModel.bProcessVersion"
+    }
+   },
+   "returns": {
+    "type": "MOADataModel.kupit_moa_datamodel_MessageVersioning"
+   }
+  },
+  "MOADataModel.deleteBprocessVersion": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "BPROCESS": {
+     "type": "cds.String",
+     "length": 20
+    },
+    "VERSION": {
+     "type": "cds.Integer"
+    }
+   },
+   "returns": {
+    "type": "MOADataModel.kupit_moa_datamodel_MessageVersioning"
+   }
+  }
+ }
+}

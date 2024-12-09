@@ -7,7 +7,7 @@ const { createPdf } = require('./HandlerPDF');
 const moment = require('moment');
 const { row, and } = require('mathjs');
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
-const { testmail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted,  mailTaskRejected, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
+const { testmail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted, mailTaskRejected, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
 const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
 
@@ -20,13 +20,13 @@ async function saveUserAction(iRequest) {
     let response;
 
     try {
-        requestId     = iRequest.data.REQUEST_ID;
-        stepID        = iRequest.data.STEPID;
+        requestId = iRequest.data.REQUEST_ID;
+        stepID = iRequest.data.STEPID;
         bpaUserAction = iRequest.data.ACTION;
 
         switch (bpaUserAction) {
             case consts.bpaUserAction.START:
-                response = await userActionStart(requestId, stepID, iRequest); 
+                response = await userActionStart(requestId, stepID, iRequest);
                 break;
             case consts.bpaUserAction.APPROVE:
                 response = await handleUserAction(requestId, stepID, consts.UserAction.APPROVED, iRequest);
@@ -44,7 +44,7 @@ async function saveUserAction(iRequest) {
                 return iRequest;
         }
 
-         return response;
+        return response;
         //return iRequest;
 
     } catch (error) {
@@ -385,12 +385,12 @@ async function updateRequestStatus(iRequestId, iStepID, iUserAction, iRequest) {
     try {
         switch (iUserAction) {
             case consts.UserAction.APPROVED:
- 
-                    processStatus = await getStatusProcessApproved(iRequestId, iStepID, iRequest)
-                    if (processStatus === consts.requestStatus.Completed) {
-                        date = new Date()
-                    }
- 
+
+                processStatus = await getStatusProcessApproved(iRequestId, iStepID, iRequest)
+                if (processStatus === consts.requestStatus.Completed) {
+                    date = new Date()
+                }
+
                 break;
 
             case consts.UserAction.TERMINATED:
@@ -404,13 +404,13 @@ async function updateRequestStatus(iRequestId, iStepID, iUserAction, iRequest) {
             return processStatus;
         }
 
-       /* if (requestData.PROCESSTYPE_code === consts.processType.Annuale ||
-            requestData.PROCESSTYPE_code === consts.processType.Cessazione
-        ) { */
-            updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date }).where({ REQUEST_ID: iRequestId });
-      /*  } else {
-            updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date, REQUEST_OWNER: '' }).where({ REQUEST_ID: iRequestId });
-        } */
+        /* if (requestData.PROCESSTYPE_code === consts.processType.Annuale ||
+             requestData.PROCESSTYPE_code === consts.processType.Cessazione
+         ) { */
+        updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date }).where({ REQUEST_ID: iRequestId });
+        /*  } else {
+              updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date, REQUEST_OWNER: '' }).where({ REQUEST_ID: iRequestId });
+          } */
     } catch (error) {
         let errMEssage = "ERROR updateRequestStatus " + iRequestId + " :" + error.message;
         iRequest.error(450, errMEssage, null, 450);
@@ -520,13 +520,13 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
     }    
     */
 
-   // return returnUpdate; 
+    // return returnUpdate; 
 
-   let message = new Object();
-   message.MTYPE = consts.SUCCESS;
-   message.REQUESTID = iRequestId;
-   message.TEXT = oBundle.getText("ACTION_COMPLETED", [iRequestId]);
-   return message;
+    let message = new Object();
+    message.MTYPE = consts.SUCCESS;
+    message.REQUESTID = iRequestId;
+    message.TEXT = oBundle.getText("ACTION_COMPLETED", [iRequestId]);
+    return message;
 }
 
 async function genereteDocument(iRequestId, iRequest, isSaveAttachment) {
@@ -781,12 +781,12 @@ async function saveAttach(iPdfContent, iRequestId, iRequest) {
 
 async function userAction(iRequestId, iStepID, iUserAction, iRequest) {
 
- 
-        let returnApproversControl = await approversControl(iRequestId, iStepID, iRequest);
-        if (returnApproversControl.errors) {
-            return returnApproversControl;
-        }
- 
+
+    let returnApproversControl = await approversControl(iRequestId, iStepID, iRequest);
+    if (returnApproversControl.errors) {
+        return returnApproversControl;
+    }
+
 
 
     //Update approval history
@@ -906,14 +906,16 @@ async function getStepParams(iRequest) {
         for (let a = 0; a < stepElements.length; a++) {
             aMailList.push(stepElements[a].MAIL);
         }
-        //
-        //    //Approvers delegated
-        //    let returnGetDelegated = await getDelegated(iRequest, stepElements);
-        //    if (returnGetDelegated.errors) {
-        //        return returnSaveMoaApprovers;
-        //    }
-        //    aMailList = aMailList.concat(returnGetDelegated);
+
+        // /*
+        //Approvers delegated
+        let returnGetDelegated = await getDelegated(iRequest, stepElements);
+        if (returnGetDelegated.errors) {
+            return returnSaveMoaApprovers;
+        }
+        aMailList = aMailList.concat(returnGetDelegated);
         aMailList = _.uniq(aMailList);
+
 
         for (let m = 0; m < aMailList.length; m++) {
             mailList = mailList + aMailList[m] + ",";
@@ -953,6 +955,56 @@ async function getStepParams(iRequest) {
         return iRequest;
     }
 }
+
+
+async function getDelegated(iRequest, iStepElements) {
+
+    let responseDelegations;
+    let results = [];
+    let aMailList = [];
+    let oDate = new Date();
+    let jsonDate = oDate.toJSON();
+    let user = "";
+
+    try {
+
+        for (let d = 0; d < iStepElements.length; d++) {
+
+            user = iStepElements[d].MAIL;
+
+            let filterP1 = "/DelegationRO?$filter=USER eq '" + user + "' and BPROCESS_BPROCESS eq 'O2PPROCESS'";
+            let filterP2 = filterP1 + " and FROMDATE le datetime'" + jsonDate + "' and TODATE ge datetime'" + jsonDate + "'";
+
+            responseDelegations = await MoaExtraction.send({
+                method: 'GET',
+                path: filterP2
+            });
+
+            for (let i = 0; i < responseDelegations.d.results.length; i++) {
+                results.push(responseDelegations.d.results[i]);
+            }
+        }
+
+    } catch (error) {
+        iRequest.error(450, "getDelegation: " + error.message, null, 450);
+        LOG.error(error.message);
+        return iRequest;
+    }
+
+    if (results.length <= 0) {
+        return aMailList;
+    }
+
+    for (let r = 0; r < results.length; r++) {
+        let result = results[r];
+        let delegate = result.DELEGATE;
+        if (delegate !== undefined || delegate !== "") {
+            aMailList.push(delegate);
+        }
+    }
+    return aMailList;
+}
+
 
 async function updateApprovalHistory(iApprovalHistory, iRequest) {
     let aApprovalHistory = new Array();
@@ -1032,7 +1084,7 @@ async function getStepDescritpion(iRequest) {
 
 
     let rsStepDescription = await SELECT.one.from(StepDescription).
-        where({ 
+        where({
             STEP: iRequest.data.STEP
         });
 
@@ -1047,24 +1099,24 @@ async function getStepDescritpion(iRequest) {
     stepDescription = stepDescription.replaceAll('<REQUEST_ID>', iRequest.data.REQUEST_ID);
 
     //////////////////////////////////////////////////////////////
-    
+
     if (rsRequest.PAYMENT_MODE_CODE) {
-        
-    let oPaymode = await SELECT.one.from(Paymode).
-    where({ CODE:  rsRequest.PAYMENT_MODE_CODE });
-    
-    stepDescription = stepDescription.replaceAll('<PAYMENT_MODE>', oPaymode.PAYMENT_NAME);
+
+        let oPaymode = await SELECT.one.from(Paymode).
+            where({ CODE: rsRequest.PAYMENT_MODE_CODE });
+
+        stepDescription = stepDescription.replaceAll('<PAYMENT_MODE>', oPaymode.PAYMENT_NAME);
 
     }
 
     ////////////////////////////////////////////////////////////////
 
     let rsRequester = await SELECT.one.from(Requester).
-    where({ CODE:  rsRequest.REQUESTER_CODE });
+        where({ CODE: rsRequest.REQUESTER_CODE });
 
-    stepDescription = stepDescription.replaceAll('<REQUESTER>', rsRequester.REQUESTER_NAME );
-    
- 
+    stepDescription = stepDescription.replaceAll('<REQUESTER>', rsRequester.REQUESTER_NAME);
+
+
 
     responseStepDescription.stepDescription = stepDescription;
     responseStepDescription.stepRo = rsStepDescription.STEP_RO;
@@ -1140,12 +1192,12 @@ async function approversControl(iRequestId, iStepID, iRequest) {
     let userCompiler = returnRequestData.createdBy;
 
     //Aggiornamento approvatori MOA
- 
+
     let returnUpdateMoa = await updateMoaApprovers(iRequestId, userCompiler, iRequest);
     if (returnUpdateMoa.errors) {
         return returnUpdateMoa;
     }
-     
+
 
     let returnGetApprovers = await getNextApprovers(iRequestId, iStepID, iRequest);
     if (returnGetApprovers.errors) {
@@ -1202,7 +1254,7 @@ function checkMailApprover(iMail) {
         return false;
     } else if (iMail === null) {
         return false;
-    } else if (iMail === undefined) { 
+    } else if (iMail === undefined) {
         return false;
     } else if (iMail === 'null') {
         return false;
@@ -1353,7 +1405,7 @@ async function sendTeamsNotification(iRequest) {
 
         //Notifica di richiesta rifiutata
         if (stepID === 10 && aRequestData.VERSION > 1) {
-         //   return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+            //   return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
         }
 
         //Sul primo step non mandiamo la notifica
@@ -1435,7 +1487,7 @@ async function assignApprover(iRequest) {
             return iRequest;
         }
 
-         const cdsTx = cds.tx(); //-> creo la transaction
+        const cdsTx = cds.tx(); //-> creo la transaction
 
         //Aggiornamento dei campi relativi al vecchio compilatore utilizzato da Fiori per visualizzare il messaggio di warning
         let oldApprover = await SELECT.one.from(ApprovalFlow).
@@ -1450,19 +1502,19 @@ async function assignApprover(iRequest) {
             }).where({
                 REQUEST_ID: requestID
             });
-          // let updateRequestResponse = await cdsTx.run(updateRequest);
+            // let updateRequestResponse = await cdsTx.run(updateRequest);
         }
         //OLD_COMPILER
         updatecompiler = await updateReqApprovers(iRequest, requestID, eMail, history.STEP, cdsTx)
         if (updatecompiler.errors) {
-           //  await cdsTx.rollback();
+            //  await cdsTx.rollback();
             return assign;
         }
 
         if (note !== undefined && note != '') {
             let responseNote = await saveNove(iRequest, requestID, note, cdsTx);
             if (responseNote.errors) {
-             //  await cdsTx.rollback();
+                //  await cdsTx.rollback();
                 return assign;
             }
 
@@ -1473,7 +1525,7 @@ async function assignApprover(iRequest) {
             return assign;
         }
 
-       // await cdsTx.commit();
+        // await cdsTx.commit();
 
         const oBundle = getTextBundle(iRequest);
         let message = new Object();
@@ -1524,7 +1576,7 @@ async function saveNove(iRequest, iRequestId, iNote, iCdsTx) {
         //let insertRequestResponse = await iCdsTx.run(insertRequest);
 
         //return insertRequestResponse;
-       return insertRequest
+        return insertRequest
 
     } catch (error) {
         iRequest.error(450, error.message, null, 450);
@@ -1582,7 +1634,7 @@ async function updateReqApprovers(iRequest, iRequestId, iEmail, iStepFlow, iCdsT
         approver.ISMANAGER = oInfoWDPosition.IsManager;
         approversEntries.push(approver);
         let insertRequest = await INSERT.into(ApprovalFlow).entries(approversEntries);
-       // let insertRequestResponse = await iCdsTx.run(insertRequest);
+        // let insertRequestResponse = await iCdsTx.run(insertRequest);
 
         return insertRequest;
         //return insertRequestResponse;

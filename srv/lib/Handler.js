@@ -863,6 +863,7 @@ async function getDocPopupData(iRequest) {
         VIS_REFKEY2: false,
         VIS_RIFERIMENTO: false,
         VIS_ATTRIBUZIONE: false,
+        REQ_ATTRIBUZIONE: false,
         REQ_IBAN: false,
         VIS_IBAN: false
 
@@ -932,6 +933,7 @@ async function getDocPopupData(iRequest) {
 
         if (oAccountreq.MANDATORY_ATTRIB === true) {
             oResult.VIS_ATTRIBUZIONE = true
+            oResult.REQ_ATTRIBUZIONE = true
         }
 
     }
@@ -1276,21 +1278,24 @@ async function checkBeforeFIDocument(oDocumentHeader, aAccountPayable, aCurrency
 
 }
 
-async function getDocumentProp(iRequest, iStep) {
+async function getDocumentProp(iRequestID, iDocID, iStep) {
 
     let exception_exist = false
 
-    let oResult = { docType: "", docProcType: "" }
+    let oResult = { docType: "", docProcType: "", creaType: "" }
 
     let oRequest = await SELECT.one.from(Request).
-        where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+        where({ REQUEST_ID: iRequestID });
 
     let aDocument = await SELECT.from(Document).
         where({
-            to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
-            DOC_ID: iRequest.data.DOC_ID
+            to_Request_REQUEST_ID: iRequestID,
+            DOC_ID: iDocID
         }).orderBy('DOC_ID asc', 'ID asc');
 
+    if (aDocument.length === 0) {
+        return oResult
+    }
 
     //    Prima di valorizzare il tipo di documento che verrà creato (DOC_TYPE) ed il tipo di registrazione (PROC_DOC_TYPE), controllo se c'è un'eccezione per i conti utilizzati
     //   Se esistono più conti con eccezioni diverse verrà considerata solo la prima eccezione trovata
@@ -1341,6 +1346,30 @@ async function getDocumentProp(iRequest, iStep) {
             oResult.docProcType = oDocparam.DOC_PROC_TYPE
         }
     }
+
+    if (Boolean(oResult.docType)) {
+        if (((oResult.docType === consts.documentType.KA || oResult.docType === consts.documentType.KB) &&
+            oResult.docProcType === "" &&
+            oRequest.PAYMENT_MODE_CODE === consts.Paymode.ENTRATEL &&
+            Boolean(aDocument[0].DOCUMENT_NUMBER)
+
+        ) || ((oResult.docType === consts.documentType.KZ || oResult.docType === consts.documentType.KY) &&
+            oResult.docProcType !== "S"
+            )
+
+        ) {
+            oResult.creaType = 'C'
+        } else {
+
+            oResult.creaType = 'A'
+
+        }
+
+
+
+    }
+
+
 
     return oResult
 
@@ -1393,7 +1422,8 @@ async function fillTableFIDocument(iRequest, iDocProp) {
         });
 
 
-    let oDocProp = await getDocumentProp(iRequest, "50")
+    // let oDocProp = await getDocumentProp(iRequest, "50")
+    let oDocProp = iDocProp
 
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -1745,7 +1775,9 @@ async function fillTableClearFIDocument(iRequest, iDocProp) {
         where({ CODE: oRequest.PAYMENT_MODE_CODE });
 
 
-    let oDocProp = await getDocumentProp(iRequest, "60")
+    // let oDocProp = await getDocumentProp(iRequest, "60")
+
+    let oDocProp = iDocProp
 
     if (Boolean(oRequest.VALUE_DATE)) {
         valut = moment(oRequest.VALUE_DATE).format('YYYYMMDD')
@@ -1857,6 +1889,22 @@ async function fillTableClearFIDocument(iRequest, iDocProp) {
 
 }
 
+async function isCreationStep(iRequest) {
+ 
+
+    /*
+
+    let oPostionsMapping = await MOADataModel.run(SELECT.one.from(PostionsMapping)
+    .where({ LBLPOSITION: '' }));
+    
+ */
+
+
+    let oDocProp = await getDocumentProp(iRequest.data.REQUEST_ID, iRequest.data.DOC_ID, iRequest.data.STEPID)
+    return oDocProp.creaType
+
+}
+
 
 async function createFIDocument(iRequest) {
 
@@ -1873,7 +1921,7 @@ async function createFIDocument(iRequest) {
 
         try {
 
-            let oDocProp = await getDocumentProp(iRequest, iRequest.data.STEPID)
+            let oDocProp = await getDocumentProp(iRequest.data.REQUEST_ID, iRequest.data.DOC_ID, iRequest.data.STEPID)
 
             if (Boolean(iRequest.data.CLEARING)) {
 
@@ -1991,16 +2039,16 @@ async function createFIDocument(iRequest) {
                                 DOC_TYPE: oBodyReq.ToDocumentHeader.DocType,
                                 DOC_NUMBER: docNumber,
                                 //COMPANY_CODE: "",
-                               // FISCAL_YEAR: "",
+                                // FISCAL_YEAR: "",
                                 STATUS: 'C',
                                 STATUS_TEXT: ''
                             })
-        
+
                             let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
 
                         } else {
 
-                
+
                             aDocument[i].DOCUMENT_COMP_CODE = compCode
                             aDocument[i].DOCUMENT_NUMBER = docNumber
                             aDocument[i].DOCUMENT_FISCAL_YEAR = fiscYear
@@ -2020,17 +2068,17 @@ async function createFIDocument(iRequest) {
                                 STATUS: 'C',
                                 STATUS_TEXT: ''
                             })
-        
+
                             let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
 
                         }
                     }
 
-                   
 
 
 
-         
+
+
 
 
                 } else // error log
@@ -2139,6 +2187,7 @@ module.exports = {
     getEccServices,
     createFIDocument,
     getDocStatus,
-    getAssignInfo
+    getAssignInfo,
+    isCreationStep
 
 }

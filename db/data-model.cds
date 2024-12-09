@@ -47,9 +47,8 @@ entity Request : managed {
       //EXPIRY_DATE_F23
       //---> tutti gli expire date unico campo
 
-        OLD_COMPILER_MAIL:       MAIL;
-  OLD_COMPILER_FULLNAME:   FULLNAME;
-
+      OLD_COMPILER_MAIL              : MAIL;
+      OLD_COMPILER_FULLNAME          : FULLNAME;
       EXPIRY_DATE                    : Date;
       PAYMENT_NOTE                   : String;
       SKIP_COORD                     : Boolean default false;
@@ -223,12 +222,12 @@ entity Parameters : managed {
 }
 
 // ZFI_O2P_PARAM
- 
+
 entity Param : managed {
- key PARAMNAME  : String(50);
- key VAL_INPUT  : String(50);
- key PARAMNUM   : Decimal(2, 0);
-  VAL_OUTPUT : String(50);
+  key PARAMNAME  : String(50);
+  key VAL_INPUT  : String(50);
+  key PARAMNUM   : Decimal(2, 0);
+      VAL_OUTPUT : String(50);
 }
 
 
@@ -348,7 +347,6 @@ entity Docparam : managed {
       DOC_TYPE        : DOCTYPE;
       DOC_PROC_TYPE   : String(1)
 }
-
 
 
 //ZFI_O2P_OU_REQ
