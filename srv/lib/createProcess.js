@@ -193,6 +193,7 @@ async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersi
 
 
     let aApprovalHistory = new Array();
+    let aApprovalHistoryDb = new Array();
     let insertRequest;
     let insertRequestResponse;
     let stepCheck = ""
@@ -295,7 +296,7 @@ async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersi
                 let oApprovalDb = aApprovalDb.find(oApprovalDb => oApprovalDb.STEP === Number(iMoaApprovers[a].STEP))
 
                 if (oApprovalDb && Boolean(oApprovalDb.BPA_TASKID_ID)) {
-                    aApprovalHistory.push(oApprovalDb)
+                    aApprovalHistoryDb.push(oApprovalDb)
                 } else {
 
                     aApprovalHistory.push({
@@ -309,8 +310,18 @@ async function insertApprovalHistory(iRequest, iRequestId, iMoaApprovers, iVersi
 
         }
 
+        if (aApprovalHistoryDb.length > 0) {
+            insertRequestResponse = await UPSERT.into(ApprovalHistory).entries(aApprovalHistoryDb);
+        }
 
-        insertRequestResponse = await UPSERT.into(ApprovalHistory).entries(aApprovalHistory);
+        if (aApprovalHistory.length > 0) {
+            insertRequestResponse = await UPSERT.into(ApprovalHistory).entries(aApprovalHistory);
+        }
+
+
+
+
+
 
 
     } catch (error) {
@@ -359,34 +370,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
             aResult = moaResponse.d.results;
 
-            if (Boolean(oMOAParam.managerStep42)) {
 
-                let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
-                    .where({ MailDipendente: oMOAParam.managerStep42 }));
-                if (oInfoWDPosition) {
-                    aResult.push({
-                        INDEX: "42", WDID: oInfoWDPosition.WorkdayEmployeeID,
-                        SAPUSER: oInfoWDPosition.UtenteSAP, MAIL: oInfoWDPosition.MailDipendente,
-                        FNAME: oInfoWDPosition.Nome, LNAME: oInfoWDPosition.Cognome,
-                        IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false"
-                    });
-                }
-            }
-
-            if (Boolean(oMOAParam.managerExceptStep40)) {
-
-                let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
-                .where({ MailDipendente: oMOAParam.managerStep42 }));
-            if (oInfoWDPosition) {
-                aResult.push({
-                    INDEX: "42", WDID: oInfoWDPosition.WorkdayEmployeeID,
-                    SAPUSER: oInfoWDPosition.UtenteSAP, MAIL: oInfoWDPosition.MailDipendente,
-                    FNAME: oInfoWDPosition.Nome, LNAME: oInfoWDPosition.Cognome,
-                    IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false"
-                });
-            }
-            
-            }
 
         } else {
 
@@ -396,16 +380,17 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
             aResult.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore", ISMANAGER: "false" });
 
-            if (oMOAParam.addStep40 === 'TRUE') {
+          // if (oMOAParam.addStep40 === 'TRUE') {
                 aResult.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
-            }
+          // }
 
-            if (Boolean(oMOAParam.managerStep42)) {
-                aResult.push({ INDEX: "42", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false" });
-            }
+           // if (Boolean(oMOAParam.managerStep42)) {
+           //       aResult.push({ INDEX: "42", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false" });
+           //  }
 
-            if (oMOAParam.addStep45 === 'TRUE') {
-                aResult.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
+            
+           if (oMOAParam.addStep45 === 'TRUE') {
+               aResult.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
             }
 
             aResult.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
@@ -427,6 +412,64 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
             }
 
         }
+
+       // sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
+      //  if (sendFakeMail === "false") {
+
+
+        if (oMOAParam.addStep40 === 'TRUE' && Boolean(oMOAParam.managerExceptStep40)) {
+
+            let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
+                oMOAParam.managerExceptStep40 + "'");
+
+            if (oResponse && oResponse.d.results.length > 0) {
+
+                let wd = oResponse.d.results[0].WDPOSITION;
+                let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
+                if (oInfoWDPosition) {
+
+                    let idx = aResult.findIndex((oResult) => oResult.INDEX === "40")
+
+                    if (idx >= 0) {
+
+                        aResult[idx].WDID = oInfoWDPosition.WorkdayEmployeeID
+                        aResult[idx].SAPUSER = oInfoWDPosition.UtenteSAP
+                        aResult[idx].MAIL = oInfoWDPosition.MailDipendente
+                        aResult[idx].FNAME = oInfoWDPosition.Nome
+                        aResult[idx].LNAME = oInfoWDPosition.Cognome
+
+                    } 
+                     else
+                       {
+
+                        aResult.push({
+                            INDEX: "40", WDID: oInfoWDPosition.WorkdayEmployeeID,
+                            SAPUSER: oInfoWDPosition.UtenteSAP, MAIL: oInfoWDPosition.MailDipendente,
+                            FNAME: oInfoWDPosition.Nome, LNAME: oInfoWDPosition.Cognome,
+                            IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false"
+                        });
+                    }
+                        
+                }
+            }
+        }
+
+
+        if (Boolean(oMOAParam.managerStep42)) {
+
+            let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
+                .where({ MailDipendente: oMOAParam.managerStep42 }));
+            if (oInfoWDPosition) {
+                aResult.push({
+                    INDEX: "42", WDID: oInfoWDPosition.WorkdayEmployeeID,
+                    SAPUSER: oInfoWDPosition.UtenteSAP, MAIL: oInfoWDPosition.MailDipendente,
+                    FNAME: oInfoWDPosition.Nome, LNAME: oInfoWDPosition.Cognome,
+                    IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false"
+                });
+            }
+        }
+
+   // }
 
     } catch (error) {
         iRequest.error(450, error.message, null, 450);
@@ -539,6 +582,9 @@ async function getMOAParams(iRequestID) {
             }
         }
     }
+
+   // oResult.addStep40 = 'TRUE'
+   // oResult.managerExceptStep40 = "HR_POSITION_MANAGER_CONTAB_GEN_AMM_VENDITE"
 
     //   Step 42
 
@@ -688,8 +734,8 @@ async function saveMoaApprovers(iRequest, iRequestId, iMoaApprovers, iCdsTx) {
         }
 
         // insertRequest = INSERT.into(ApprovalFlow).entries(approversEntries);
-        insertRequest = UPSERT.into(ApprovalFlow).entries(approversEntries);
-        InsertRequestResponse = await iCdsTx.run(insertRequest);
+        insertRequest = await UPSERT.into(ApprovalFlow).entries(approversEntries);
+        //InsertRequestResponse = await iCdsTx.run(insertRequest);
 
         let debug = 0;
         debug++;
@@ -1088,8 +1134,8 @@ async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest) {
         }
 
         //Delete OLD MOA Approvers
-        let deleteApprovers = DELETE.from(ApprovalFlow).where({ to_Request_REQUEST_ID: iRequest.data.REQUEST_ID });
-        let deleteResponse = await cdsTx.run(deleteApprovers);
+        let deleteApprovers = await DELETE.from(ApprovalFlow).where({ to_Request_REQUEST_ID: iRequest.data.REQUEST_ID });
+        // let deleteResponse = await cdsTx.run(deleteApprovers);
 
 
         //Save MOA Approvers
@@ -1118,7 +1164,7 @@ async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest) {
         }
 
         //Commit 
-        await cdsTx.commit();
+        // await cdsTx.commit();
 
     } catch (error) {
         let errMEssage = "updateMoaApprovers:" + error.message + " O2PREQUESTID: " + iRequest.data.REQUEST_ID;

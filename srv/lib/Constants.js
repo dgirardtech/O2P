@@ -139,6 +139,10 @@ exports.mailPatterns = Object.freeze({
 
 //Attachment Type
 exports.attachmentTypes = Object.freeze({
-    ADESIONE: "ADESIONE",
-    GENERICO: "GENERICO"
+    CAPI: "CAPI",
+    FLBONIFIC: "FLBONIFIC",
+    F24: "F24",
+    F23_CONC:"F23_CONC",
+    F23_UFF:"F23_UFF",
+    F23_VERS:"F23_VERS"
 });

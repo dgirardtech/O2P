@@ -83,8 +83,7 @@ entity Document : managed {
       PARTN_BNK_TYPE       : String(4);
       REF_ID               : String(16);
       SPECIAL_GL_IND       : SPECIAL_GL_IND;
-      ACCOUNT              : ACCOUNT;
-      ACCOUNT_ADVANCE      : Boolean default false;
+      ACCOUNT              : ACCOUNT; 
       REASON               : REASON;
       AMOUNT               : AMOUNT;
       TEXT                 : String(50);
@@ -102,8 +101,8 @@ entity Document : managed {
       REFKEY2              : String(12);
       VALUT                : Date;
       IS_FROM_EXCEL        : Boolean default false;
-      virtual VENDOR_DESC  : String;
-
+      virtual VENDOR_DESC  : String; 
+      virtual ACCOUNT_ADVANCE: Boolean
 }
 
 //ZFI_O2P_APPRFLOW
@@ -271,7 +270,7 @@ entity Accountreq : managed {
       COORDINATOR_LIMIT      : Decimal(11, 2);
       DIRECTOR_TRESHOLD      : Decimal(11, 2);
       SPECIAL_GL_IND         : SPECIAL_GL_IND;
-      ADVANCE_ACCOUNT        : Boolean default false;
+      ACCOUNT_ADVANCE        : Boolean default false;
       POSTAL_ACCOUNT         : Boolean default false;
       VALUE_DATE             : Boolean default false;
       MANDATORY_ATTRIB       : Boolean default false;
@@ -334,6 +333,7 @@ entity Doclog : managed {
       FISCAL_YEAR  : YEAR;
       STATUS       : String;
       STATUS_TEXT  : String;
+      CLEARING     : Boolean
 }
 
 // ZFI_O2P_DOCPARAM
@@ -442,8 +442,10 @@ type COMPANY          : String(4);
 type DOCNUM           : String(10);
 type SPECIAL_GL_IND   : String(1);
 type YEAR             : Decimal(4, 0);
-type DOC_ID           : Decimal(3, 0);
-type DOC_ID_POS       : Decimal(3, 0);
+//type DOC_ID           : Decimal(3, 0);
+//type DOC_ID_POS       : Decimal(3, 0);
+type DOC_ID           : String(3);
+type DOC_ID_POS       : String(3);
 type DOCTYPE          : String(2);
 type ACCOUNT          : String(10);
 type REQUESTER        : String(10);

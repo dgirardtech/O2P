@@ -3,7 +3,7 @@ const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter,getMOAParams } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote, getLayout, checkData,
-    updateRequest, getTemplate, getRejectInfo, formatMonitoring, formatMonitoringDetail, formatDocument, getDocPopupData,getDocStatus,
+    updateRequest, getTemplate, getRejectInfo, formatMonitoring, formatMonitoringDetail, formatDocument,manageDocPopupData, getDocStatus,
     fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument,getAssignInfo,isCreationStep } = require('./lib/Handler');
 const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument,
     emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
@@ -17,8 +17,7 @@ module.exports = cds.service.impl(async function () {
     global.MoaExtraction = await cds.connect.to('MoaExtraction');
     global.WorkDayProxy = await cds.connect.to('WorkDayProxy');
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
-
-    global.MOADataModel = await cds.connect.to('MOADataModel');
+ 
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,14 +29,12 @@ module.exports = cds.service.impl(async function () {
     const { UserTaskCounter } = this.entities;
     const { CostCenterTextSet, AfeLocationSet } = this.entities;
     const { VendorSet,AccDocHeaderSet, AccDocPositionSet,GlAccountCompanySet} = this.entities;
-
-
-    const { PostionsMapping } = this.entities
+ 
 
 
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
     global.ZFI_O2P_COMMON_SRV = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-global.MOADataModel = await cds.connect.to('MOADataModel');
+ 
 
     global.ApprovalView = ApprovalView;
     global.StepDescription = StepDescription;
@@ -77,7 +74,7 @@ global.MOADataModel = await cds.connect.to('MOADataModel');
     global.AccDocPositionSet = AccDocPositionSet
     global.GlAccountCompanySet = GlAccountCompanySet
 
-    global.PostionsMapping = PostionsMapping
+ 
 
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +135,7 @@ global.MOADataModel = await cds.connect.to('MOADataModel');
 
     this.on('checkData', checkData);
 
-    this.on('getDocPopupData', getDocPopupData);
+    this.on('manageDocPopupData', manageDocPopupData)
 
     this.on('getDocStatus', getDocStatus);
 
@@ -200,6 +197,7 @@ global.MOADataModel = await cds.connect.to('MOADataModel');
         return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
     });
 
+   
     
 
 }

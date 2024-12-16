@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-   "@cap-js-community/odata-v2-adapter": "^1.11.9",
+    "@cap-js-community/odata-v2-adapter": "^1.11.9",
     "@sap-cloud-sdk/connectivity": "^3.7.0",
     "@sap-cloud-sdk/http-client": "^3.7.0",
     "@sap-cloud-sdk/odata-v2": "^3.12.1",
@@ -37,7 +37,7 @@
     "@sap/cds-dk": "^7",
     "@sap/dev-cap-tools": "^1.31.0",
     "@sap/eslint-plugin-cds": "^3",
-    "@sap/hdi-deploy": "4.9.4",
+    "@sap/hdi-deploy": "^5.3.2",
     "eslint": "^9"
   },
   "scripts": {
@@ -168,7 +168,6 @@
           "path": "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV"
         }
       },
-      
       "ZFI_AFE_COMMON_SRV": {
         "kind": "odata-v2",
         "model": "srv/external/ZFI_AFE_COMMON_SRV",
@@ -178,16 +177,7 @@
           "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZFI_AFE_COMMON_SRV"
         }
-      },
-
-      "MOADataModel": {
-        "kind": "odata-v2",
-        "model": "srv/external/MOADataModel",
-        "credentials": {
-          "destination": "kupit-moa-data-model-dest-api",
-          "path": "/odata/v2/catalog/"
-        }
-      }
+      } 
     }
   }
 }

@@ -2,8 +2,6 @@ using kupit.o2p as KupitO2PModel from '../db/data-model';
 using {WorkDayProxy as WorkDayService} from './external/WorkDayProxy.csn';
 using {ZFI_AFE_COMMON_SRV as ZFI_AFE_COMMON_SRV} from './external/ZFI_AFE_COMMON_SRV.csn';
 using {ZFI_O2P_COMMON_SRV as ZFI_O2P_COMMON_SRV} from './external/ZFI_O2P_COMMON_SRV.csn';
-using { MOADataModel as MOADataModel } from './external/MOADataModel.csn';
-
 
 
 @path: 'kupito2pmodel-srv'
@@ -277,8 +275,7 @@ service O2PModelService @(requires: [
                 document.PARTN_BNK_TYPE,
                 document.REF_ID,
                 document.SPECIAL_GL_IND,
-                document.ACCOUNT,
-                document.ACCOUNT_ADVANCE,
+                document.ACCOUNT, 
                 document.REASON,
                 document.AMOUNT,
                 document.TEXT,
@@ -351,7 +348,7 @@ service O2PModelService @(requires: [
     function getLayout(REQUESTER : String,
                        PAYMENT_MODE : String,
                        PRIORITY : Boolean,
-                       F24_ENTRATEL_TYPE : String)                      returns getLayoutReturn;
+                       TYPE_F24_ENTRATEL : String)                      returns getLayoutReturn;
 
     action   createProcess(REQUESTER : String)                          returns Message;
     action   checkData(request : Request, document : array of Document) returns array of checkDataReturn;
@@ -372,10 +369,11 @@ service O2PModelService @(requires: [
                               STEPID : KupitO2PModel.STEP_ID)           returns array of createFIDocumentReturn;
 
     function getMOAParams(REQUEST_ID : KupitO2PModel.REQUEST_ID)        returns getMOAParamsReturn;
-    
     function getMonitorTaskLink(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns Message;
     function getRejectInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns RejectInfo;
-    function getDocStatus(REQUEST_ID : KupitO2PModel.REQUEST_ID)        returns array of getDocStatusReturn;
+
+    function getDocStatus(REQUEST_ID : KupitO2PModel.REQUEST_ID,
+                          STEPID : KupitO2PModel.STEP_ID)               returns array of getDocStatusReturn;
 
     function isCreationStep(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                             DOC_ID : KupitO2PModel.DOC_ID,
@@ -393,75 +391,32 @@ service O2PModelService @(requires: [
                             NOTE : String,
                             EMAIL : String)                             returns Message;
 
-
-    action   getDocPopupData(REQUESTER : String,
-                             PAYMODE : String,
-                             REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                             DOC_ID : KupitO2PModel.DOC_ID,
-                             ID : KupitO2PModel.DOC_ID_POS,
-                             LOCATION : KupitO2PModel.LOCATION,
-                             VENDOR : KupitO2PModel.VENDOR,
-                             COST_CENTER : KupitO2PModel.COST_CENTER,
-                             INT_ORDER : KupitO2PModel.INT_ORDER,
-                             ACCOUNT : KupitO2PModel.ACCOUNT)           returns getDocPopupDataReturn;
-
-    action   checkDocPopupData(REQUESTER : String,
-                               PAYMODE : String,
-                               REQUEST_ID : KupitO2PModel.REQUEST_ID,
-                               DOC_ID : KupitO2PModel.DOC_ID,
-                               ID : KupitO2PModel.DOC_ID_POS,
-                               LOCATION : KupitO2PModel.LOCATION,
-                               VENDOR : KupitO2PModel.VENDOR,
-                               COST_CENTER : KupitO2PModel.COST_CENTER,
-                               INT_ORDER : KupitO2PModel.INT_ORDER,
-                               ACCOUNT : KupitO2PModel.ACCOUNT)         returns checkDataReturn;
+ 
 
 
-    type isCreationStepReturn   : String;
-
-    type AssignInfo             : {
-        COMPILER_NAME : String;
-        MOTIVATION    : String;
-    }
-
-    type getMOAParamsReturn : {
-
-      depreAccount : String;
-      addStep30Coord : String;
-      addStep30CoordLinea : String;
-      managerExceptStep40 : String;
-      addStep40 : String;
-      managerStep42 : String;
-      addStep45 : String;
-      addStep60Controller : String;
-      addStep60Cassa : String;
-      addStep60Finanza : String;
-      addStep70 : String;
-      addStep80 : String;
-
-    }
-
-    type getDocStatusReturn     : {
-        REQUEST_ID  : KupitO2PModel.REQUEST_ID;
-        DOC_ID      : KupitO2PModel.DOC_ID;
-        VENDOR      : KupitO2PModel.VENDOR;
-        VENDOR_DESC : String;
-        AMOUNT_TOT  : KupitO2PModel.AMOUNT;
-        DOC_TYPE    : KupitO2PModel.DOCTYPE;
-        DOC_NUMBER  : KupitO2PModel.DOCNUM;
-        STATUS      : String;
-        STATUS_TEXT : String
-    }
+    action   manageDocPopupData(PAYMODE : String,
+                                REQUEST_ID : KupitO2PModel.REQUEST_ID,
+                                DOC_ID : KupitO2PModel.DOC_ID,
+                                ID : KupitO2PModel.DOC_ID_POS,
+                                LOCATION : KupitO2PModel.LOCATION,
+                                VENDOR : KupitO2PModel.VENDOR,
+                                COST_CENTER : KupitO2PModel.COST_CENTER,
+                                INT_ORDER : KupitO2PModel.INT_ORDER,
+                                ACCOUNT : KupitO2PModel.ACCOUNT,
+                                AMOUNT :  Decimal(13, 2),
+                                REASON : KupitO2PModel.REASON,
+                                IBAN : KupitO2PModel.IBAN, 
+                                NOTE : String,
+                                ATTRIBUZIONE : String(18) )    returns manageDocPopupDataReturn;
 
 
-    type getDocPopupDataReturn  : {
+    type manageDocPopupDataReturn : {
+
         LOCATION_DESC    : String;
         VENDOR_DESC      : String;
         REF_ID           : String;
-        IBAN             : array of IBAN;
         COST_CENTER_DESC : String;
         INT_ORDER_DESC   : String;
-        ACCOUNT          : array of ACCOUNT;
         REQ_LOCATION     : Boolean default false;
         VIS_COGE         : Boolean default false;
         VIS_TRIBUTO      : Boolean default false;
@@ -478,25 +433,72 @@ service O2PModelService @(requires: [
         REQ_ATTRIBUZIONE : Boolean default false;
         REQ_IBAN         : Boolean default false;
         VIS_IBAN         : Boolean default false;
+        REQ_REASON       : Boolean default true;
+        VIS_REASON       : Boolean default true;
+        REQ_AMOUNT       : Boolean default true;
+        VIS_AMOUNT       : Boolean default true;
+        REQ_VENDOR       : Boolean default true;
+        VIS_VENDOR       : Boolean default true; 
+        IBAN             : array of IBAN;
+        ACCOUNT          : array of ACCOUNT;
+        ERROR            : array of checkDataReturn
 
     }
 
-    type IBAN                   : {
+    type isCreationStepReturn     : String;
+
+    type AssignInfo               : {
+        COMPILER_NAME : String;
+        MOTIVATION    : String;
+    }
+
+    type getMOAParamsReturn       : {
+
+        depreAccount        : String;
+        addStep30Coord      : String;
+        addStep30CoordLinea : String;
+        managerExceptStep40 : String;
+        addStep40           : String;
+        managerStep42       : String;
+        addStep45           : String;
+        addStep60Controller : String;
+        addStep60Cassa      : String;
+        addStep60Finanza    : String;
+        addStep70           : String;
+        addStep80           : String;
+
+    }
+
+    type getDocStatusReturn       : {
+        REQUEST_ID  : KupitO2PModel.REQUEST_ID;
+        DOC_ID      : KupitO2PModel.DOC_ID;
+        VENDOR      : KupitO2PModel.VENDOR;
+        VENDOR_DESC : String;
+        AMOUNT_TOT  : KupitO2PModel.AMOUNT;
+        DOC_TYPE    : KupitO2PModel.DOCTYPE;
+        DOC_NUMBER  : KupitO2PModel.DOCNUM;
+        STATUS      : String;
+        STATUS_TEXT : String
+    }
+
+ 
+
+    type IBAN                     : {
         CODE : KupitO2PModel.IBAN
     }
 
-    type ACCOUNT                : {
+    type ACCOUNT                  : {
         CODE        : KupitO2PModel.ACCOUNT;
         DESC        : String;
         CONCAT_DESC : String;
     }
 
-    type DocTree                : {
+    type DocTree                  : {
         REQUEST_ID : KupitO2PModel.REQUEST_ID;
         HEADER     : array of DocHead
     }
 
-    type DocHead                : {
+    type DocHead                  : {
         DOC_ID               : KupitO2PModel.DOC_ID;
         VENDOR               : KupitO2PModel.VENDOR;
         VENDOR_DESC          : String;
@@ -516,7 +518,7 @@ service O2PModelService @(requires: [
         POSITION             : array of DocPos
     }
 
-    type DocPos                 : {
+    type DocPos                   : {
         PARENT_ID           : KupitO2PModel.DOC_ID;
         ID                  : KupitO2PModel.DOC_ID_POS;
         ACCOUNT             : KupitO2PModel.ACCOUNT;
@@ -538,17 +540,18 @@ service O2PModelService @(requires: [
     }
 
 
-    type checkDataReturn        : {
+    type checkDataReturn          : {
+        MTYPE : MessageType;
+        TEXT  : String;
+        REF_FIELD: String
+    }
+
+    type createFIDocumentReturn   : {
         MTYPE : MessageType;
         TEXT  : String;
     }
 
-    type createFIDocumentReturn : {
-        MTYPE : MessageType;
-        TEXT  : String;
-    }
-
-    type Message                : {
+    type Message                  : {
         MTYPE         : MessageType;
         TEXT          : String(250);
         WF_INSTACE_ID : WfInstanceId;
@@ -558,20 +561,20 @@ service O2PModelService @(requires: [
         CONTENT       : String;
     };
 
-    type RejectInfo             : {
+    type RejectInfo               : {
         REJECTOR_NAME : String;
         MOTIVATION    : String;
     }
 
     @assert.range
-    type MessageType            : String enum {
+    type MessageType              : String enum {
         Error   = 'E';
         Warning = 'W';
         Info    = 'I';
         success = 'S'
     }
 
-    type WfInstanceId           : String(250);
+    type WfInstanceId             : String(250);
 
 
     @open
@@ -594,7 +597,7 @@ service O2PModelService @(requires: [
         VIS_F24_ENTRATEL_TYPE            : Boolean;
         VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT : Boolean;
         VIS_SEND_TASK_BTN                : Boolean
-
-    }
+    
+     }
 
 }

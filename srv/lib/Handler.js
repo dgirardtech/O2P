@@ -339,39 +339,31 @@ async function getRejectInfo(iRequest) {
     return returninfo;
 }
 
-
-
-async function getLayout(iRequest) {
-
-    //let requester   = iRequest.data.REQUESTER
-    // let paymentMode = iRequest.data.PAYMENT_MODE
-    // let F24EntratelType =  iRequest.data.F24_ENTRATEL_TYPE
-    // let priority = iRequest.data.PRIORITY
+async function manageData(iRequest) {
 
 
     const oBundle = getTextBundle(iRequest);
 
 
-    let visPriority = false
-    let visAddCroMail = false
-    let visBeneficiaryDate = false
-    let labExpireDate = ''
-    let visExpireDate = false
-    let visF24EntratelTypeClAccount = false
-    let visF24EntratelType = false
-    let visSendTaskBtn = false
+    let oResult = {
+        VIS_PRIORITY: false,
+        VIS_ADD_CRO_MAIL: false,
+        VIS_EXPIRE_DATE: false,
+        REQ_EXPIRE_DATE: false,
+        LAB_EXPIRE_DATE: '',
+        VIS_BENEFICIARY_DATE: false,
+        REQ_BENEFICIARY_DATE: false,
+        VIS_F24_ENTRATEL_TYPE: false,
+        REQ_F24_ENTRATEL_TYPE: false,
+        VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT: false,
+        REQ_F24_ENTRATEL_TYPE_CL_ACCOUNT: false,
+        VIS_SEND_TASK_BTN: false
+
+    }
+
 
     let oRequester = await SELECT.one.from(Requester).
         where({ CODE: iRequest.data.REQUESTER });
-
-    /*
-if (!oRequester) {
-    let errMEssage = "ERROR get layout " + iRequest.data.REQUESTER + ". Requester not found";
-    iRequest.error(450, errMEssage, null, 450);
-    LOG.error(errMEssage);
-    return iRequest;
-}
-    */
 
 
     /*   let oPayMode = await SELECT.one.from(Paymode).
@@ -388,74 +380,76 @@ if (!oRequester) {
 
     //set check priority visibility
     if (iRequest.data.PAYMENT_MODE === consts.Paymode.BONIFICO) {
-        visPriority = true
-        visAddCroMail = true
+        oResult.VIS_PRIORITY = true
+        oResult.VIS_ADD_CRO_MAIL = true
     }
 
     if (iRequest.data.PRIORITY === true) {
-        visBeneficiaryDate = true
+        oResult.VIS_BENEFICIARY_DATE = true
+        oResult.REQ_BENEFICIARY_DATE = true
     }
 
 
     if (iRequest.data.PAYMENT_MODE === consts.Paymode.F24) {
 
-        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_F24")
-        visExpireDate = true
+        oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_F24")
+        oResult.VIS_EXPIRE_DATE = true
 
     }
 
     if (iRequest.data.PAYMENT_MODE === consts.Paymode.F23) {
 
-        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_F23")
-        visExpireDate = true
+        oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_F23")
+        oResult.VIS_EXPIRE_DATE = true
 
     }
 
     if (iRequest.data.PAYMENT_MODE === consts.Paymode.MAV) {
 
-        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_MAV")
-        visExpireDate = true
+        oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_MAV")
+        oResult.VIS_EXPIRE_DATE = true
 
     }
 
     if (iRequest.data.PAYMENT_MODE === consts.Paymode.FLBONIFIC) {
 
-        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_FLBONIFIC")
-        visExpireDate = true
+        oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_FLBONIFIC")
+        oResult.VIS_EXPIRE_DATE = true
 
     }
 
 
     if (iRequest.data.PAYMENT_MODE === consts.Paymode.ENTRATEL) {
 
-        labExpireDate = oBundle.getText("LAB_EXPIRE_DATE_F24")
-        visExpireDate = true
+        oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_F24")
+        oResult.VIS_EXPIRE_DATE = true
 
-        visF24EntratelType = true
+        oResult.VIS_F24_ENTRATEL_TYPE = true
+        oResult.REQ_F24_ENTRATEL_TYPE = true
 
         if (iRequest.data.F24_ENTRATEL_TYPE === 'DEBTOFFSET') {
-            visF24EntratelTypeClAccount = true
+            oResult.VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT = true
+            oResult.REQ_F24_ENTRATEL_TYPE_CL_ACCOUNT = true
         }
 
     }
 
     if (oRequester.SEND_TASK === true) {
-        visSendTaskBtn = true
+        oResult.VIS_SEND_TASK_BTN = true
     }
 
-
-    return {
-        VIS_PRIORITY: visPriority,
-        VIS_ADD_CRO_MAIL: visAddCroMail,
-        VIS_EXPIRE_DATE: visExpireDate,
-        LAB_EXPIRE_DATE: labExpireDate,
-        VIS_BENEFICIARY_DATE: visBeneficiaryDate,
-        VIS_F24_ENTRATEL_TYPE: visF24EntratelType,
-        VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT: visF24EntratelTypeClAccount,
-        VIS_SEND_TASK_BTN: visSendTaskBtn
-
+    if (oResult.VIS_EXPIRE_DATE === true) {
+        oResult.REQ_EXPIRE_DATE = true
     }
 
+    return oResult
+
+}
+
+async function getLayout(iRequest) {
+
+    let oLayout = await manageData(iRequest)
+    return oLayout
 
 }
 
@@ -465,56 +459,96 @@ async function checkData(iRequest) {
 
     let oRequest = iRequest.data.request
     let aDocument = iRequest.data.document
+    let aAttachment = iRequest.data.attachment
+
     let aResult = []
 
 
-
-
-    if (!oRequest.TITLE || oRequest.TITLE === "") {
-
-        aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("TITLE_MAND") }) //"Title field is mandatory"
-        // let errMEssage = oBundle.getText("TITLE_MAND") }) //"Title field is mandatory
-        // iRequest.error(450, errMEssage, null, 450);
-        // LOG.error(errMEssage);
-
-    }
-
-    if (!oRequest.AREA_CODE || oRequest.AREA_CODE === "") {
-
-        aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("AREA_MAND") }) //"Area field is mandatory";
-
-    }
-
-
-
-    if (!oRequest.WAERS_CODE || oRequest.WAERS_CODE === "") {
-
-        aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("CURR_MAND") }) //"Currency is mandatory";
-
-
-    } else {
-
-        let oCurrency = await SELECT.one.from(Currency).
-            where({ code: oRequest.WAERS_CODE });
-
-        if (!oCurrency) {
-
-            aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("CURR_NVAL") }) // "Currency is not valid";
+    let oImpLayout = {
+        data: {
+            REQUESTER: oRequest.REQUESTER_CODE,
+            PAYMENT_MODE: oRequest.PAYMENT_MODE_CODE,
+            PRIORITY: oRequest.PRIORITY,
+            TYPE_F24_ENTRATEL: oRequest.TYPE_F24_ENTRATEL
 
         }
     }
 
-    if (!oRequest.PAYMENT_MODE_CODE || oRequest.PAYMENT_MODE_CODE === "") {
+    let oLayout = await manageData(oImpLayout)
 
-        aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("PAYMODE_MAND") }) //"Payment mode is mandatory";
-
+    // check 1
+    if (!Boolean(oRequest.TITLE)) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "TITLE", TEXT: oBundle.getText("TITLE_MAND") }) //"Title field is mandatory"
     }
 
-    if (oRequest.PRIORITY === true && oRequest.BENEFICIARY_DATE === "") {
-
-        aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("BEN_DATE_MAND") }) //"For prior orders, insert a desired Beneficiary Date";
-
+    // check 2
+    if (!Boolean(oRequest.AREA_CODE)) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "AREA", TEXT: oBundle.getText("AREA_MAND") }) //"Area field is mandatory";
     }
+
+    // check 3
+    if (Boolean(!oRequest.WAERS_CODE)) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "WAERS_CODE", TEXT: oBundle.getText("CURR_MAND") }) //"Currency is mandatory";
+    }
+    else {
+        let oCurrency = await SELECT.one.from(Currency).where({ code: oRequest.WAERS_CODE });
+
+        if (!oCurrency) {
+            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "WAERS_CODE", TEXT: oBundle.getText("CURR_NVAL") }) // "Currency is not valid";
+        }
+    }
+
+    // check 4
+    if (Boolean(!oRequest.PAYMENT_MODE_CODE)) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "PAYMENT_MODE_CODE", TEXT: oBundle.getText("PAYMODE_MAND") }) //"Payment mode is mandatory";
+    }
+
+
+    // check 5
+    if (Boolean(!oRequest.EXPIRY_DATE) && oLayout.REQ_EXPIRE_DATE === true) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "EXPIRY_DATE", TEXT: oBundle.getText("EXPIRY_DATE_MAND") }) //"Expire Date is mandatory";
+    }
+
+
+    // check 6
+    if (Boolean(!oRequest.F24_ENTRATEL_TYPE) && oLayout.REQ_F24_ENTRATEL_TYPE) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "F24_ENTRATEL_TYPE", TEXT: oBundle.getText("F24_ENTRATEL_TYPE_MAND") }) //Attenzione, per gli F24 ENTRATEL è necessario indicare la tipologia
+    }
+
+    // check 7
+    if (Boolean(!oRequest.F24_ENTRATEL_CLEARING_ACCOUNT) && oLayout.REQ_F24_ENTRATEL_TYPE_CL_ACCOUNT) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "F24_ENTRATEL_CLEARING_ACCOUNT", TEXT: oBundle.getText("F24_ENTRATEL_TYPE_CL_ACCOUNT_MAND") }) //"Attenzione, il conto di compensazione è un dato obbligatorio.
+    }
+
+
+    // check 8
+    if (oRequest.EXTRA_MANAGER_REQUIRED === true) {
+
+        oApproval = await SELECT.one.from(ApprovalHistory).
+            where({
+                REQUEST_ID: oRequest.REQUEST_ID,
+                VERSION: oRequest.VERSION,
+                To_Action_ACTION: 'READY'
+            });
+
+
+        if (oApproval && oApproval.STEP === '20') {
+            let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: oRequest.EXTRA_MANAGER_NAME }));
+            if (!oInfoWDPosition) {
+                aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "EXTRA_MANAGER_NAME", TEXT: oBundle.getText("EXTRA_MANAGER_NAME_MAND") }) //"Further manager has been requested but not inserted
+            }
+        }
+    }
+
+
+
+
+    if (Boolean(!oRequest.BENEFICIARY_DATE) && oLayout.REQ_BENEFICIARY_DATE === true) {
+        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "BENEFICIARY_DATE", TEXT: oBundle.getText("BEN_DATE_MAND") }) //"For prior orders, insert a desired Beneficiary Date";
+    }
+
+
+
 
 
 
@@ -526,6 +560,95 @@ async function checkData(iRequest) {
      } */
 
     // return iRequest;
+
+
+    //iDocData
+
+    let checkAttachCapi = false
+
+
+
+if (aDocument.length > 0) {
+    
+    for (let i = 0; i < aDocument.length; i++) {
+
+        let iDocData = {
+            data: {
+                PAYMODE: oRequest.PAYMENT_MODE_CODE,
+                REQUEST_ID: oRequest.REQUEST_ID,
+                DOC_ID: aDocument[i].DOC_ID,
+                ID: aDocument[i].ID,
+                LOCATION: aDocument[i].LOCATION,
+                VENDOR: aDocument[i].VENDOR,
+                COST_CENTER: aDocument[i].COST_CENTER,
+                INT_ORDER: aDocument[i].INT_ORDER,
+                ACCOUNT: aDocument[i].ACCOUNT,
+                AMOUNT: aDocument[i].AMOUNT,
+                REASON: aDocument[i].REASON,
+                IBAN: aDocument[i].IBAN,
+                NOTE: aDocument[i].NOTE,
+                ATTRIBUZIONE: aDocument[i].ATTRIBUZIONE
+            }
+        }
+
+        let oDocData = await manageDocPopupData(iDocData)
+
+        if (oDocData.CHECK_ATTACH_CAPI === true && checkAttachCapi === false) {
+            checkAttachCapi = oDocData.CHECK_ATTACH_CAPI
+        }
+
+        let aError = oDocData.ERROR
+
+        for (let x = 0; x < aError.length; x++) {
+            aResult.push(aError[x])
+        }
+
+    }
+
+} else {
+
+    aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("DOCUMENT_MAND") }) //“Attenzione, inserire almeno un documento
+     
+}
+
+
+    if (Boolean(checkAttachCapi)) {
+
+        let oAttachment = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.CAPI)
+        if (!oAttachment) {
+            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_CAPI_MAND") }) //“Attenzione, per i conti che prevedono l’Ordine interno è necessario inserire l’allegato : Giustificativo Capitalizzazione”.
+        }
+
+    }
+
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.FLBONIFIC) {
+        let oAttachment = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.FLBONIFIC)
+        if (!oAttachment) {
+            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_FLBONIFIC_MAND") }) //“Attenzione, per il flusso bonifici è necessario allegare il relativo documento”.
+        }
+    }
+
+
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.F24) {
+        let oAttachment = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F24)
+        if (!oAttachment) {
+            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_F24_MAND") }) //“Attenzione, per gli F24 è necessario allegare il relativo documento.
+        }
+    }
+
+    
+
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.F23) {
+        let oAttachmentF23Conc = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F23_CONC)
+        let oAttachmentF23Uff = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F23_UFF)
+        let oAttachmentF23Vers = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F23_VERS)
+        
+        if (!oAttachmentF23Conc || !oAttachmentF23Uff || !oAttachmentF23Vers ) {
+            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_F23_MAND") }) //    “Attenzione, per gli F23 è necessario allegare i documenti relativi”.
+        }
+    }
+ 
+
 
     return aResult
 
@@ -728,7 +851,7 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
             AMOUNT: aDocument[i].AMOUNT,
             //
             SPECIAL_GL_IND: aDocument[i].SPECIAL_GL_IND,
-            ACCOUNT_ADVANCE: aDocument[i].ACCOUNT_ADVANCE,
+            //ACCOUNT_ADVANCE: aDocument[i].ACCOUNT_ADVANCE,
             NOTE: aDocument[i].NOTE,
             TEXT: aDocument[i].TEXT,
             CONTABILE_NICKNAME: aDocument[i].CONTABILE_NICKNAME,
@@ -760,7 +883,6 @@ async function fromDocumentToTree(iRequest) {
 
 }
 async function fromRequestIdToTree(iRequest) {
-
 
     let aDocument = await SELECT.from(Document).
         where({ to_Request_REQUEST_ID: iRequest.data.REQUEST_ID }).orderBy('DOC_ID asc', 'ID asc');
@@ -816,7 +938,7 @@ async function fromTreeToDocument(iRequest) {
                 AMOUNT: aPosition[x].AMOUNT,
 
                 SPECIAL_GL_IND: aPosition[x].SPECIAL_GL_IND,
-                ACCOUNT_ADVANCE: aPosition[x].ACCOUNT_ADVANCE,
+                // ACCOUNT_ADVANCE: aPosition[x].ACCOUNT_ADVANCE,
 
                 NOTE: aPosition[x].NOTE,
                 TEXT: aPosition[x].TEXT,
@@ -839,12 +961,28 @@ async function fromTreeToDocument(iRequest) {
 }
 
 
-async function getDocPopupData(iRequest) {
+
+async function manageDocPopupData(iRequest) {
+
+    var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
+
+    const { AfeSet } = EccServiceAfe.entities;
+    const { AfeLocationSet } = EccServiceAfe.entities;
+    const { CostCenterTextSet } = EccServiceAfe.entities;
+
+
+    var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+
+    const { VendorBankSet } = EccServiceO2P.entities;
+    const { VendorSet } = EccServiceO2P.entities;
+    const { OrderTypeSet } = EccServiceO2P.entities;
+
+
+
+    const oBundle = getTextBundle(iRequest);
 
     let oResult = {
 
-        IBAN: [],
-        ACCOUNT: [],
         REF_ID: "",
         LOCATION_DESC: "",
         VENDOR_DESC: "",
@@ -865,20 +1003,31 @@ async function getDocPopupData(iRequest) {
         VIS_ATTRIBUZIONE: false,
         REQ_ATTRIBUZIONE: false,
         REQ_IBAN: false,
-        VIS_IBAN: false
+        VIS_IBAN: false,
+        CHECK_ATTACH_CAPI: false,
+        REQ_REASON: true,
+        VIS_REASON: true,
+        REQ_AMOUNT: true,
+        VIS_AMOUNT: true,
+        REQ_VENDOR: true,
+        VIS_VENDOR: true,
+        IBAN: [],
+        ACCOUNT: [],
+        ERROR: []
 
     }
 
 
-
-
-
-
     ///////////////////////////////////////////////////
-    // set layout
+    //  get Layout Data
+
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+
 
     let oRequester = await SELECT.one.from(Requester).
-        where({ CODE: iRequest.data.REQUESTER });
+        where({ CODE: oRequest.REQUESTER_CODE });
 
     if (oRequester) {
 
@@ -900,7 +1049,7 @@ async function getDocPopupData(iRequest) {
 
     let oAccountreq = await SELECT.one.from(Accountreq).
         where({
-            REQUESTER_CODE: iRequest.data.REQUESTER,
+            REQUESTER_CODE: oRequest.REQUESTER_CODE,
             ACCOUNT: iRequest.data.ACCOUNT
 
         });
@@ -918,7 +1067,7 @@ async function getDocPopupData(iRequest) {
             oResult.REQ_INT_ORDER = true
         }
 
-        if (oAccountreq.ADVANCE_ACCOUNT === true) {
+        if (oAccountreq.ACCOUNT_ADVANCE === true) {
             oResult.VIS_NOTE = true
             oResult.REQ_NOTE = true
         }
@@ -939,7 +1088,6 @@ async function getDocPopupData(iRequest) {
     }
 
 
-
     if (Boolean(oAccountreq) && oAccountreq.REQUEST_CDC &&
         oRequester && oRequester.DUMMY_CDC === true) {
         oResult.VIS_CDC_DUMMY = true
@@ -953,85 +1101,160 @@ async function getDocPopupData(iRequest) {
 
 
     //////////////////////////////////////////////////////
-    // fill data
+    // get and check data
 
 
-    oResult.REF_ID = 'BPM' + iRequest.data.REQUEST_ID + String(iRequest.data.DOC_ID.padStart(3, '0'))
-
-
-
-    var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
-
-    const { CostCenterTextSet } = EccServiceAfe.entities;
+    oResult.REF_ID = 'BPM' + iRequest.data.REQUEST_ID + iRequest.data.DOC_ID
 
 
     let callECC = getEnvParam("CALL_ECC", false);
     if (callECC === "true") {
 
-        let aCostCenter = await EccServiceAfe.run(
-            SELECT.from(CostCenterTextSet).where({ Kostl: iRequest.data.COST_CENTER.padStart(10, '0') }));
+        if (Boolean(iRequest.data.COST_CENTER)) {
 
-        if (aCostCenter.length > 0) {
-            oResult.COST_CENTER_DESC = aCostCenter[0].Ltext
+            let costCenter = iRequest.data.COST_CENTER
+
+            if (Boolean(/^\d+$/.test(costCenter))) {
+                costCenter = iRequest.data.COST_CENTER.padStart(10, '0')
+            }
+
+            let aCostCenter = await EccServiceAfe.run(
+                SELECT.from(CostCenterTextSet).where({ Kostl: costCenter }));
+            if (aCostCenter.length > 0) {
+                oResult.COST_CENTER_DESC = aCostCenter[0].Ltext
+            }
+            else {
+                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "COST_CENTER", TEXT: oBundle.getText("COST_CENTER_NVAL") }) //"Cost Center is not valid"
+            }
         }
 
-        const { AfeLocationSet } = EccServiceAfe.entities;
+        else {
 
-        let aLocation = await EccServiceAfe.run(
-            SELECT.from(AfeLocationSet).where({ Kunnr: iRequest.data.LOCATION, Objpos: '001' }));
+            if (oResult.REQ_COST_CENTER === true) {
+                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "COST_CENTER", TEXT: oBundle.getText("COST_CENTER_MAND") }) //"Cost Center is mandatory"
+            }
 
-        if (aLocation.length > 0) {
-            oResult.LOCATION_DESC = aLocation[0].Stras
         }
 
 
-        const { AfeSet } = EccServiceAfe.entities;
+        if (Boolean(iRequest.data.LOCATION)) {
 
-        let aOrder = await EccServiceAfe.run(
-            SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0') }));
+            let aLocation = await EccServiceAfe.run(
+                SELECT.from(AfeLocationSet).where({ Kunnr: iRequest.data.LOCATION, Objpos: '001' }));
 
-        if (aOrder.length > 0) {
-            oResult.INT_ORDER_DESC = aOrder[0].OrderName
+            if (aLocation.length > 0) {
+                oResult.LOCATION_DESC = aLocation[0].Stras
+            }
+            else {
+                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "LOCATION", TEXT: oBundle.getText("LOCATION_NVAL") }) //"Location is not valid
+            }
+        }
+        else {
+            if (oResult.REQ_LOCATION === true) {
+                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "LOCATION", TEXT: oBundle.getText("LOCATION_MAND") }) //"Location is mandatory
+            }
         }
 
 
+        if (Boolean(iRequest.data.INT_ORDER)) {
 
+            let aOrder = await EccServiceAfe.run(
+                SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0') }));
+
+            if (aOrder.length > 0) {
+                oResult.INT_ORDER_DESC = aOrder[0].OrderName
+
+
+                let aOrderType = await EccServiceO2P.run(
+                    SELECT.from(OrderTypeSet).where({ Auart: aOrder[0].OrderType }));
+                if (aOrderType.length > 0) {
+                    if (aOrderType[0].Aprof === '000050') {
+
+                        oResult.CHECK_ATTACH_CAPI = true
+
+                        let budget = Number(aOrder[0].LclAfeValue) +
+                            (Number(aOrder[0].LclAfeValue) / 10) -
+                            Number(aOrder[0].LclAfeValueSpent)
+
+                        if (Number(budget) < Number(iRequest.data.AMOUNT)) {
+
+                            // Order &1: Residual budget: &2 - Required in the mandate: &3
+                            // Attention, for the internal Order & the budget has been exceeded
+
+                            oResult.ERROR.push({
+                                MTYPE: consts.ERROR, REF_FIELD: "AMOUNT",
+                                TEXT: oBundle.getText("RESID_BUDGET", [iRequest.data.INT_ORDER, budget, iRequest.data.AMOUNT])
+                            })
+
+                            oResult.ERROR.push({
+                                MTYPE: consts.ERROR, REF_FIELD: "AMOUNT",
+                                TEXT: oBundle.getText("EXCEED_BUDGET", [iRequest.data.INT_ORDER])
+                            })
+                        }
+                    }
+                }
+
+            } else {
+                oResult.ERROR.push({
+                    MTYPE: consts.ERROR, REF_FIELD: "INT_ORDER",
+                    TEXT: oBundle.getText("INT_ORDER_NVAL")
+                }) // Internal order is not valid
+            }
+
+        } else {
+
+            if (oResult.REQ_INT_ORDER === true) {
+                oResult.ERROR.push({
+                    MTYPE: consts.ERROR, REF_FIELD: "INT_ORDER",
+                    TEXT: oBundle.getText("INT_ORDER_MAND")
+                }) // Internal order is mandatory.
+            }
+
+        }
 
         /////////////////////////////////////////////////////////////////////////////
-
-        var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-        const { VendorSet } = EccServiceO2P.entities;
-
 
         let aVendor = await EccServiceO2P.run(
             SELECT.from(VendorSet).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
 
         if (aVendor.length > 0) {
             oResult.VENDOR_DESC = aVendor[0].Name1
+        } else {
+            //  Vendor does not exist or it is not created for company code &
+            oResult.ERROR.push({
+                MTYPE: consts.ERROR, REF_FIELD: "VENDOR",
+                TEXT: oBundle.getText("VENDOR_NVAL", [oRequester.BUKRS])
+            })
         }
-
-
-        const { VendorBankSet } = EccServiceO2P.entities;
 
 
         let aVendorBank = await EccServiceO2P.run(
             SELECT.from(VendorBankSet).where({ Lifnr: iRequest.data.VENDOR }));
 
-        for (let i = 0; i < aVendorBank.length; i++) {
-            oResult.IBAN.push({ CODE: aVendorBank[i].Iban })
-        }
+        if (aVendorBank.length > 0) {
+            for (let i = 0; i < aVendorBank.length; i++) {
+                oResult.IBAN.push({ CODE: aVendorBank[i].Iban })
+            }
+        } else {
 
+            if (iRequest.data.PAYMODE === consts.Paymode.BONIFICO) {
+                oResult.ERROR.push({
+                    MTYPE: consts.ERROR, REF_FIELD: "IBAN",
+                    TEXT: oBundle.getText("NO_VENDOR_IBAN")
+                }) // For Vendor selected there are no IBANs
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////
 
     let aAccountreq = await SELECT.from(Accountreq).
         where({
-            REQUESTER_CODE: iRequest.data.REQUESTER
+            REQUESTER_CODE: oRequest.REQUESTER_CODE
         });
 
     for (let i = 0; i < aAccountreq.length; i++) {
-        if (aAccountreq[i].ADVANCE_ACCOUNT === true && String(iRequest.data.ID.padStart(3, '0')) !== consts.firstId) {
+        if (aAccountreq[i].ACCOUNT_ADVANCE === true && iRequest.data.ID !== consts.firstId) {
             continue
         }
 
@@ -1044,64 +1267,30 @@ async function getDocPopupData(iRequest) {
     }
 
 
+    if (oResult.REQ_NOTE === true && !Boolean(iRequest.data.NOTE)) {
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "NOTE", TEXT: oBundle.getText("NOTE_MAND") }) // Note is mandatory. 
+    }
+
+    if (oResult.REQ_ATTRIBUZIONE === true && !Boolean(iRequest.data.ATTRIBUZIONE)) {
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTRIBUZIONE", TEXT: oBundle.getText("ATTRIBUZIONE_MAND") }) // Attribuzione is mandatory. 
+    }
+
+    if (oResult.REQ_IBAN === true && !Boolean(iRequest.data.IBAN)) {
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "IBAN", TEXT: oBundle.getText("IBAN_MAND") }) // Iban is mandatory. 
+    }
+
+    if (oResult.REQ_REASON === true && !Boolean(iRequest.data.REASON)) {
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "REASON", TEXT: oBundle.getText("REASON_MAND") }) // Reason is mandatory. 
+    }
+
+    if (oResult.REQ_AMOUNT === true && !Boolean(Number(iRequest.data.AMOUNT))) {
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "AMOUNT", TEXT: oBundle.getText("AMOUNT_MAND") }) // Amount is mandatory. 
+    }
 
     return oResult
 
 }
 
-async function checkDocPopupData(iRequest) {
-
-    const oBundle = getTextBundle(iRequest);
-
-    let aResult = []
-
-
-    if (iRequest.data.COST_CENTER === "") {
-
-        aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("COST_CENTER_MAND") }) //"Cost Center is mandatory"
-
-    } else {
-
-        var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
-
-        const { CostCenterTextSet } = EccServiceAfe.entities;
-
-        let callECC = getEnvParam("CALL_ECC", false);
-        if (callECC === "true") {
-
-            let aCostCenter = await EccServiceAfe.run(
-                SELECT.from(CostCenterTextSet).where({ Kostl: iRequest.data.COST_CENTER.padStart(10, '0') }));
-
-            if (aCostCenter.length = 0) {
-                aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("COST_CENTER_NVAL") }) //"Cost Center is not valid"
-            }
-
-        }
-    }
-
-
-    if (iRequest.data.LOCATION === "") {
-        aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("LOCATION_MAND") }) //"Location is mandatory
-    } else {
-
-        const { AfeLocationSet } = EccServiceAfe.entities;
-
-        let callECC = getEnvParam("CALL_ECC", false);
-        if (callECC === "true") {
-
-            let aLocation = await EccServiceAfe.run(
-                SELECT.from(AfeLocationSet).where({ Kunnr: iRequest.data.LOCATION, Objpos: '001' }));
-
-            if (aLocation.length = 0) {
-                aResult.push({ MTYPE: consts.ERROR, TEXT: oBundle.getText("LOCATION_NVAL") }) //"Location is not valid
-            }
-        }
-
-    }
-
-    return aResult
-
-}
 
 
 
@@ -1154,6 +1343,13 @@ async function getDocStatus(iRequest) {
 
             if (first001DocId === true) {
                 aResult.push(oResult)
+
+                vendorDesc = ""
+                docType = ''
+                docNumber = ''
+                status = ''
+                statusText = ''
+
             }
 
 
@@ -1169,17 +1365,38 @@ async function getDocStatus(iRequest) {
             }
 
 
-            let oDocLog = aDocLog.find(oDocLog => oDocLog.DOC_ID === aDocument[i].DOC_ID)
+            let oDocLog
+
+            let oDocProp = await getDocumentProp(iRequest.data.REQUEST_ID, aDocument[i].DOC_ID, iRequest.data.STEPID)
+
+            if (oDocProp.creaType === 'A') {
+
+                oDocLog = aDocLog.find(oDocLog => oDocLog.DOC_ID === aDocument[i].DOC_ID &&
+                    oDocLog.CLEARING === false)
+
+            }
+
+            if (oDocProp.creaType === 'C') {
+
+                oDocLog = aDocLog.find(oDocLog => oDocLog.DOC_ID === aDocument[i].DOC_ID &&
+                    oDocLog.CLEARING === true)
+
+            }
+
+
             if (oDocLog) {
+
                 docType = oDocLog.DOC_TYPE
                 docNumber = oDocLog.DOC_NUMBER
                 status = oDocLog.STATUS
                 statusText = oDocLog.STATUS_TEXT
+
             } else {
 
-                // let oDocProp = await getDocumentProp(iRequest, iRequest.data.STEPID) 
+                docType = oDocProp.docType
 
             }
+
 
             oResult = {
                 REQUEST_ID: iRequest.data.REQUEST_ID,
@@ -1306,6 +1523,9 @@ async function getDocumentProp(iRequestID, iDocID, iStep) {
         });
 
 
+    let oAccountreq = aAccountreq.find(oAccountreq => oAccountreq.ACCOUNT === aDocument[0].ACCOUNT)
+
+
     for (let i = 0; i < aAccountreq.length; i++) {
 
         let oDocparam = await SELECT.one.from(Docparam).
@@ -1313,7 +1533,7 @@ async function getDocumentProp(iRequestID, iDocID, iStep) {
                 PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
                 ACCOUNT: aAccountreq[i].ACCOUNT,
                 STEP: iStep,
-                ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
+                ACCOUNT_ADVANCE: oAccountreq.ACCOUNT_ADVANCE,
                 PRIORITY: oRequest.PRIORITY,
                 URGENT: oRequest.URGENT
             });
@@ -1336,7 +1556,7 @@ async function getDocumentProp(iRequestID, iDocID, iStep) {
                 PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
                 ACCOUNT: '',
                 STEP: iStep,
-                ACCOUNT_ADVANCE: aDocument[0].ACCOUNT_ADVANCE,
+                ACCOUNT_ADVANCE: oAccountreq.ACCOUNT_ADVANCE,
                 PRIORITY: oRequest.PRIORITY,
                 URGENT: oRequest.URGENT
             });
@@ -1631,12 +1851,16 @@ async function fillTableFIDocument(iRequest, iDocProp) {
 
 
                     if (oDocProp.docType === consts.documentType.KA) {
-                        valueDate = moment(oRequest.EXPIRY_DATE).format('YYYYMMDD')
+                        if (Boolean(oRequest.EXPIRY_DATE)) {
+                            valueDate = moment(oRequest.EXPIRY_DATE).format('YYYYMMDD')
+                        }
+
                     } else {
                         if (Boolean(aDocument[i].VALUT)) {
                             valueDate = moment(aDocument[i].VALUT).format('YYYYMMDD')
                         }
                     }
+
 
                     itemNo = itemNo + 1
                     let itemNoString = itemNo.toString()
@@ -1673,7 +1897,13 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                     let orderId = ''
 
                     if (Boolean(aDocument[i].COST_CENTER)) { // 10 
-                        costCenter = aDocument[i].COST_CENTER.padStart(10, '0')
+
+                        costCenter = aDocument[i].COST_CENTER
+
+                        if (Boolean(/^\d+$/.test(costCenter))) {
+                            costCenter = aDocument[i].COST_CENTER.padStart(10, '0')
+                        }
+
                     }
 
                     if (Boolean(aDocument[i].INT_ORDER)) { // 12
@@ -1860,7 +2090,7 @@ async function fillTableClearFIDocument(iRequest, iDocProp) {
         Valut: valut,
         Augtx: '',
         Sgtxt: sgtxt,
-        Xblnr: 'BPM' + iRequest.data.REQUEST_ID + String(iRequest.data.DOC_ID.padStart(3, '0')),
+        Xblnr: 'BPM' + iRequest.data.REQUEST_ID + iRequest.data.DOC_ID,
         Bktxt: 'BPM' + iRequest.data.REQUEST_ID,
         Gsber: '',
         Prctr: '',
@@ -1890,14 +2120,6 @@ async function fillTableClearFIDocument(iRequest, iDocProp) {
 }
 
 async function isCreationStep(iRequest) {
- 
-
-    /*
-
-    let oPostionsMapping = await MOADataModel.run(SELECT.one.from(PostionsMapping)
-    .where({ LBLPOSITION: '' }));
-    
- */
 
 
     let oDocProp = await getDocumentProp(iRequest.data.REQUEST_ID, iRequest.data.DOC_ID, iRequest.data.STEPID)
@@ -1952,8 +2174,6 @@ async function createFIDocument(iRequest) {
                 ///////////////////////////////////////////////////////////////  
 
             }
-
-
 
 
             let oResponse = await new Promise(async (resolve, reject) => {
@@ -2035,13 +2255,14 @@ async function createFIDocument(iRequest) {
                                 to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
                                 DOC_ID: iRequest.data.DOC_ID,
                                 LOG_TIME: new Date().toISOString(),
-                                CREATOR_USER: oBodyReq.ToDocumentHeader.Username,
-                                DOC_TYPE: oBodyReq.ToDocumentHeader.DocType,
+                                CREATOR_USER: iRequest.user.id,
+                                DOC_TYPE: oDocProp.docType,
                                 DOC_NUMBER: docNumber,
-                                //COMPANY_CODE: "",
-                                // FISCAL_YEAR: "",
+                                COMPANY_CODE: compCode,
+                                FISCAL_YEAR: fiscYear,
                                 STATUS: 'C',
-                                STATUS_TEXT: ''
+                                STATUS_TEXT: '',
+                                CLEARING: true
                             })
 
                             let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
@@ -2060,13 +2281,14 @@ async function createFIDocument(iRequest) {
                                 to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
                                 DOC_ID: iRequest.data.DOC_ID,
                                 LOG_TIME: new Date().toISOString(),
-                                CREATOR_USER: oBodyReq.ToDocumentHeader.Username,
-                                DOC_TYPE: oBodyReq.ToDocumentHeader.DocType,
+                                CREATOR_USER: iRequest.user.id,
+                                DOC_TYPE: oDocProp.docType,
                                 DOC_NUMBER: docNumber,
                                 COMPANY_CODE: compCode,
                                 FISCAL_YEAR: fiscYear,
                                 STATUS: 'C',
-                                STATUS_TEXT: ''
+                                STATUS_TEXT: '',
+                                CLEARING: false
                             })
 
                             let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
@@ -2075,24 +2297,25 @@ async function createFIDocument(iRequest) {
                     }
 
 
-
-
-
-
-
-
                 } else // error log
                 {
+
+                    let clearing = false
+
+                    if (Boolean(iRequest.data.CLEARING)) {
+                        clearing = true
+                    }
 
                     aDocLog.push({
 
                         to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
                         DOC_ID: iRequest.data.DOC_ID,
                         LOG_TIME: new Date().toISOString(),
-                        CREATOR_USER: oBodyReq.ToDocumentHeader.Username,
-                        DOC_TYPE: oBodyReq.ToDocumentHeader.DocType,
+                        CREATOR_USER: iRequest.user.id,
+                        DOC_TYPE: oDocProp.docType,
                         STATUS: 'E',
-                        STATUS_TEXT: errorText
+                        STATUS_TEXT: errorText,
+                        CLEARING: clearing
                     })
 
                     let upsertDocLog = await UPSERT.into(Doclog).entries(aDocLog);
@@ -2182,8 +2405,7 @@ module.exports = {
     fromDocumentToTree,
     fromRequestIdToTree,
     fromTreeToDocument,
-    getDocPopupData,
-    checkDocPopupData,
+    manageDocPopupData,
     getEccServices,
     createFIDocument,
     getDocStatus,
