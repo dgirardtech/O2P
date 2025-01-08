@@ -2,12 +2,12 @@
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter,getMOAParams } = require('./lib/createProcess');
-const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote, getLayout, checkData,
+const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,  
     updateRequest, getTemplate, getRejectInfo, formatMonitoring, formatMonitoringDetail, formatDocument,manageDocPopupData, getDocStatus,
-    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument,getAssignInfo,isCreationStep } = require('./lib/Handler');
-const { getStepParams, getStepList, saveUserAction, assignApprover, genereteDocument,
+    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument,getAssignInfo,isCreationStep ,manageMainData } = require('./lib/Handler');
+const { getStepParams, getStepList, saveUserAction, assignApprover, 
     emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
-
+    const { testMail } = require('./lib/MailHandler'); 
 
 module.exports = cds.service.impl(async function () {
 
@@ -104,12 +104,7 @@ module.exports = cds.service.impl(async function () {
     //this.after('READ', 'Request', getRequest);
     this.after('UPDATE', 'Request', updateRequest);
 
-    //-------------FUNCTION Get PDF O2P-----------
-    this.on('getPDFContent', async (req) => {
-        let requestId = req.data.REQUEST_ID;
-        return await genereteDocument(requestId, req, false);
-    });
-
+ 
        //---------Function Assign info----
    this.on('getAssignInfo', getAssignInfo);   
 
@@ -128,14 +123,24 @@ module.exports = cds.service.impl(async function () {
     this.before('CREATE', 'Notes', createNote);
     this.after('READ', 'Notes', readNote);
     this.before('DELETE', 'Notes', deleteNote);
-
-    this.on('getLayout', getLayout);
-
+ 
     this.on('getTemplate', getTemplate);
+ 
+    //this.on('manageMainData', manageMainData);
 
-    this.on('checkData', checkData);
+    this.on('manageMainData', async (req) => {
+       // let requestId = req.data.REQUEST_ID;
+        return await manageMainData( req );
+    });
 
-    this.on('manageDocPopupData', manageDocPopupData)
+   // this.on('manageDocPopupData', manageDocPopupData)
+
+
+   this.on('manageDocPopupData',  async (req) => {
+    // let requestId = req.data.REQUEST_ID;
+     return await manageDocPopupData( req , false );
+ });
+
 
     this.on('getDocStatus', getDocStatus);
 
@@ -169,6 +174,9 @@ module.exports = cds.service.impl(async function () {
 
     //-------------ACTION AZIONE ASSEGNAZIONE NUOVO UTENTE-------------------
     this.on('assignApprover', assignApprover);
+
+
+    this.on('testMail' , testMail)
 
 
     this.on('READ', CostCenterTextSet, async (request) => {

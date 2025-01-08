@@ -8237,6 +8237,289 @@
     }
    }
   },
+  "ZFI_O2P_COMMON_SRV.OrderTypeSet": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "@sap.creatable": "false",
+   "@sap.updatable": "false",
+   "@sap.deletable": "false",
+   "@sap.pageable": "false",
+   "@sap.content.version": "1",
+   "@sap.label": "T003O",
+   "elements": {
+    "Auart": {
+     "key": true,
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "Order Type",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Autyp": {
+     "type": "cds.String",
+     "length": 2,
+     "@sap.unicode": "false",
+     "@sap.label": "Order category",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Numkr": {
+     "type": "cds.String",
+     "length": 2,
+     "@sap.unicode": "false",
+     "@sap.label": "Number Range",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Obligo": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Commt Update",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Erloese": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Revenues",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Stsma": {
+     "type": "cds.String",
+     "length": 8,
+     "@sap.unicode": "false",
+     "@sap.label": "Status Profile",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Aprof": {
+     "type": "cds.String",
+     "length": 6,
+     "@sap.unicode": "false",
+     "@sap.label": "Settlmt Profile",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Pprof": {
+     "type": "cds.String",
+     "length": 6,
+     "@sap.unicode": "false",
+     "@sap.label": "Plan. profile",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Copar": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "CO Partner",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Resz1": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "Residence Time1",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Resz2": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "Residence Time2",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Aufkl": {
+     "type": "cds.Boolean",
+     "@sap.unicode": "false",
+     "@sap.label": "Classification",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Relkz": {
+     "type": "cds.Boolean",
+     "@sap.unicode": "false",
+     "@sap.label": "Release immed.",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Chgkz": {
+     "type": "cds.Boolean",
+     "@sap.unicode": "false",
+     "@sap.label": "ChangeDocuments",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Bprof": {
+     "type": "cds.String",
+     "length": 6,
+     "@sap.unicode": "false",
+     "@sap.label": "Budget Profile",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Plint": {
+     "type": "cds.Boolean",
+     "@sap.unicode": "false",
+     "@sap.label": "Integ. planning",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Nabpf": {
+     "type": "cds.Boolean",
+     "@sap.unicode": "false",
+     "@sap.label": "Do not settle",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Vorpl": {
+     "type": "cds.Boolean",
+     "@sap.unicode": "false",
+     "@sap.label": "Planning",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Layout": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "Order layout",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Tdform": {
+     "type": "cds.String",
+     "length": 16,
+     "@sap.unicode": "false",
+     "@sap.label": "Form",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Scope": {
+     "type": "cds.String",
+     "length": 5,
+     "@sap.unicode": "false",
+     "@sap.label": "Object Class",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Colordproc": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "CO processing",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "VrgStsma": {
+     "type": "cds.String",
+     "length": 8,
+     "@sap.unicode": "false",
+     "@sap.label": "Status profile",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "FuncArea": {
+     "type": "cds.String",
+     "length": 16,
+     "@sap.unicode": "false",
+     "@sap.label": "Functional Area",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "ExecProfile": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "Exec. Profile",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    }
+   }
+  },
   "ZFI_O2P_COMMON_SRV.VendorBankSet": {
    "kind": "entity",
    "@cds.external": true,
@@ -8343,17 +8626,12 @@
      "@sap.filterable": "false",
      "notNull": true
     },
-    "ToAccountGL": {
+    "ToAccountPayable": {
      "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.AccountglSet",
+     "target": "ZFI_O2P_COMMON_SRV.AccountPayableSet",
      "cardinality": {
       "max": "*"
      },
-     "keys": []
-    },
-    "ToDocumentHeader": {
-     "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.DocumentHeaderSet",
      "keys": []
     },
     "ToAccReturn": {
@@ -8364,9 +8642,14 @@
      },
      "keys": []
     },
-    "ToAccountPayable": {
+    "ToDocumentHeader": {
      "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.AccountPayableSet",
+     "target": "ZFI_O2P_COMMON_SRV.DocumentHeaderSet",
+     "keys": []
+    },
+    "ToAccountGL": {
+     "type": "cds.Association",
+     "target": "ZFI_O2P_COMMON_SRV.AccountglSet",
      "cardinality": {
       "max": "*"
      },
@@ -10337,6 +10620,11 @@
      "@sap.filterable": "false",
      "notNull": true
     },
+    "ToDocumentHeader": {
+     "type": "cds.Association",
+     "target": "ZFI_O2P_COMMON_SRV.ClearDocumentHeaderSet",
+     "keys": []
+    },
     "ToAccReturn": {
      "type": "cds.Association",
      "target": "ZFI_O2P_COMMON_SRV.AccReturnSet",
@@ -10344,15 +10632,10 @@
       "max": "*"
      },
      "keys": []
-    },
-    "ToDocumentHeader": {
-     "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.ClearDocumentHeaderSet",
-     "keys": []
     }
    }
   },
-  "ZFI_O2P_COMMON_SRV.OrderTypeSet": {
+  "ZFI_O2P_COMMON_SRV.CostCenterCompanySet": {
    "kind": "entity",
    "@cds.external": true,
    "@cds.persistence.skip": true,
@@ -10361,250 +10644,800 @@
    "@sap.deletable": "false",
    "@sap.pageable": "false",
    "@sap.content.version": "1",
-   "@sap.label": "T003O",
+   "@sap.label": "CEPC_BUKRS",
    "elements": {
-    "Auart": {
+    "Kokrs": {
      "key": true,
      "type": "cds.String",
      "length": 4,
      "@sap.unicode": "false",
-     "@sap.label": "Order Type",
+     "@sap.label": "CO Area",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
      "@sap.filterable": "false",
      "notNull": true
     },
-    "Autyp": {
+    "Prctr": {
+     "key": true,
      "type": "cds.String",
-     "length": 2,
+     "length": 10,
      "@sap.unicode": "false",
-     "@sap.label": "Order category",
+     "@sap.label": "Profit Center",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
      "@sap.filterable": "false",
      "notNull": true
     },
-    "Numkr": {
-     "type": "cds.String",
-     "length": 2,
-     "@sap.unicode": "false",
-     "@sap.label": "Number Range",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Obligo": {
-     "type": "cds.String",
-     "length": 1,
-     "@sap.unicode": "false",
-     "@sap.label": "Commt Update",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Erloese": {
-     "type": "cds.String",
-     "length": 1,
-     "@sap.unicode": "false",
-     "@sap.label": "Revenues",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Stsma": {
-     "type": "cds.String",
-     "length": 8,
-     "@sap.unicode": "false",
-     "@sap.label": "Status Profile",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Aprof": {
-     "type": "cds.String",
-     "length": 6,
-     "@sap.unicode": "false",
-     "@sap.label": "Settlmt Profile",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Pprof": {
-     "type": "cds.String",
-     "length": 6,
-     "@sap.unicode": "false",
-     "@sap.label": "Plan. profile",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Copar": {
-     "type": "cds.String",
-     "length": 1,
-     "@sap.unicode": "false",
-     "@sap.label": "CO Partner",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Resz1": {
-     "type": "cds.String",
-     "length": 3,
-     "@sap.unicode": "false",
-     "@sap.label": "Residence Time1",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Resz2": {
-     "type": "cds.String",
-     "length": 3,
-     "@sap.unicode": "false",
-     "@sap.label": "Residence Time2",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Aufkl": {
-     "type": "cds.Boolean",
-     "@sap.unicode": "false",
-     "@sap.label": "Classification",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Relkz": {
-     "type": "cds.Boolean",
-     "@sap.unicode": "false",
-     "@sap.label": "Release immed.",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Chgkz": {
-     "type": "cds.Boolean",
-     "@sap.unicode": "false",
-     "@sap.label": "ChangeDocuments",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Bprof": {
-     "type": "cds.String",
-     "length": 6,
-     "@sap.unicode": "false",
-     "@sap.label": "Budget Profile",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Plint": {
-     "type": "cds.Boolean",
-     "@sap.unicode": "false",
-     "@sap.label": "Integ. planning",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Nabpf": {
-     "type": "cds.Boolean",
-     "@sap.unicode": "false",
-     "@sap.label": "Do not settle",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Vorpl": {
-     "type": "cds.Boolean",
-     "@sap.unicode": "false",
-     "@sap.label": "Planning",
-     "@sap.creatable": "false",
-     "@sap.updatable": "false",
-     "@sap.sortable": "false",
-     "@sap.filterable": "false",
-     "notNull": true
-    },
-    "Layout": {
+    "Bukrs": {
+     "key": true,
      "type": "cds.String",
      "length": 4,
      "@sap.unicode": "false",
-     "@sap.label": "Order layout",
+     "@sap.label": "Company Code",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
      "@sap.filterable": "false",
      "notNull": true
     },
-    "Tdform": {
+    "Vname": {
      "type": "cds.String",
-     "length": 16,
+     "length": 6,
      "@sap.unicode": "false",
-     "@sap.label": "Form",
+     "@sap.label": "Joint Venture",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
      "@sap.filterable": "false",
      "notNull": true
     },
-    "Scope": {
+    "Recid": {
+     "type": "cds.String",
+     "length": 2,
+     "@sap.unicode": "false",
+     "@sap.label": "Recovery Indic.",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Etype": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "Equity type",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "JvOtype": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "JV Object Type",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "JvJibcl": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "JIB/JIBE Class",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "JvJibsa": {
      "type": "cds.String",
      "length": 5,
      "@sap.unicode": "false",
-     "@sap.label": "Object Class",
+     "@sap.label": "JIB/JIBE SbClsA",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
      "@sap.filterable": "false",
      "notNull": true
-    },
-    "Colordproc": {
+    }
+   }
+  },
+  "ZFI_O2P_COMMON_SRV.CostCenterSet": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "@sap.creatable": "false",
+   "@sap.updatable": "false",
+   "@sap.deletable": "false",
+   "@sap.pageable": "false",
+   "@sap.content.version": "1",
+   "@sap.label": "CSKS",
+   "elements": {
+    "Kokrs": {
+     "key": true,
      "type": "cds.String",
-     "length": 1,
+     "length": 4,
      "@sap.unicode": "false",
-     "@sap.label": "CO processing",
+     "@sap.label": "CO Area",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
      "@sap.filterable": "false",
      "notNull": true
     },
-    "VrgStsma": {
+    "Kostl": {
+     "key": true,
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "Cost Center",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Datbi": {
+     "key": true,
      "type": "cds.String",
      "length": 8,
      "@sap.unicode": "false",
-     "@sap.label": "Status profile",
+     "@sap.label": "Valid To",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Datab": {
+     "type": "cds.String",
+     "length": 8,
+     "@sap.unicode": "false",
+     "@sap.label": "Valid From",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false"
+    },
+    "Bkzkp": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Lock Act.PCosts",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Pkzkp": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Plan pri. costs",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Bukrs": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "Company Code",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Gsber": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "Business Area",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Kosar": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "CCtr Category",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Verak": {
+     "type": "cds.String",
+     "length": 20,
+     "@sap.unicode": "false",
+     "@sap.label": "Person Resp.",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "VerakUser": {
+     "type": "cds.String",
+     "length": 12,
+     "@sap.unicode": "false",
+     "@sap.label": "User Responsible",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Waers": {
+     "type": "cds.String",
+     "length": 5,
+     "@sap.unicode": "false",
+     "@sap.label": "Currency",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Kalsm": {
+     "type": "cds.String",
+     "length": 6,
+     "@sap.unicode": "false",
+     "@sap.label": "Costing Sheet",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Txjcd": {
+     "type": "cds.String",
+     "length": 15,
+     "@sap.unicode": "false",
+     "@sap.label": "Tax Jur.",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Prctr": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "Profit Center",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Werks": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "Plant",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Logsystem": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "Logical System",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Ersda": {
+     "type": "cds.String",
+     "length": 8,
+     "@sap.unicode": "false",
+     "@sap.label": "Created on",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false"
+    },
+    "Usnam": {
+     "type": "cds.String",
+     "length": 12,
+     "@sap.unicode": "false",
+     "@sap.label": "Created By",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Bkzks": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Actl sec. costs",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Bkzer": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Lock act. rev.",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Bkzob": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Commitment",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Pkzks": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Plan secondary",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Pkzer": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Plan revenues",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Vmeth": {
+     "type": "cds.String",
+     "length": 2,
+     "@sap.unicode": "false",
+     "@sap.label": "Alloc. methods",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Mgefl": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Record Quantity",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Abtei": {
+     "type": "cds.String",
+     "length": 12,
+     "@sap.unicode": "false",
+     "@sap.label": "Department",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Nkost": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "Subseq.CCtr",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Kvewe": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "Usage",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Kappl": {
+     "type": "cds.String",
+     "length": 2,
+     "@sap.unicode": "false",
+     "@sap.label": "Application",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Koszschl": {
+     "type": "cds.String",
+     "length": 6,
+     "@sap.unicode": "false",
+     "@sap.label": "Overhead key",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Land1": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "Country",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Anred": {
+     "type": "cds.String",
+     "length": 15,
+     "@sap.unicode": "false",
+     "@sap.label": "Title",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Name1": {
+     "type": "cds.String",
+     "length": 35,
+     "@sap.unicode": "false",
+     "@sap.label": "Name",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Name2": {
+     "type": "cds.String",
+     "length": 35,
+     "@sap.unicode": "false",
+     "@sap.label": "Name 2",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Name3": {
+     "type": "cds.String",
+     "length": 35,
+     "@sap.unicode": "false",
+     "@sap.label": "Name 3",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Name4": {
+     "type": "cds.String",
+     "length": 35,
+     "@sap.unicode": "false",
+     "@sap.label": "Name 4",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Ort01": {
+     "type": "cds.String",
+     "length": 35,
+     "@sap.unicode": "false",
+     "@sap.label": "City",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Ort02": {
+     "type": "cds.String",
+     "length": 35,
+     "@sap.unicode": "false",
+     "@sap.label": "District",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Stras": {
+     "type": "cds.String",
+     "length": 35,
+     "@sap.unicode": "false",
+     "@sap.label": "Street",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Pfach": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "PO Box",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Pstlz": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "Postal Code",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Pstl2": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "PO Box PCode",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Regio": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "Region",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Spras": {
+     "type": "cds.String",
+     "length": 2,
+     "@sap.unicode": "false",
+     "@sap.label": "Language",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Telbx": {
+     "type": "cds.String",
+     "length": 15,
+     "@sap.unicode": "false",
+     "@sap.label": "Telebox",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Telf1": {
+     "type": "cds.String",
+     "length": 16,
+     "@sap.unicode": "false",
+     "@sap.label": "Telephone 1",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Telf2": {
+     "type": "cds.String",
+     "length": 16,
+     "@sap.unicode": "false",
+     "@sap.label": "Telephone 2",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Telfx": {
+     "type": "cds.String",
+     "length": 31,
+     "@sap.unicode": "false",
+     "@sap.label": "Fax Number",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Teltx": {
+     "type": "cds.String",
+     "length": 30,
+     "@sap.unicode": "false",
+     "@sap.label": "Teletex",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Telx1": {
+     "type": "cds.String",
+     "length": 30,
+     "@sap.unicode": "false",
+     "@sap.label": "Telex",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Datlt": {
+     "type": "cds.String",
+     "length": 14,
+     "@sap.unicode": "false",
+     "@sap.label": "Data line",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Drnam": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "Printer name",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Khinr": {
+     "type": "cds.String",
+     "length": 12,
+     "@sap.unicode": "false",
+     "@sap.label": "Std. Hierarchy",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Cckey": {
+     "type": "cds.String",
+     "length": 23,
+     "@sap.unicode": "false",
+     "@sap.label": "Cost collector",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Kompl": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Stakz": {
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Objnr": {
+     "type": "cds.String",
+     "length": 22,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Funkt": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Afunk": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "CpiTempl": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "CpdTempl": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
@@ -10615,18 +11448,128 @@
      "type": "cds.String",
      "length": 16,
      "@sap.unicode": "false",
-     "@sap.label": "Functional Area",
+     "@sap.label": "",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
      "@sap.filterable": "false",
      "notNull": true
     },
-    "ExecProfile": {
+    "SciTempl": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "ScdTempl": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "SkiTempl": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "SkdTempl": {
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Vname": {
+     "type": "cds.String",
+     "length": 6,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Recid": {
+     "type": "cds.String",
+     "length": 2,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Etype": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "JvOtype": {
      "type": "cds.String",
      "length": 4,
      "@sap.unicode": "false",
-     "@sap.label": "Exec. Profile",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "JvJibcl": {
+     "type": "cds.String",
+     "length": 3,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "JvJibsa": {
+     "type": "cds.String",
+     "length": 5,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "FercInd": {
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",

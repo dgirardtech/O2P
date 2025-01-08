@@ -52,6 +52,7 @@ entity Request : managed {
       EXPIRY_DATE                    : Date;
       PAYMENT_NOTE                   : String;
       SKIP_COORD                     : Boolean default false;
+      SKIP_COORD_TEXT                : String;
       TYPE_F24_ENTRATEL              : String(10); // forse associata a tabella F24_ENTRATEL dominio ZFI_O2P_D_F24_ENTRATEL_TYPE
       F24_ENTRATEL_CLEARING_ACCOUNT  : String(10);
       NEW_PROC_DOC_TYPE              : String(1); // forse associata a tabella DOC_TYPE dominio ZFI_O2P_D_DOC_PROC_TYPE

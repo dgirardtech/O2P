@@ -3,13 +3,13 @@ const _ = require('underscore');
 const consts = require("./Constants");
 const { getEnvParam, getTextBundle } = require('./Utils');
 const { getMoaApprovers, updateMoaApprovers, insertApprovalHistory, getTaskId, getTaskComposedUrl } = require('./createProcess');
-const { createPdf } = require('./HandlerPDF');
+const { generateO2PDocument } = require('./HandlerPDF');
 const moment = require('moment');
 const { row, and } = require('mathjs');
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
-const { testmail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted, mailTaskRejected, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
+const { testMail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted, mailTaskRejected, sendAllMail, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
-const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
+const { UPSERT } = require('@sap/cds/lib/ql/cds-ql'); 
 
 async function saveUserAction(iRequest) {
 
@@ -43,6 +43,12 @@ async function saveUserAction(iRequest) {
                 LOG.error(errMEssage);
                 return iRequest;
         }
+
+
+        let oResponseSendAllMail = await sendAllMail(iRequest)
+  
+        let o2pDocument = await generateO2PDocument(iRequest,true) 
+
 
         return response;
         //return iRequest;
@@ -83,16 +89,15 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
             retUpdateRequestStatus = consts.requestStatus.Refused
         }
 
-        /*
-
+/*
         let retsendProcessMail = await sendProcessMail(iRequestId, retUpdateRequestStatus, iUserAction, iRequest);
         if (retsendProcessMail.errors) {
             return retsendProcessMail;
         }
-
-        */
+            */
 
     }
+
 
 
     let message = new Object();
@@ -103,6 +108,11 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
 
 }
 
+ 
+
+
+
+ 
 async function sendStep70Mail(iRequestId, iProcessStatus, iUserAction, iRequest) {
 
     let recipient = [];
@@ -157,9 +167,7 @@ async function sendStep70Mail(iRequestId, iProcessStatus, iUserAction, iRequest)
   
            */
 
-
-        // recipient.push('davide.girard@avvale.com');
-        // ccrecipient.push('davide.girard@avvale.com');
+ 
 
         /*
  
@@ -214,8 +222,11 @@ async function sendStep70Mail(iRequestId, iProcessStatus, iUserAction, iRequest)
 }
 
 
+
 async function sendProcessMail(iRequestId, iProcessStatus, iUserAction, iRequest) {
 
+
+    /*
     let response;
 
     switch (iProcessStatus) {
@@ -230,12 +241,12 @@ async function sendProcessMail(iRequestId, iProcessStatus, iUserAction, iRequest
             response = await emailRejectedProcessTask(iRequestId, iRequest);
             break;
     }
+*/
 
-    /*
-    if (iUserAction === consts.UserAction.REJECTED) {
-        response = await emailRejectedProcessTask(iRequestId, iRequest);
-    }
-    */
+
+
+
+ 
 
     if (response !== undefined) {
         return response;
@@ -254,7 +265,10 @@ async function emailRejectedProcessTask(iRequestId, iRequest) {
     let actualUser;
     let note = "";
 
-    try {
+    try 
+    
+    {
+
         actualUser = iRequest.user.id;
 
         request = await getRequestData(iRequestId, iRequest)
@@ -482,8 +496,8 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
     }
 
     //Update approval history
-    let actualUser = iRequest.user.id; //<----da ripristinare 
-    //let actualUser = 'cbenvenuti@q8.it';
+    let actualUser = iRequest.user.id
+ 
 
     let returnO2PData = await getRequestData(iRequestId, iRequest);
     let actualVersion = returnO2PData.VERSION;
@@ -499,28 +513,13 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
 
     let returnUpdate = await updateApprovalHistory(approvalHistory, iRequest);
 
-    //viene eseguito dopo l'aggiornamento history per avere una tabella aggiornata 
-    /*
-    let returnGenereteDocument = await genereteDocument(iRequestId, iRequest, true);
-    if (returnGenereteDocument.errors) {
-         return returnGenereteDocument;
-    }
-    */
 
     //aggiornamento data inizio flusso
     let startdt = new Date();
     let updateRequest;
     updateRequest = await UPDATE(Request).where({ REQUEST_ID: iRequestId }).set({ START_APPROVAL_FLOW: startdt });
 
-
-    /*
-    let sendmail = await emailStartedProcess(iRequestId, iRequest);
-    if (sendmail.errors) {
-        return sendmail;
-    }    
-    */
-
-    // return returnUpdate; 
+ 
 
     let message = new Object();
     message.MTYPE = consts.SUCCESS;
@@ -528,254 +527,8 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
     message.TEXT = oBundle.getText("ACTION_COMPLETED", [iRequestId]);
     return message;
 }
+ 
 
-async function genereteDocument(iRequestId, iRequest, isSaveAttachment) {
-
-    //Get PidData
-    let returnData = await getRequestData(iRequestId, iRequest);
-    if (returnData.errors) {
-        return returnData;
-    }
-
-    //Generete Json
-    let returnJsonData = await genereteJsonData(returnData, iRequest);
-    if (returnJsonData.errors) {
-        return returnJsonData;
-    }
-
-    let xdpTemplate = '';
-    if (returnData.to_Commitment_COMMITMENT === consts.CONVEZIONAMENTO) {
-        xdpTemplate = "kupit_o2p_conv_pass/kupito2ponvpass";
-    } else {
-        xdpTemplate = "kupit_o2p_loc_pass/kupito2plocpass";
-    }
-
-    //CreatePDF                           
-    let returnCreatePdf = await createPdf(returnJsonData, iRequestId, iRequest, xdpTemplate);
-    if (returnCreatePdf.errors) {
-        return returnCreatePdf;
-    }
-
-    if (isSaveAttachment === true) {
-        //SavePidAttach
-        let returnSaveAttach = saveAttach(returnCreatePdf, iRequestId, iRequest);
-        if (returnSaveAttach.errors) {
-            return returnSaveAttach;
-        }
-
-        return returnSaveAttach;
-    } else {
-        let message = new Object()
-        message.MTYPE = consts.SUCCESS;
-        message.TEXT = "O2P_" + iRequestId + ".pdf";
-        message.REQUESTID = iRequestId;
-        message.CONTENT = returnCreatePdf;
-        return message;
-    }
-}
-
-async function genereteJsonData(iRequestData, iRequest) {
-
-    let jsonData;
-
-    let headerdata = await getHeaderData(iRequestData, iRequest);
-    if (headerdata.errors) {
-        return headerdata;
-    }
-    let afedata = await getAFEData(iRequestData, iRequest);
-    if (afedata.errors) {
-        return afedata;
-    }
-
-    let contractcommitement = await getContractCommit(iRequestData, iRequest);
-    if (contractcommitement.errors) {
-        return contractcommitement;
-    }
-
-    let approvers = await getApprovers(iRequestData, iRequest);
-    if (approvers.errors) {
-        return approvers;
-    }
-
-    let convContractComm = await getConvContractComm(iRequestData, iRequest);
-    if (convContractComm.errors) {
-        return convContractComm;
-    }
-
-    let oCreatePDF = {
-        data: {
-            GS_HEADER: {},
-            GT_HEADER_VALUES_SX: {
-                DATA: []
-            },
-            GT_HEADER_VALUES_DX: {
-                DATA: []
-            },
-            GT_AFE_DATA: {
-                T_AFE_DATA_SX: {
-                    DATA: []
-                },
-                T_AFE_DATA_DX: {
-                    DATA: []
-                }
-            },
-            GT_CONTRACT_COMMITEMENT: {
-                DATA: []
-            },
-            GT_APPROVERS: {
-                DATA: []
-            },
-            GT_CONTRACT_COMMITEMENT_01: {
-                DATA: []
-            }
-        }
-    };
-    let data = {};
-
-    let GT_HEADER_VALUES_SX = {};
-    let GT_HEADER_VALUES_DX = {};
-    data.GS_HEADER = headerdata.GS_HEADER;
-    GT_HEADER_VALUES_SX.DATA = headerdata.GT_HEADER_VALUES_SX;
-    data.GT_HEADER_VALUES_SX = GT_HEADER_VALUES_SX;
-    GT_HEADER_VALUES_DX.DATA = headerdata.GT_HEADER_VALUES_DX;
-    data.GT_HEADER_VALUES_DX = GT_HEADER_VALUES_DX;
-
-    data.GT_AFE_DATA = afedata;
-    let T_AFE_DATA_SX = {};
-    let T_AFE_DATA_DX = {};
-    T_AFE_DATA_SX.DATA = afedata.T_AFE_DATA_SX;
-    T_AFE_DATA_DX.DATA = afedata.T_AFE_DATA_DX;
-    data.GT_AFE_DATA.T_AFE_DATA_SX = T_AFE_DATA_SX;
-    data.GT_AFE_DATA.T_AFE_DATA_DX = T_AFE_DATA_DX;
-
-    let GT_CONTRACT_COMMITEMENT = {};
-    let GT_CONTRACT_COMMITEMENT_01 = {};
-    GT_CONTRACT_COMMITEMENT.DATA = contractcommitement.ET_CONV_CONTR_COMMITEMENT;
-    GT_CONTRACT_COMMITEMENT_01.DATA = contractcommitement.ET_CONV_CONTR_COMMITEMENT;
-    data.GT_CONTRACT_COMMITEMENT = GT_CONTRACT_COMMITEMENT;
-    data.GT_CONTRACT_COMMITEMENT_01 = GT_CONTRACT_COMMITEMENT_01;
-
-    let GT_APPROVERS = {};
-    GT_APPROVERS.DATA = approvers.ET_APPROVERS;
-    data.GT_APPROVERS = GT_APPROVERS;
-
-    if (headerdata.GT_PV_LIST !== undefined) {
-        let GT_PV_LIST = {};
-        GT_PV_LIST.DATA = headerdata.GT_PV_LIST;
-        data.GT_PV_LIST = GT_PV_LIST;
-    }
-
-    if (convContractComm.ET_CONV_CONTR_COMMITEMENT !== undefined) {
-        let GT_CONV_CONTR_COMMITEMENT = {};
-        GT_CONV_CONTR_COMMITEMENT.DATA = convContractComm.ET_CONV_CONTR_COMMITEMENT;
-        data.GT_CONV_CONTR_COMMITEMENT = GT_CONV_CONTR_COMMITEMENT;
-    }
-
-    oCreatePDF.data = data;
-
-    try {
-
-        let sCreatePDF = JSON.stringify(oCreatePDF);
-
-        jsonData = JSON.parse(sCreatePDF);
-
-    } catch (error) {
-        let errMEssage = "ERROR genereteJsonData " + iRequestData.REQUEST_ID + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-
-    return jsonData;
-}
-
-
-async function getApprovers(iRequestData, iRequest) {
-
-
-    let returndata = {};
-    let ET_APPROVERS = [];
-    const oBundle = getTextBundle(iRequest);
-    try {
-
-        let approvers = await SELECT.from(ApprovalView).
-            where({
-                REQUEST_ID: iRequestData.REQUEST_ID
-            }).orderBy('SEQUENCE asc', 'STEP asc');
-
-        for (let i = 0; i < approvers.length; i++) {
-            let row = {};
-            row.FULL_NAME = approvers[i].FULLNAME;
-            if (approvers[i].EXECUTED_AT !== null) {
-                row.APPROVAL_DATE = moment(approvers[i].EXECUTED_AT).format('DD/MM/YYYY');
-            }
-            row.APPROVAL_ROLE = approvers[i].DESCROLE;
-            ET_APPROVERS.push(row);
-
-        }
-
-        returndata.ET_APPROVERS = ET_APPROVERS;
-
-        return returndata;
-
-    } catch (error) {
-        let errMEssage = "ERROR getApprovers " + iRequestData.REQUEST_ID + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-
-
-}
-
-
-
-async function saveAttach(iPdfContent, iRequestId, iRequest) {
-
-    let fullName;
-    let attach = {};
-    let attachUpdate = new Array();
-
-    let actualUser = iRequest.user.id;
-    var fileSizeInBytes = iPdfContent.length;
-
-    try {
-
-        let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
-            .where({ MailDipendente: actualUser }));
-        if (oInfoWDPosition === undefined) {
-            fullName = actualUser;
-        } else {
-            fullName = oInfoWDPosition.FullName;
-        }
-
-        attach.to_Request_REQUEST_ID = iRequestId;
-        attach.ID = 1;
-        attach.CONTENT = iPdfContent;
-        attach.MEDIATYPE = "application/pdf";
-        attach.FILENAME = "O2P_" + iRequestId + ".pdf";
-        attach.SIZE = fileSizeInBytes
-        attach.URL = "/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=" + iRequestId + ",ID=1)/CONTENT";
-        // attach.ATTACHMENTTYPE_ATTACHMENTTYPE = consts.attachmentTypes.O2PCOMP;
-        attach.CREATOR_FULLNAME = fullName;
-        attach.createdAt = new Date();
-        attach.createdBy = actualUser;
-
-        attachUpdate.push(attach);
-
-        const cdsTx = cds.tx(); //-> creo la transaction //gli allegati vengono committati per la gestione della mail
-        let upsertAttch = UPSERT.into(Attachments).entries(attachUpdate);
-        let upsertResponse = await cdsTx.run(upsertAttch);
-        await cdsTx.commit();
-
-    } catch (error) {
-        let errMEssage = "ERROR saveAttach " + iRequestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return iRequest;
-}
 
 
 
@@ -1276,6 +1029,8 @@ async function updateRequestVersion(iRequest) {
 
     let respInsertHistory = await insertApprovalHistory(iRequest, requestId, moaApprovers.approvalFlow, newVersion);
 
+    let o2pDocument = await generateO2PDocument(iRequest,true) 
+    
     return respInsertHistory;
 
 }
@@ -1781,10 +1536,7 @@ async function emailCompletedProcess(iRequestId, iRequest) {
             ccrecipient = reqData.EMAILADDRESSCC.split(/\s*[\s,;]\s*/);
         }
 
-
-
-        // recipient.push('davide.girard@avvale.com');
-        // ccrecipient.push('davide.girard@avvale.com');
+ 
 
         let columns = ["CONTENT", "MEDIATYPE", "ATTACHMENTTYPE_ATTACHMENTTYPE", "FILENAME"]
         let attachementsRs = await SELECT.columns(columns).from(Attachments).
@@ -1878,8 +1630,7 @@ async function emailTerminatedProcess(iRequestId, iRequest) {
         */
 
         //recipient.push(iRequest.)
-
-        //  recipient.push('davide.girard@avvale.com')
+ 
 
         if (recipient.length <= 0) {
             return iRequest;
@@ -1919,12 +1670,12 @@ module.exports = {
     saveUserAction,
     approversControl,
     updateRequestVersion,
-    sendTeamsNotification,
-    genereteDocument,
+    sendTeamsNotification, 
     insertApprovalHistory,
     assignApprover,
     emailStartedProcess,
     emailCompletedProcess,
     emailTerminatedProcess,
-    emailRejectedProcessTask
+    emailRejectedProcessTask,
+    convertToBinaryType
 }

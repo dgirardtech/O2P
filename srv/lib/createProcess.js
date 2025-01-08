@@ -380,17 +380,17 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
             aResult.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore", ISMANAGER: "false" });
 
-          // if (oMOAParam.addStep40 === 'TRUE') {
-                aResult.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
-          // }
+            // if (oMOAParam.addStep40 === 'TRUE') {
+            aResult.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
+            // }
 
-           // if (Boolean(oMOAParam.managerStep42)) {
-           //       aResult.push({ INDEX: "42", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false" });
-           //  }
+            // if (Boolean(oMOAParam.managerStep42)) {
+            //       aResult.push({ INDEX: "42", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager Step30", ISMANAGER: "false" });
+            //  }
 
-            
-           if (oMOAParam.addStep45 === 'TRUE') {
-               aResult.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
+
+            if (oMOAParam.addStep45 === 'TRUE') {
+                aResult.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
             }
 
             aResult.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
@@ -413,8 +413,8 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
         }
 
-       // sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
-      //  if (sendFakeMail === "false") {
+        // sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
+        //  if (sendFakeMail === "false") {
 
 
         if (oMOAParam.addStep40 === 'TRUE' && Boolean(oMOAParam.managerExceptStep40)) {
@@ -438,9 +438,8 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                         aResult[idx].FNAME = oInfoWDPosition.Nome
                         aResult[idx].LNAME = oInfoWDPosition.Cognome
 
-                    } 
-                     else
-                       {
+                    }
+                    else {
 
                         aResult.push({
                             INDEX: "40", WDID: oInfoWDPosition.WorkdayEmployeeID,
@@ -449,7 +448,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                             IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false"
                         });
                     }
-                        
+
                 }
             }
         }
@@ -469,7 +468,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
             }
         }
 
-   // }
+        // }
 
     } catch (error) {
         iRequest.error(450, error.message, null, 450);
@@ -583,8 +582,8 @@ async function getMOAParams(iRequestID) {
         }
     }
 
-   // oResult.addStep40 = 'TRUE'
-   // oResult.managerExceptStep40 = "HR_POSITION_MANAGER_CONTAB_GEN_AMM_VENDITE"
+    // oResult.addStep40 = 'TRUE'
+    // oResult.managerExceptStep40 = "HR_POSITION_MANAGER_CONTAB_GEN_AMM_VENDITE"
 
     //   Step 42
 
@@ -1228,8 +1227,37 @@ async function getTaskId(iRequestId, iStepId, iWfInstaceID, iRequest) {
 }
 
 
+async function getActualStep(iRequestId) {
+
+    let actualStep = ''
+
+    let oRequest = await SELECT.one.from(Request).
+        where({
+            REQUEST_ID: iRequestId
+        });
+
+
+    if (oRequest) {
+
+        let oApproval = await SELECT.one.from(ApprovalHistory).
+            where({
+                REQUEST_ID: oRequest.REQUEST_ID,
+                VERSION: oRequest.VERSION,
+                To_Action_ACTION: 'READY'
+            });
+
+        if (oApproval) {
+            actualStep = oApproval.STEP
+        }
+
+    }
+
+    return actualStep
+
+}
 
 module.exports = {
+    getActualStep,
     createProcess,
     updateWfInstanceId,
     checkTaskCreated,

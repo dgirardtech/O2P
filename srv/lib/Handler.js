@@ -10,10 +10,11 @@ const { getEnvParam, getTextBundle } = require('./Utils');
 const { row, forEach, not, number, and } = require('mathjs');
 const { RequestBuilder } = require('@sap-cloud-sdk/odata-v2');
 const { xDnsPrefetchControl } = require('helmet');
-const { updateMoaApprovers, insertApprovalHistory } = require('./createProcess');
+const { updateMoaApprovers, insertApprovalHistory, getMoaApprovers } = require('./createProcess');
 const { INSERT } = require('@sap/cds/lib/ql/cds-ql');
 const { resolve } = require('path');
 const { log } = require('console');
+
 
 
 
@@ -242,6 +243,49 @@ async function deleteNote(iRequest) {
 }
 
 
+
+async function getTerminatedName(iRequest, iO2PRequest) {
+    try {
+        let rejectorInfo = {};
+        let oldVersion = 0;
+        if (iO2PRequest.VERSION === 1) {
+            oldVersion = iO2PRequest.VERSION;
+        } else {
+            oldVersion = iO2PRequest.VERSION - 1;
+        }
+
+        ;
+
+        let aRequest = await SELECT.one.from(ApprovalHistory).
+            where({
+                REQUEST_ID: iO2PRequest.REQUEST_ID,
+                VERSION: oldVersion,
+                To_Action_ACTION: consts.UserAction.TERMINATED
+            });
+
+        if (aRequest == undefined) {
+            return "";
+
+
+        }
+
+        rejectorInfo.rejectorName = aRequest.REAL_FULLNAME;
+        if (rejectorInfo.rejectorName === null) {
+            rejectorInfo.rejectorName = aRequest.REAL_MAIL;
+        }
+        rejectorInfo.createby = aRequest.REAL_MAIL;
+        return rejectorInfo;
+
+
+    } catch (error) {
+        let errMEssage = "ERROR getTerminatedName: " + iO2PRequest.data.REQUEST_ID + ". " + error.message;
+        iRequest.error(450, errMEssage, iO2PRequest, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+    }
+
+}
+
 async function getRejectorName(iRequest, iO2PRequest) {
     try {
         let rejectorInfo = {};
@@ -311,6 +355,62 @@ async function getRejectMotivation(iRequest, iCreatedby) {
 }
 
 
+async function getTerminatedMotivation(iRequest, iCreatedby) {
+
+    let oldVersion = 0;
+    if (iRequest.VERSION === 1) {
+        oldVersion = iRequest.VERSION;
+    } else {
+        oldVersion = iRequest.VERSION - 1;
+    }
+
+    ;
+
+    let reqData = await SELECT.one.from(Notes).
+        where({
+            to_Request_REQUEST_ID: iRequest.REQUEST_ID,
+            VERSION: oldVersion,
+            createdBy: iCreatedby
+        });
+
+    if (reqData !== undefined && reqData.NOTE !== null) {
+        return reqData.NOTE;
+    } else {
+        return ""
+    }
+
+}
+
+
+async function getTerminatedInfo(iRequest) {
+    //LOG.info("getTerminatedInfo");
+    //let now = moment(new Date());
+
+    let reqData = await SELECT.one.from(Request).
+        where({
+            REQUEST_ID: iRequest.data.REQUEST_ID
+        });
+
+    if (reqData === null || reqData == undefined) {
+        let errMEssage = "ERROR get request " + iRequest.data.REQUEST_ID + ". Request not found";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+    }
+
+    let returninfo = {};
+    let returnReject = await getTerminatedName(iRequest, reqData);
+    if (returnReject == "") {
+        return returnReject;
+    }
+    //if( returninfo !== ""){ 
+    returninfo.REJECTOR_NAME = returnReject.rejectorName;
+    returninfo.MOTIVATION = await getTerminatedMotivation(reqData, returnReject.createby);
+    //}
+    return returninfo;
+}
+
+
 async function getRejectInfo(iRequest) {
     //LOG.info("getRejectInfo");
     //let now = moment(new Date());
@@ -339,10 +439,14 @@ async function getRejectInfo(iRequest) {
     return returninfo;
 }
 
-async function manageData(iRequest) {
-
+async function manageMainData(iRequest) {
 
     const oBundle = getTextBundle(iRequest);
+
+
+    let oRequest = iRequest.data.request
+    let aDocument = iRequest.data.document
+    let aAttachment = iRequest.data.attachment
 
 
     let oResult = {
@@ -357,77 +461,71 @@ async function manageData(iRequest) {
         REQ_F24_ENTRATEL_TYPE: false,
         VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT: false,
         REQ_F24_ENTRATEL_TYPE_CL_ACCOUNT: false,
-        VIS_SEND_TASK_BTN: false
+        VIS_SEND_TASK_BTN: false,
+        VIS_SKIP_COORD: false,
+        ERROR: []
 
     }
 
 
     let oRequester = await SELECT.one.from(Requester).
-        where({ CODE: iRequest.data.REQUESTER });
+        where({ CODE: oRequest.REQUESTER_CODE });
 
 
-    /*   let oPayMode = await SELECT.one.from(Paymode).
-           where({ PAYMENT_MODE: iRequest.data.PAYMENT_MODE });
-   
-    
-      if (!oPayMode) {
-           let errMEssage = "ERROR get layout " + iRequest.data.PAYMENT_MODE + ". Payment Mode not found";
-           iRequest.error(450, errMEssage, null, 450);
-           LOG.error(errMEssage);
-           return iRequest;
-       }
-          */
+    let actualStep = ''
+    let oApproval = await SELECT.one.from(ApprovalHistory).
+        where({
+            REQUEST_ID: oRequest.REQUEST_ID,
+            VERSION: oRequest.VERSION,
+            To_Action_ACTION: 'READY'
+        });
 
-    //set check priority visibility
-    if (iRequest.data.PAYMENT_MODE === consts.Paymode.BONIFICO) {
-        oResult.VIS_PRIORITY = true
-        oResult.VIS_ADD_CRO_MAIL = true
+    if (oApproval) {
+        actualStep = oApproval.STEP
     }
 
-    if (iRequest.data.PRIORITY === true) {
+
+    if (oRequest.PRIORITY === true) {
         oResult.VIS_BENEFICIARY_DATE = true
         oResult.REQ_BENEFICIARY_DATE = true
     }
 
 
-    if (iRequest.data.PAYMENT_MODE === consts.Paymode.F24) {
+    //set check priority visibility
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.BONIFICO) {
+        oResult.VIS_PRIORITY = true
+        oResult.VIS_ADD_CRO_MAIL = true
+    }
 
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.F24) {
         oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_F24")
         oResult.VIS_EXPIRE_DATE = true
-
     }
 
-    if (iRequest.data.PAYMENT_MODE === consts.Paymode.F23) {
-
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.F23) {
         oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_F23")
         oResult.VIS_EXPIRE_DATE = true
-
     }
 
-    if (iRequest.data.PAYMENT_MODE === consts.Paymode.MAV) {
-
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.MAV) {
         oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_MAV")
         oResult.VIS_EXPIRE_DATE = true
-
     }
 
-    if (iRequest.data.PAYMENT_MODE === consts.Paymode.FLBONIFIC) {
-
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.FLBONIFIC) {
         oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_FLBONIFIC")
         oResult.VIS_EXPIRE_DATE = true
-
     }
 
 
-    if (iRequest.data.PAYMENT_MODE === consts.Paymode.ENTRATEL) {
-
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.ENTRATEL) {
         oResult.LAB_EXPIRE_DATE = oBundle.getText("LAB_EXPIRE_DATE_F24")
         oResult.VIS_EXPIRE_DATE = true
 
         oResult.VIS_F24_ENTRATEL_TYPE = true
         oResult.REQ_F24_ENTRATEL_TYPE = true
 
-        if (iRequest.data.F24_ENTRATEL_TYPE === 'DEBTOFFSET') {
+        if (oRequest.F24_ENTRATEL_TYPE === 'DEBTOFFSET') {
             oResult.VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT = true
             oResult.REQ_F24_ENTRATEL_TYPE_CL_ACCOUNT = true
         }
@@ -442,189 +540,261 @@ async function manageData(iRequest) {
         oResult.REQ_EXPIRE_DATE = true
     }
 
-    return oResult
 
-}
+    if (actualStep === "10") {
 
-async function getLayout(iRequest) {
+        let aMoaApprovers = await getMoaApprovers(iRequest, oRequest.REQUEST_ID, iRequest.user.id);
 
-    let oLayout = await manageData(iRequest)
-    return oLayout
-
-}
-
-async function checkData(iRequest) {
-
-    const oBundle = getTextBundle(iRequest);
-
-    let oRequest = iRequest.data.request
-    let aDocument = iRequest.data.document
-    let aAttachment = iRequest.data.attachment
-
-    let aResult = []
-
-
-    let oImpLayout = {
-        data: {
-            REQUESTER: oRequest.REQUESTER_CODE,
-            PAYMENT_MODE: oRequest.PAYMENT_MODE_CODE,
-            PRIORITY: oRequest.PRIORITY,
-            TYPE_F24_ENTRATEL: oRequest.TYPE_F24_ENTRATEL
-
+        let oMoaApprovers30 = aMoaApprovers.find(oMoaApprovers => oMoaApprovers.INDEX === "30")
+        if (oMoaApprovers30) {
+            oResult.VIS_SKIP_COORD = true
         }
+
     }
 
-    let oLayout = await manageData(oImpLayout)
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     // check 1
     if (!Boolean(oRequest.TITLE)) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "TITLE", TEXT: oBundle.getText("TITLE_MAND") }) //"Title field is mandatory"
+        //"Title field is mandatory"
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "TITLE", TEXT: oBundle.getText("TITLE_MAND") })
     }
 
     // check 2
     if (!Boolean(oRequest.AREA_CODE)) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "AREA", TEXT: oBundle.getText("AREA_MAND") }) //"Area field is mandatory";
+        //"Area field is mandatory"
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "AREA", TEXT: oBundle.getText("AREA_MAND") })
     }
 
     // check 3
     if (Boolean(!oRequest.WAERS_CODE)) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "WAERS_CODE", TEXT: oBundle.getText("CURR_MAND") }) //"Currency is mandatory";
+        //"Currency is mandatory"
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "WAERS_CODE", TEXT: oBundle.getText("CURR_MAND") })
     }
     else {
         let oCurrency = await SELECT.one.from(Currency).where({ code: oRequest.WAERS_CODE });
 
         if (!oCurrency) {
-            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "WAERS_CODE", TEXT: oBundle.getText("CURR_NVAL") }) // "Currency is not valid";
+            // "Currency is not valid"
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "WAERS_CODE", TEXT: oBundle.getText("CURR_NVAL") })
         }
     }
 
     // check 4
     if (Boolean(!oRequest.PAYMENT_MODE_CODE)) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "PAYMENT_MODE_CODE", TEXT: oBundle.getText("PAYMODE_MAND") }) //"Payment mode is mandatory";
+        //"Payment mode is mandatory";
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "PAYMENT_MODE_CODE", TEXT: oBundle.getText("PAYMODE_MAND") })
     }
 
 
     // check 5
-    if (Boolean(!oRequest.EXPIRY_DATE) && oLayout.REQ_EXPIRE_DATE === true) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "EXPIRY_DATE", TEXT: oBundle.getText("EXPIRY_DATE_MAND") }) //"Expire Date is mandatory";
+    if (Boolean(!oRequest.EXPIRY_DATE) && oResult.REQ_EXPIRE_DATE === true) {
+        //"Expire Date is mandatory"
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "EXPIRY_DATE", TEXT: oBundle.getText("EXPIRY_DATE_MAND") })
     }
 
 
     // check 6
-    if (Boolean(!oRequest.F24_ENTRATEL_TYPE) && oLayout.REQ_F24_ENTRATEL_TYPE) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "F24_ENTRATEL_TYPE", TEXT: oBundle.getText("F24_ENTRATEL_TYPE_MAND") }) //Attenzione, per gli F24 ENTRATEL è necessario indicare la tipologia
+    if (Boolean(!oRequest.F24_ENTRATEL_TYPE) && Boolean(oResult.REQ_F24_ENTRATEL_TYPE)) {
+        //Attenzione, per gli F24 ENTRATEL è necessario indicare la tipologia
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "F24_ENTRATEL_TYPE", TEXT: oBundle.getText("F24_ENTRATEL_TYPE_MAND") })
     }
 
     // check 7
-    if (Boolean(!oRequest.F24_ENTRATEL_CLEARING_ACCOUNT) && oLayout.REQ_F24_ENTRATEL_TYPE_CL_ACCOUNT) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "F24_ENTRATEL_CLEARING_ACCOUNT", TEXT: oBundle.getText("F24_ENTRATEL_TYPE_CL_ACCOUNT_MAND") }) //"Attenzione, il conto di compensazione è un dato obbligatorio.
+    if (Boolean(!oRequest.F24_ENTRATEL_CLEARING_ACCOUNT) && Boolean(oResult.REQ_F24_ENTRATEL_TYPE_CL_ACCOUNT)) {
+        //"Attenzione, il conto di compensazione è un dato obbligatorio.
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "F24_ENTRATEL_CLEARING_ACCOUNT", TEXT: oBundle.getText("F24_ENTRATEL_TYPE_CL_ACCOUNT_MAND") })
     }
 
 
     // check 8
-    if (oRequest.EXTRA_MANAGER_REQUIRED === true) {
+    if (oRequest.EXTRA_MANAGER_REQUIRED === true && actualStep === '20') {
+        let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: oRequest.EXTRA_MANAGER_NAME }));
+        if (!oInfoWDPosition) {
+            //"Further manager has been requested but not inserted
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "EXTRA_MANAGER_NAME", TEXT: oBundle.getText("EXTRA_MANAGER_NAME_MAND") })
+        }
+    }
 
-        oApproval = await SELECT.one.from(ApprovalHistory).
-            where({
-                REQUEST_ID: oRequest.REQUEST_ID,
-                VERSION: oRequest.VERSION,
-                To_Action_ACTION: 'READY'
-            });
 
 
-        if (oApproval && oApproval.STEP === '20') {
-            let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ MailDipendente: oRequest.EXTRA_MANAGER_NAME }));
-            if (!oInfoWDPosition) {
-                aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "EXTRA_MANAGER_NAME", TEXT: oBundle.getText("EXTRA_MANAGER_NAME_MAND") }) //"Further manager has been requested but not inserted
+    if (Boolean(!oRequest.BENEFICIARY_DATE) && oResult.REQ_BENEFICIARY_DATE === true) {
+        //"For prior orders, insert a desired Beneficiary Date"
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "BENEFICIARY_DATE", TEXT: oBundle.getText("BEN_DATE_MAND") })
+    }
+
+
+    let maxRow = 0
+
+    let oPayMode = await SELECT.one.from(Paymode).
+        where({ CODE: oRequest.PAYMENT_MODE_CODE });
+    if (oPayMode) {
+        maxRow = oPayMode.MAX_ROW
+    }
+
+
+    let aDocCheck = []
+    let oDocCheck = {}
+
+    let first001DocId = false
+    let lastId = ""
+    let nRow = 0
+
+    if (aDocument.length > 0) {
+
+        for (let i = 0; i < aDocument.length; i++) {
+
+            nRow = Number(nRow) + 1
+
+            if (aDocument[i].DOC_ID !== lastId) {
+
+                lastId = aDocument[i].DOC_ID
+
+                if (first001DocId === true) {
+
+                    oDocCheck.docId = lastId
+                    oDocCheck.numRow = nRow
+                    aDocCheck.push(oDocCheck)
+                    oDocCheck = {}
+
+                    nRow = 0
+
+                }
+
+                first001DocId = true
             }
-        }
-    }
 
 
-
-
-    if (Boolean(!oRequest.BENEFICIARY_DATE) && oLayout.REQ_BENEFICIARY_DATE === true) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "BENEFICIARY_DATE", TEXT: oBundle.getText("BEN_DATE_MAND") }) //"For prior orders, insert a desired Beneficiary Date";
-    }
-
-
-
-
-
-
-    // da rivedere controllo totali
-    /* if (aDocument) {
-         let errMEssage = "Order with total amount null!";
-         iRequest.error(450, errMEssage, null, 450);
-         LOG.error(errMEssage);
-     } */
-
-    // return iRequest;
-
-
-    //iDocData
-
-    let checkAttachCapi = false
-
-
-
-if (aDocument.length > 0) {
-    
-    for (let i = 0; i < aDocument.length; i++) {
-
-        let iDocData = {
-            data: {
-                PAYMODE: oRequest.PAYMENT_MODE_CODE,
-                REQUEST_ID: oRequest.REQUEST_ID,
-                DOC_ID: aDocument[i].DOC_ID,
-                ID: aDocument[i].ID,
-                LOCATION: aDocument[i].LOCATION,
-                VENDOR: aDocument[i].VENDOR,
-                COST_CENTER: aDocument[i].COST_CENTER,
-                INT_ORDER: aDocument[i].INT_ORDER,
-                ACCOUNT: aDocument[i].ACCOUNT,
-                AMOUNT: aDocument[i].AMOUNT,
-                REASON: aDocument[i].REASON,
-                IBAN: aDocument[i].IBAN,
-                NOTE: aDocument[i].NOTE,
-                ATTRIBUZIONE: aDocument[i].ATTRIBUZIONE
+            let iDocData = {
+                data: {
+                    PAYMODE: oRequest.PAYMENT_MODE_CODE,
+                    REQUEST_ID: oRequest.REQUEST_ID,
+                    DOC_ID: aDocument[i].DOC_ID,
+                    ID: aDocument[i].ID,
+                    LOCATION: aDocument[i].LOCATION,
+                    VENDOR: aDocument[i].VENDOR,
+                    COST_CENTER: aDocument[i].COST_CENTER,
+                    INT_ORDER: aDocument[i].INT_ORDER,
+                    ACCOUNT: aDocument[i].ACCOUNT,
+                    AMOUNT: aDocument[i].AMOUNT,
+                    REASON: aDocument[i].REASON,
+                    IBAN: aDocument[i].IBAN,
+                    NOTE: aDocument[i].NOTE,
+                    ATTRIBUZIONE: aDocument[i].ATTRIBUZIONE
+                }
             }
+
+            let oDocData = await manageDocPopupData(iDocData, true)
+
+
+            let aError = oDocData.ERROR
+
+            for (let x = 0; x < aError.length; x++) {
+                oResult.ERROR.push(aError[x])
+            }
+
+
+            if (oDocData.CHECK_ATTACH_CAPI === true) {
+                oDocCheck.checkAttachCapi = true
+            }
+
+            if (oDocData.IS_POSTAL_ACCOUNT === true) {
+                oDocCheck.existPostalAccount = true
+            } else {
+                oDocCheck.existNotPostalAccount = true
+            }
+
+
+            if (oDocData.IS_ADVANCE_ACCOUNT === true) {
+                oDocCheck.existAdvanceAccount = true
+            } else {
+                oDocCheck.existNotAdvanceAccount = true
+            }
+
+
+            if (i === aDocument.length - 1) {
+                oDocCheck.docId = lastId
+                oDocCheck.numRow = nRow
+                aDocCheck.push(oDocCheck)
+                oDocCheck = {}
+
+                nRow = 0
+            }
+
         }
 
-        let oDocData = await manageDocPopupData(iDocData)
+    } else {
 
-        if (oDocData.CHECK_ATTACH_CAPI === true && checkAttachCapi === false) {
-            checkAttachCapi = oDocData.CHECK_ATTACH_CAPI
-        }
-
-        let aError = oDocData.ERROR
-
-        for (let x = 0; x < aError.length; x++) {
-            aResult.push(aError[x])
-        }
+        //“Attenzione, inserire almeno un documento
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("DOCUMENT_MAND") })
 
     }
 
-} else {
-
-    aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("DOCUMENT_MAND") }) //“Attenzione, inserire almeno un documento
-     
-}
 
 
-    if (Boolean(checkAttachCapi)) {
+    oDocCheck = aDocCheck.find(oDocCheck => oDocCheck.numRow > maxRow)
+    if (oDocCheck) {
+        // Paym. mode {0} does not allow to have more than {1} details for document
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("MAX_ROW", [oPayMode.PAYMENT_NAME, oPayMode.MAX_ROW]) })
 
+    }
+
+
+    oDocCheck = aDocCheck.find(oDocCheck => oDocCheck.checkAttachCapi === true)
+    if (oDocCheck) {
         let oAttachment = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.CAPI)
         if (!oAttachment) {
-            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_CAPI_MAND") }) //“Attenzione, per i conti che prevedono l’Ordine interno è necessario inserire l’allegato : Giustificativo Capitalizzazione”.
+            //“Attenzione, per i conti che prevedono l’Ordine interno è necessario inserire l’allegato : Giustificativo Capitalizzazione”.
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_CAPI_MAND") })
+        }
+    }
+
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.BONIFICO && oRequest.PRIORITY === true) {
+        oDocCheck = aDocCheck.find(oDocCheck => oDocCheck.numRow > 1 && oDocCheck.existAdvanceAccount === true)
+        if (oDocCheck) {
+            //“Priority Orders with advances accounts admit only one row for document
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("PRIO_ADVANCE") })
+        }
+    }
+
+
+
+
+    if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.CCPOSTALE ||
+        oRequest.PAYMENT_MODE_CODE === consts.Paymode.RAV) {
+
+        oDocCheck = aDocCheck.find(oDocCheck => oDocCheck.existNotPostalAccount === true)
+        if (oDocCheck) {
+            // “Attenzione, ci sono dei documenti che non riportano le spese postali”
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("NOT_POSTAL_ACCOUNT") })
+        }
+
+    } else {
+
+        oDocCheck = aDocCheck.find(oDocCheck => oDocCheck.existPostalAccount === true)
+        if (oDocCheck) {
+            // “Attenzione, ci sono dei documenti che riportano le spese postali”
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("POSTAL_ACCOUNT") })
         }
 
     }
+
+    oDocCheck = aDocCheck.find(oDocCheck => oDocCheck.existNotAdvanceAccount === true &&
+        oDocCheck.existAdvanceAccount === true)
+    if (oDocCheck) {
+        // It is not possible to create an order with documents referring to advances and "normal" document
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "DOCUMENT", TEXT: oBundle.getText("ADVANCE_AND_NOT_ACCOUNT") })
+
+    }
+
 
     if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.FLBONIFIC) {
         let oAttachment = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.FLBONIFIC)
         if (!oAttachment) {
-            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_FLBONIFIC_MAND") }) //“Attenzione, per il flusso bonifici è necessario allegare il relativo documento”.
+            //“Attenzione, per il flusso bonifici è necessario allegare il relativo documento”.
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_FLBONIFIC_MAND") })
         }
     }
 
@@ -632,27 +802,38 @@ if (aDocument.length > 0) {
     if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.F24) {
         let oAttachment = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F24)
         if (!oAttachment) {
-            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_F24_MAND") }) //“Attenzione, per gli F24 è necessario allegare il relativo documento.
+            //“Attenzione, per gli F24 è necessario allegare il relativo documento.
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_F24_MAND") })
         }
     }
 
-    
+
 
     if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.F23) {
         let oAttachmentF23Conc = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F23_CONC)
         let oAttachmentF23Uff = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F23_UFF)
         let oAttachmentF23Vers = aAttachment.find(oAttachment => oAttachment.ATTACHMENTTYPE_ATTACHMENTTYPE === consts.attachmentTypes.F23_VERS)
-        
-        if (!oAttachmentF23Conc || !oAttachmentF23Uff || !oAttachmentF23Vers ) {
-            aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_F23_MAND") }) //    “Attenzione, per gli F23 è necessario allegare i documenti relativi”.
+
+        if (!oAttachmentF23Conc || !oAttachmentF23Uff || !oAttachmentF23Vers) {
+            //    “Attenzione, per gli F23 è necessario allegare i documenti relativi”.
+            oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTACHMENTTYPE", TEXT: oBundle.getText("ATTACH_F23_MAND") })
         }
     }
- 
 
 
-    return aResult
+    if (!Boolean(oRequest.SKIP_COORD_TEXT) && Boolean(oRequest.SKIP_COORD)) {
+        // “E’ possibile saltare l’approvazione del Coordinatore solo inserendo una motivazione !
+        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "SKIP_COORD_TEXT", TEXT: oBundle.getText("SKIP_COORD_TEXT_MAND") })
+    }
+
+
+
+    return oResult
 
 }
+
+
+
 
 
 async function getTemplate(iRequest) {
@@ -832,6 +1013,8 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
                 DOCUMENT_NUMBER: aDocument[i].DOCUMENT_NUMBER,
                 CLEARING_NUMBER: aDocument[i].CLEARING_NUMBER,
                 REASON: aDocument[i].REASON,
+                TOT_AMOUNT: 0,
+                
 
 
                 POSITION: []
@@ -864,8 +1047,10 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
 
         })
 
+        oHeader.TOT_AMOUNT = Number(aDocument[i].AMOUNT) + Number(oHeader.TOT_AMOUNT)
+
         if (i === aDocument.length - 1) {
-            oResult.HEADER.push(oHeader)
+            oResult.HEADER.push(oHeader) 
         }
 
     }
@@ -962,7 +1147,7 @@ async function fromTreeToDocument(iRequest) {
 
 
 
-async function manageDocPopupData(iRequest) {
+async function manageDocPopupData(iRequest, fromMain) {
 
     var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
 
@@ -976,6 +1161,10 @@ async function manageDocPopupData(iRequest) {
     const { VendorBankSet } = EccServiceO2P.entities;
     const { VendorSet } = EccServiceO2P.entities;
     const { OrderTypeSet } = EccServiceO2P.entities;
+    const { CostCenterCompanySet } = EccServiceO2P.entities;
+    const { CostCenterSet } = EccServiceO2P.entities;
+
+
 
 
 
@@ -1005,12 +1194,16 @@ async function manageDocPopupData(iRequest) {
         REQ_IBAN: false,
         VIS_IBAN: false,
         CHECK_ATTACH_CAPI: false,
+        IS_POSTAL_ACCOUNT: false,
+        IS_ADVANCE_ACCOUNT: false,
         REQ_REASON: true,
         VIS_REASON: true,
         REQ_AMOUNT: true,
         VIS_AMOUNT: true,
         REQ_VENDOR: true,
         VIS_VENDOR: true,
+        REQ_ACCOUNT: true,
+        VIS_ACCOUNT: true,
         IBAN: [],
         ACCOUNT: [],
         ERROR: []
@@ -1057,6 +1250,14 @@ async function manageDocPopupData(iRequest) {
 
     if (oAccountreq) {
 
+        /*
+        if(iRequest.data.ID === consts.firstId) {
+            oResult.AccountSpecialGl = oAccountreq.SPECIAL_GL_IND 
+            oResult.DocumentSpecialGl = oAccountreq.SPECIAL_GL_IND 
+            oDocCheck.firstAccount = aDocument[i].ACCOUNT
+        }
+         */
+
         if (oAccountreq.REQUEST_CDC === true) {
             oResult.VIS_COST_CENTER = true
             oResult.REQ_COST_CENTER = true
@@ -1070,6 +1271,7 @@ async function manageDocPopupData(iRequest) {
         if (oAccountreq.ACCOUNT_ADVANCE === true) {
             oResult.VIS_NOTE = true
             oResult.REQ_NOTE = true
+            oResult.IS_ADVANCE_ACCOUNT = true
         }
 
         if (oAccountreq.REFKEY2 === true) {
@@ -1085,6 +1287,9 @@ async function manageDocPopupData(iRequest) {
             oResult.REQ_ATTRIBUZIONE = true
         }
 
+        if (oAccountreq.POSTAL_ACCOUNT === true) {
+            oResult.IS_POSTAL_ACCOUNT = true
+        }
     }
 
 
@@ -1104,37 +1309,16 @@ async function manageDocPopupData(iRequest) {
     // get and check data
 
 
+    let aError = []
+
+
     oResult.REF_ID = 'BPM' + iRequest.data.REQUEST_ID + iRequest.data.DOC_ID
 
 
     let callECC = getEnvParam("CALL_ECC", false);
     if (callECC === "true") {
 
-        if (Boolean(iRequest.data.COST_CENTER)) {
-
-            let costCenter = iRequest.data.COST_CENTER
-
-            if (Boolean(/^\d+$/.test(costCenter))) {
-                costCenter = iRequest.data.COST_CENTER.padStart(10, '0')
-            }
-
-            let aCostCenter = await EccServiceAfe.run(
-                SELECT.from(CostCenterTextSet).where({ Kostl: costCenter }));
-            if (aCostCenter.length > 0) {
-                oResult.COST_CENTER_DESC = aCostCenter[0].Ltext
-            }
-            else {
-                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "COST_CENTER", TEXT: oBundle.getText("COST_CENTER_NVAL") }) //"Cost Center is not valid"
-            }
-        }
-
-        else {
-
-            if (oResult.REQ_COST_CENTER === true) {
-                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "COST_CENTER", TEXT: oBundle.getText("COST_CENTER_MAND") }) //"Cost Center is mandatory"
-            }
-
-        }
+        ///////////////// CHECK HEADER
 
 
         if (Boolean(iRequest.data.LOCATION)) {
@@ -1146,107 +1330,116 @@ async function manageDocPopupData(iRequest) {
                 oResult.LOCATION_DESC = aLocation[0].Stras
             }
             else {
-                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "LOCATION", TEXT: oBundle.getText("LOCATION_NVAL") }) //"Location is not valid
+                //"Location is not valid
+                aError.push({
+                    MTYPE: consts.ERROR, REF_TAB: "DOC_HEAD", REF_FIELD: "LOCATION",
+                    TEXT: oBundle.getText("LOCATION_NVAL")
+                })
             }
         }
+
         else {
             if (oResult.REQ_LOCATION === true) {
-                oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "LOCATION", TEXT: oBundle.getText("LOCATION_MAND") }) //"Location is mandatory
+                //"Location is mandatory
+                aError.push({
+                    MTYPE: consts.ERROR, REF_TAB: "DOC_HEAD", REF_FIELD: "LOCATION",
+                    TEXT: oBundle.getText("LOCATION_MAND")
+                })
             }
         }
 
+        ////////////////
 
-        if (Boolean(iRequest.data.INT_ORDER)) {
+        if (Boolean(iRequest.data.VENDOR)) {
 
-            let aOrder = await EccServiceAfe.run(
-                SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0') }));
+            let aVendor = await EccServiceO2P.run(
+                SELECT.from(VendorSet).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
 
-            if (aOrder.length > 0) {
-                oResult.INT_ORDER_DESC = aOrder[0].OrderName
-
-
-                let aOrderType = await EccServiceO2P.run(
-                    SELECT.from(OrderTypeSet).where({ Auart: aOrder[0].OrderType }));
-                if (aOrderType.length > 0) {
-                    if (aOrderType[0].Aprof === '000050') {
-
-                        oResult.CHECK_ATTACH_CAPI = true
-
-                        let budget = Number(aOrder[0].LclAfeValue) +
-                            (Number(aOrder[0].LclAfeValue) / 10) -
-                            Number(aOrder[0].LclAfeValueSpent)
-
-                        if (Number(budget) < Number(iRequest.data.AMOUNT)) {
-
-                            // Order &1: Residual budget: &2 - Required in the mandate: &3
-                            // Attention, for the internal Order & the budget has been exceeded
-
-                            oResult.ERROR.push({
-                                MTYPE: consts.ERROR, REF_FIELD: "AMOUNT",
-                                TEXT: oBundle.getText("RESID_BUDGET", [iRequest.data.INT_ORDER, budget, iRequest.data.AMOUNT])
-                            })
-
-                            oResult.ERROR.push({
-                                MTYPE: consts.ERROR, REF_FIELD: "AMOUNT",
-                                TEXT: oBundle.getText("EXCEED_BUDGET", [iRequest.data.INT_ORDER])
-                            })
-                        }
-                    }
-                }
-
+            if (aVendor.length > 0) {
+                oResult.VENDOR_DESC = aVendor[0].Name1
             } else {
-                oResult.ERROR.push({
-                    MTYPE: consts.ERROR, REF_FIELD: "INT_ORDER",
-                    TEXT: oBundle.getText("INT_ORDER_NVAL")
-                }) // Internal order is not valid
+                //  Vendor does not exist or it is not created for company code &
+                aError.push({
+                    MTYPE: consts.ERROR, REF_TAB: "DOC_HEAD", REF_FIELD: "VENDOR",
+                    TEXT: oBundle.getText("VENDOR_NVAL", [oRequester.BUKRS])
+                })
             }
 
-        } else {
 
-            if (oResult.REQ_INT_ORDER === true) {
-                oResult.ERROR.push({
-                    MTYPE: consts.ERROR, REF_FIELD: "INT_ORDER",
-                    TEXT: oBundle.getText("INT_ORDER_MAND")
-                }) // Internal order is mandatory.
+
+            let aVendorBank = await EccServiceO2P.run(
+                SELECT.from(VendorBankSet).where({ Lifnr: iRequest.data.VENDOR }));
+
+            if (aVendorBank.length > 0) {
+                for (let i = 0; i < aVendorBank.length; i++) {
+                    oResult.IBAN.push({ CODE: aVendorBank[i].Iban })
+                }
+            } else {
+
+                if (iRequest.data.PAYMODE === consts.Paymode.BONIFICO) {
+                    // For Vendor selected there are no IBANs
+                    aError.push({
+                        MTYPE: consts.ERROR, REF_TAB: "DOC_HEAD", REF_FIELD: "IBAN",
+                        TEXT: oBundle.getText("NO_VENDOR_IBAN")
+                    })
+                }
             }
-
         }
 
-        /////////////////////////////////////////////////////////////////////////////
+        else {
 
-        let aVendor = await EccServiceO2P.run(
-            SELECT.from(VendorSet).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
+            if (Boolean(oResult.REQ_VENDOR)) {
 
-        if (aVendor.length > 0) {
-            oResult.VENDOR_DESC = aVendor[0].Name1
-        } else {
-            //  Vendor does not exist or it is not created for company code &
-            oResult.ERROR.push({
-                MTYPE: consts.ERROR, REF_FIELD: "VENDOR",
-                TEXT: oBundle.getText("VENDOR_NVAL", [oRequester.BUKRS])
-            })
+                // Vendor is mandatory.
+                aError.push({
+                    MTYPE: consts.ERROR, REF_TAB: "DOC_HEAD", REF_FIELD: "VENDOR",
+                    TEXT: oBundle.getText("VENDOR_MAND")
+                })
+
+            }
         }
 
+    }
 
-        let aVendorBank = await EccServiceO2P.run(
-            SELECT.from(VendorBankSet).where({ Lifnr: iRequest.data.VENDOR }));
+    /////////////////////
 
-        if (aVendorBank.length > 0) {
-            for (let i = 0; i < aVendorBank.length; i++) {
-                oResult.IBAN.push({ CODE: aVendorBank[i].Iban })
-            }
-        } else {
+    if (oResult.REQ_IBAN === true && !Boolean(iRequest.data.IBAN)) {
+        // Iban is mandatory. 
+        aError.push({
+            MTYPE: consts.ERROR, REF_TAB: "DOC_HEAD", REF_FIELD: "IBAN",
+            TEXT: oBundle.getText("IBAN_MAND")
+        })
+    }
 
-            if (iRequest.data.PAYMODE === consts.Paymode.BONIFICO) {
-                oResult.ERROR.push({
-                    MTYPE: consts.ERROR, REF_FIELD: "IBAN",
-                    TEXT: oBundle.getText("NO_VENDOR_IBAN")
-                }) // For Vendor selected there are no IBANs
+    //////////////////////////////
+
+    if (oResult.REQ_REASON === true && !Boolean(iRequest.data.REASON)) {
+        // Reason is mandatory. 
+        aError.push({
+            MTYPE: consts.ERROR, REF_TAB: "DOC_HEAD", REF_FIELD: "REASON",
+            TEXT: oBundle.getText("REASON_MAND")
+        })
+    }
+
+
+    if (Boolean(fromMain) && iRequest.data.ID !== consts.firstId) {
+        aError = []
+    }
+
+
+    if (Boolean(fromMain)) {
+        for (let i = 0; i < aError.length; i++) {
+            if (aError[i].REF_TAB === "DOC_HEAD") {
+                aError[i].TEXT = oBundle.getText("REF_DOC_HEAD", [iRequest.data.DOC_ID, aError[i].TEXT])
             }
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////
+
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    // CHECK ITEM
 
     let aAccountreq = await SELECT.from(Accountreq).
         where({
@@ -1266,26 +1459,218 @@ async function manageDocPopupData(iRequest) {
 
     }
 
+    if (oResult.REQ_ACCOUNT && !Boolean(iRequest.data.ACCOUNT)) {
+        // Account is mandatory. 
+        aError.push({
+            MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "ACCOUNT",
+            TEXT: oBundle.getText("ACCOUNT_MAND")
+        })
 
-    if (oResult.REQ_NOTE === true && !Boolean(iRequest.data.NOTE)) {
-        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "NOTE", TEXT: oBundle.getText("NOTE_MAND") }) // Note is mandatory. 
     }
 
-    if (oResult.REQ_ATTRIBUZIONE === true && !Boolean(iRequest.data.ATTRIBUZIONE)) {
-        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "ATTRIBUZIONE", TEXT: oBundle.getText("ATTRIBUZIONE_MAND") }) // Attribuzione is mandatory. 
+    ////////////////////////////////////////////////////////////
+
+    if (Boolean(iRequest.data.COST_CENTER)) {
+
+        let costCenter = iRequest.data.COST_CENTER
+
+        if (Boolean(/^\d+$/.test(costCenter))) {
+            costCenter = iRequest.data.COST_CENTER.padStart(10, '0')
+        }
+
+
+        let nowDate = moment(new Date).format('YYYYMMDD')
+
+        let aCostCenterO2P = await EccServiceO2P.run(
+            SELECT.from(CostCenterSet).where({ Kostl: costCenter, Datbi: { '>=': nowDate } }));
+
+        if (aCostCenterO2P.length > 0) {
+
+            let aCostCenterText = await EccServiceAfe.run(
+                SELECT.from(CostCenterTextSet).where({ Kostl: costCenter }));
+
+            if (aCostCenterText.length > 0) {
+
+                oResult.COST_CENTER_DESC = aCostCenterText[0].Ltext
+
+                // "if cost center the cost center is going to be closed soon then a warning message is triggered
+
+
+                let difference = Number(aCostCenterO2P[0].Datbi) - Number(nowDate)
+
+                if (difference <= 7) {
+                    // The cost center {0} will be not valid from {1}
+                    aError.push({
+                        MTYPE: consts.WARNING, REF_TAB: "DOC_ITEM", REF_FIELD: "COST_CENTER",
+                        TEXT: oBundle.getText("COST_CENTER_VALIDITY", [iRequest.data.COST_CENTER, aCostCenterO2P[0].Datbi])
+                    })
+                }
+
+                let aCostCenterCompany = await EccServiceO2P.run(
+                    SELECT.from(CostCenterCompanySet).where({
+                        Kokrs: 'KPCA',
+                        Prctr: aCostCenterO2P[0].Prctr,
+                        Bukrs: oRequester.BUKRS
+                    }));
+
+                if (aCostCenterCompany.length === 0) {
+
+                    let aCostCenterCompany = await EccServiceO2P.run(
+                        SELECT.from(CostCenterCompanySet).where({
+                            Kokrs: 'KPCA',
+                            Prctr: aCostCenterO2P[0].Prctr
+                        }));
+
+                    if (aCostCenterCompany.length > 0) {
+                        //   "If i have found at least one record then, it means that the profit center is valid for some companies but not mine
+                        //    "If i don't find any record then it means that the profit center is valid for all companies
+
+                        // Cost Center with Profit Center not valid for the current company code
+                        aError.push({
+                            MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "COST_CENTER",
+                            TEXT: oBundle.getText("COST_CENTER_PRCTR_NVAL")
+                        })
+
+                    }
+                }
+            }
+        }
+
+        else {
+            //"Cost Center is not valid"
+            aError.push({
+                MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "COST_CENTER",
+                TEXT: oBundle.getText("COST_CENTER_NVAL")
+            })
+        }
     }
 
-    if (oResult.REQ_IBAN === true && !Boolean(iRequest.data.IBAN)) {
-        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "IBAN", TEXT: oBundle.getText("IBAN_MAND") }) // Iban is mandatory. 
+    else {
+
+        if (oResult.REQ_COST_CENTER === true) {
+            //"Cost Center is mandatory"
+            aError.push({
+                MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "COST_CENTER",
+                TEXT: oBundle.getText("COST_CENTER_MAND")
+            })
+        }
+
     }
 
-    if (oResult.REQ_REASON === true && !Boolean(iRequest.data.REASON)) {
-        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "REASON", TEXT: oBundle.getText("REASON_MAND") }) // Reason is mandatory. 
+    /////////////////////////////////////////////////////////////
+
+
+    if (Boolean(iRequest.data.INT_ORDER)) {
+
+        let aOrder = await EccServiceAfe.run(
+            SELECT.from(AfeSet).where({ Order: iRequest.data.INT_ORDER.padStart(12, '0') }));
+
+        if (aOrder.length > 0) {
+            oResult.INT_ORDER_DESC = aOrder[0].OrderName
+
+            if (aOrder[0].Status !== "RELEASED") {
+                //Attention, internal order is not in RELEASED status
+                aError.push({
+                    MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "INT_ORDER",
+                    TEXT: oBundle.getText("INT_ORDER_NRELEASED")
+                })
+            }
+
+            let aOrderType = await EccServiceO2P.run(
+                SELECT.from(OrderTypeSet).where({ Auart: aOrder[0].OrderType }));
+            if (aOrderType.length > 0) {
+                if (aOrderType[0].Aprof === '000050') {
+
+                    oResult.CHECK_ATTACH_CAPI = true
+
+                    let budget = Number(aOrder[0].LclAfeValue) +
+                        (Number(aOrder[0].LclAfeValue) / 10) -
+                         Number(aOrder[0].LclAfeValueSpent)
+
+                    if (Number(budget) < Number(iRequest.data.AMOUNT)) {
+
+                        // Order &1: Residual budget: &2 - Required in the mandate: &3 
+                        aError.push({
+                            MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "AMOUNT",
+                            TEXT: oBundle.getText("RESID_BUDGET", [iRequest.data.INT_ORDER, budget, iRequest.data.AMOUNT])
+                        })
+
+                        // Attention, for the internal Order & the budget has been exceeded
+                        aError.push({
+                            MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "AMOUNT",
+                            TEXT: oBundle.getText("EXCEED_BUDGET", [iRequest.data.INT_ORDER])
+                        })
+                    }
+                }
+            }
+
+        } else {
+            // Internal order is not valid
+            aError.push({
+                MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "INT_ORDER",
+                TEXT: oBundle.getText("INT_ORDER_NVAL")
+            })
+        }
+
+    } else {
+
+        if (oResult.REQ_INT_ORDER === true) {
+            // Internal order is mandatory.
+            aError.push({
+                MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "INT_ORDER",
+                TEXT: oBundle.getText("INT_ORDER_MAND")
+            })
+        }
+
     }
+
+    /////////////////////////////////////////////////////////////////////////////
 
     if (oResult.REQ_AMOUNT === true && !Boolean(Number(iRequest.data.AMOUNT))) {
-        oResult.ERROR.push({ MTYPE: consts.ERROR, REF_FIELD: "AMOUNT", TEXT: oBundle.getText("AMOUNT_MAND") }) // Amount is mandatory. 
+        // Amount is mandatory. 
+        aError.push({
+            MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "AMOUNT",
+            TEXT: oBundle.getText("AMOUNT_MAND")
+        })
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+
+    if (oResult.REQ_NOTE === true && !Boolean(iRequest.data.NOTE)) {
+        // Note is mandatory. 
+        aError.push({
+            MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "NOTE",
+            TEXT: oBundle.getText("NOTE_MAND")
+        })
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+
+    if (oResult.REQ_ATTRIBUZIONE === true && !Boolean(iRequest.data.ATTRIBUZIONE)) {
+        // Attribuzione is mandatory. 
+        aError.push({
+            MTYPE: consts.ERROR, REF_TAB: "DOC_ITEM", REF_FIELD: "ATTRIBUZIONE",
+            TEXT: oBundle.getText("ATTRIBUZIONE_MAND")
+        })
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+
+
+    if (Boolean(fromMain)) {
+        for (let i = 0; i < aError.length; i++) {
+            if (aError[i].REF_TAB === "DOC_ITEM") {
+                aError[i].TEXT = oBundle.getText("REF_DOC_ITEM", [iRequest.data.DOC_ID, iRequest.data.ID, aError[i].TEXT])
+            }
+        }
+    }
+
+
+    /////////////////////////////////////////////////////////////////////////////
+
+    oResult.ERROR = aError
 
     return oResult
 
@@ -2397,8 +2782,6 @@ module.exports = {
     getRejectorName,
     getRejectMotivation,
     getTemplate,
-    getLayout,
-    checkData,
     formatMonitoring,
     formatMonitoringDetail,
     formatDocument,
@@ -2410,6 +2793,10 @@ module.exports = {
     createFIDocument,
     getDocStatus,
     getAssignInfo,
-    isCreationStep
+    isCreationStep,
+    manageMainData,
+    getDocumentProp,
+    getTerminatedInfo,
+    transcodeDocumentToTree
 
 }

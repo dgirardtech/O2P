@@ -345,13 +345,15 @@ service O2PModelService @(requires: [
     function getAssignInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns AssignInfo;
     function getTemplate()                                              returns getTemplateReturn;
 
-    function getLayout(REQUESTER : String,
-                       PAYMENT_MODE : String,
-                       PRIORITY : Boolean,
-                       TYPE_F24_ENTRATEL : String)                      returns getLayoutReturn;
+ 
 
     action   createProcess(REQUESTER : String)                          returns Message;
-    action   checkData(request : Request, document : array of Document) returns array of checkDataReturn;
+
+    action testMail(REQUEST_ID : KupitO2PModel.REQUEST_ID, 
+                    STEPID     : KupitO2PModel.STEP_ID, 
+                    ACTION     : KupitO2PModel.Actionenum ,
+                    MAILID : String )  returns Message;
+
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                             STEPID : KupitO2PModel.STEP_ID,
@@ -392,7 +394,26 @@ service O2PModelService @(requires: [
                             EMAIL : String)                             returns Message;
 
  
+    action   manageMainData(request    : Request,
+                            document   : array of Document, 
+                            attachment : array of Attachments) 
+                                 returns array of manageMainDataReturn;
 
+
+    type manageMainDataReturn : {
+
+        VIS_PRIORITY                     : Boolean;
+        VIS_ADD_CRO_MAIL                 : Boolean;
+        VIS_EXPIRE_DATE                  : Boolean;
+        LAB_EXPIRE_DATE                  : String;
+        VIS_BENEFICIARY_DATE             : Boolean;
+        VIS_F24_ENTRATEL_TYPE            : Boolean;
+        VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT : Boolean;
+        VIS_SEND_TASK_BTN                : Boolean;
+
+        ERROR                            : array of checkDataReturn
+
+    }
 
     action   manageDocPopupData(PAYMODE : String,
                                 REQUEST_ID : KupitO2PModel.REQUEST_ID,
@@ -586,18 +607,6 @@ service O2PModelService @(requires: [
 
     }
 
-    @open
-    type getLayoutReturn {
-
-        VIS_PRIORITY                     : Boolean;
-        VIS_ADD_CRO_MAIL                 : Boolean;
-        VIS_EXPIRE_DATE                  : Boolean;
-        LAB_EXPIRE_DATE                  : String;
-        VIS_BENEFICIARY_DATE             : Boolean;
-        VIS_F24_ENTRATEL_TYPE            : Boolean;
-        VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT : Boolean;
-        VIS_SEND_TASK_BTN                : Boolean
-    
-     }
+ 
 
 }

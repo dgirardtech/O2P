@@ -68,32 +68,22 @@ exports.stepStatus = Object.freeze({
 //exports.idProcessNotification = "O2PPROCESS"
 exports.idProcessNotification = "CIPREGAPPYEARLY" //per test
 
-//exports.idProcessMail = "O2PPROCESS"
-exports.idProcessMail = "CIPREGPROCESS"
+exports.idProcessMail = "O2PPROCESS"
+//exports.idProcessMail = "CIPREGPROCESS"
 
  
 
-exports.mailId = Object.freeze({
-    PROCESS_COMPLETED: "PROCESS_COMPLETED",
-    MODIFY_REQUEST:    "MODIFY_REQUEST",
-    MISSING_APPROVERS: "MISSING_APPROVERS"
-});
-
-/*
-exports.mailId = Object.freeze({
+exports.mailId = Object.freeze({ 
     MISSING_APPROVERS: "MISSING_APPROVERS",
-    PROCESS_DELETED:   "PROCESS_DELETED",
-    MODIFY_REQUEST:    "MODIFY_REQUEST",
-    PROCESS_COMPLETED_MONTLY: "PROCESS_COMPLETED_MONTLY",
-    PROCESS_COMPLETED_YEARLY: "PROCESS_COMPLETED_YEARLY",
-    PROCESS_COMPLETED_CESSATION: "PROCESS_COMPLETED_CESSATION",
-    PROCESS_APPROVED_CESSATION: "PROCESS_APPROVED_CESSATION",
-    PROCESS_COMPLETED_REVOCATION: "PROCESS_COMPLETED_REVOCATION",
-    PROCESS_STARTED:   "PROCESS_STARTED"
+    REFUSE_REQUEST: "REFUSE_REQUEST",
+    MODIFY_REQUEST: "MODIFY_REQUEST",
+    KA_KB_CREATED: "KA_KB_CREATED",
+    KZ_KY_CREATED: "KZ_KY_CREATED",
+    ONERIPV: "ONERIPV",
+    PRIORITY: "PRIORITY",
 });
 
-*/
-
+ 
 // NOTIFICATION ID LIST
 exports.notificationId = Object.freeze({
     TASK_READY: "TEAMSNOTIFICATION",
@@ -109,28 +99,16 @@ exports.documentType  = Object.freeze({
 
 // SOSTITUTION PATTERNS 
 exports.mailPatterns = Object.freeze({
-    DATA: "<<DATA>>",
-    MESE: "<<MESE>>",
-    ANNO: "<<ANNO>>",
-    NADESIONI: "<<NADESIONI>>",
-    REQUESTID: "<<REQUEST_ID>>",
-    FULL_NAME_COMPILER: "<<FULL_NAME_COMPILER>>",
-    FULL_NAME: "<<FULL_NAME>>",
-    TASK_URL: "<<TASK_URL>>",
-    IMP2SOMMA: "<<IMP2SOMMA>>",
-    AFAVORE: "<<AFAVORE>>", // chiedere
-    NUM_BON: "<<NUM_BON>>",
-    DATAVECCHIADER: "<<DATAVECCHIADER>>",
-    IMPVECCHIADER: "<<IMPVECCHIADER>>",
-    DATANUOVIADER: "<<DATANUOVIADER>>",
-    IMPNUOVIADER: "<<IMPNUOVIADER>>",
-    DATAINTEGR: "<<DATAINTEGR>>",
-    IMPINTEGR: "<<IMPINTEGR>>",
-    IMPTOT: "<<IMPTOT>>",
-    INTEGR: "<<INTEGR>>",
-    NOTE: "<<NOTE>>",
-    TAB_GESTORI: "<<TAB_GESTORI>>",
-    DATA_FINE: "<<DATA_FINE>>"
+
+    REQUEST_ID : "<<REQUEST_ID>>",
+    REQUESTER : "<<REQUESTER>>",
+    REF_USER : "<<REF_USER>>",
+    REF_MOTIVATION : "<<REF_MOTIVATION>>", 
+    N_DOC: "<<N_DOC>>",
+    PRIORITY_TEXT:"<<PRIORITY_TEXT>>",
+    MOD_USER:"<<MOD_USER>>",
+    MOD_MOTIVATION: "<<MOD_MOTIVATION>>", 
+    PAYMENT_MODE: "<<PAYMENT_MODE>>",
 
 });
 

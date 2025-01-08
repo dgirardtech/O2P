@@ -3,12 +3,30 @@ const client = require('@sap-cloud-sdk/http-client');
 const connectivity = require('@sap-cloud-sdk/connectivity');
 const _ = require('underscore');
 const consts = require("./Constants");
-const { getRejectorName } = require('./Handler');
+const { getRejectorName, getDocumentProp, getRejectInfo, getTerminatedInfo, transcodeDocumentToTree } = require('./Handler');
+
 const { getEnvParam, getTextBundle } = require('./Utils');
 const moment = require('moment');
+const { generateO2PDocument } = require('./HandlerPDF');
 
 
+function convertToBinaryType(iData) {
+    return new Promise((resolve, reject) => {
+        const stream = new PassThrough();
+        const chunks = [];
 
+        stream.on('data', function (chunk) {
+            chunks.push(chunk)
+        })
+        stream.on('end', () => {
+            resolve(Buffer.concat(chunks))
+        })
+        stream.on('error', (error) => {
+            reject(error)
+        })
+        iData.pipe(stream)
+    });
+}
 
 async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, iRequest) {
 
@@ -30,7 +48,7 @@ async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, i
         "toRecipients": iRecipients,
         "title": subject,
         "message": content,
-        "idapplication":  consts.idProcessNotification
+        "idapplication": consts.idProcessNotification
     };
 
     let returnSendTeamsNotification = await sendTeamsNotification(iO2PRequest.REQUEST_ID, consts.notificationId.TASK_READY, oBody, iRequest);
@@ -43,14 +61,12 @@ async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, i
 
 async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iRequest) {
 
- 
+
     let returnBodyNotification = await getBodyNotification(iO2PRequest.REQUEST_ID, consts.notificationId.TASK_READY, iRequest)
     if (returnBodyNotification.errors) {
         return returnBodyNotification;
     }
-        
 
-  
 
     let fullNameCompiler = "";
     let approvalH = await SELECT.one.from(ApprovalHistory).
@@ -77,7 +93,7 @@ async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iReques
         "toRecipients": iRecipients,
         "title": subject,
         "message": content,
-        "idapplication":  consts.idProcessNotification
+        "idapplication": consts.idProcessNotification
     };
 
     let returnSendTeamsNotification = await sendTeamsNotification(iRequest.REQUEST_ID, consts.notificationId.TASK_READY, oBody, iRequest);
@@ -91,15 +107,15 @@ async function mailProcessCompleted(iRequestId, iO2Prequest, iRecipents, iAattac
 
     let returnBodyMail
 
- 
 
-        returnBodyMail = await getBodyMail(iRequestId, consts.mailId.PROCESS_COMPLETED, iRequest)
-        if (returnBodyMail.errors) {
-            return returnBodyMail;
-        }
 
- 
- 
+    returnBodyMail = await getBodyMail(iRequestId, consts.mailId.PROCESS_COMPLETED, iRequest)
+    if (returnBodyMail.errors) {
+        return returnBodyMail;
+    }
+
+
+
 
     var date = new Date()
     //var month = date.toLocaleString('default', { month: 'long' });
@@ -119,9 +135,9 @@ async function mailProcessCompleted(iRequestId, iO2Prequest, iRecipents, iAattac
 
     var dateString = [dayStr, monthStr, year].join('/');
     content = content.replaceAll(consts.mailPatterns.DATA, dateString);
- 
- 
-  
+
+
+
 
     let fullNameCompiler = ""
     let approvalH = await SELECT.one.from(ApprovalHistory).
@@ -135,9 +151,9 @@ async function mailProcessCompleted(iRequestId, iO2Prequest, iRecipents, iAattac
         fullNameCompiler = approvalH.REAL_FULLNAME;
     }
 
- 
+
     content = content.replaceAll(consts.mailPatterns.FULL_NAME_COMPILER, fullNameCompiler)
- 
+
 
     let oBody = {
         "subject": subject,
@@ -165,11 +181,16 @@ async function mailTaskRejected(iRequestId, iO2Pdata, iRecipents, iFullName, iFu
         return returnBodyMail;
     }
 
-    let subject = returnBodyMail.id_subject.replaceAll(consts.mailPatterns.REQUESTID, iO2Pdata.REQUEST_ID);
+    let subject = returnBodyMail.id_subject
+    subject = subject.replaceAll(consts.mailPatterns.REQUESTID, iO2Pdata.REQUEST_ID);
 
-    let content = returnBodyMail.id_object.replaceAll(consts.mailPatterns.FULL_NAME, iFullName);
+    let content = returnBodyMail.id_object
+    content = content.replaceAll(consts.mailPatterns.FULL_NAME, iFullName);
     content = content.replaceAll(consts.mailPatterns.FULL_NAME_COMPILER, iFullNameCompiler);
     content = content.replaceAll(consts.mailPatterns.NOTE, iNotes);
+
+
+
 
 
 
@@ -177,7 +198,7 @@ async function mailTaskRejected(iRequestId, iO2Pdata, iRecipents, iFullName, iFu
         "subject": subject,
         "content": content,
         "toRecipients": iRecipents,
-        "ccRecipients": ["davide.girard@avvale.com", "carlotta.conte@avvale.com"],
+        "ccRecipients": [],
         "aAttachment": [],
     };
 
@@ -224,7 +245,7 @@ async function mailProcessDeleted(iRequestId, iRecipents, iFullName, iNotes, iRe
 
 async function mailMissingApprovers(iRequestData, iRequest) {
 
- 
+
     let returnBodyMail = await getBodyMail(iRequestData.REQUEST_ID, consts.mailId.MISSING_APPROVERS, iRequest)
     if (returnBodyMail.errors) {
         return returnBodyMail;
@@ -239,7 +260,6 @@ async function mailMissingApprovers(iRequestData, iRequest) {
     });
 
 
-    //toRecipients.push('davide.girard@avvale.com');
 
     let subject = returnBodyMail.id_subject.replaceAll(consts.mailPatterns.REQUESTID, iRequestData.REQUEST_ID);
 
@@ -344,7 +364,7 @@ async function sendMail(iRequestId, iIdMail, iMailBody, iRequest) {
             iMailBody = getFakeBody(iMailBody);
         }
 
-       // sendMailResponse = await MailHandler.send('POST', '/sendMail', iMailBody);
+        sendMailResponse = await MailHandler.send('POST', '/sendMail', iMailBody);
 
         //// sendMailResponse = await MailHandler.send('POST', '/sendMail',  { contentType: "HTML", content: iMailBody } );
 
@@ -388,16 +408,331 @@ function getFakeBody(iMailBody) {
     iMailBody.ccRecipients = [];
 
     return iMailBody;
+
 }
 
+
+
+async function testMail(iRequest) {
+
+    let oReturnSendMail = await sendAllMail(iRequest)
+
+}
+
+
+async function getMailId(iRequest) {
+
+    //iRequest.data.ACTION === consts.bpaUserAction.START
+    //iRequest.data.ACTION === consts.bpaUserAction.APPROVE
+    //iRequest.data.ACTION === consts.bpaUserAction.REJECT
+    //iRequest.data.ACTION === consts.bpaUserAction.TERMINATE
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID })
+
+
+
+
+    let mailId = ""
+
+
+    if (iRequest.data.ACTION === consts.bpaUserAction.TERMINATE) {
+        mailId = consts.mailId.REFUSE_REQUEST
+    }
+
+
+    if (iRequest.data.ACTION === consts.bpaUserAction.REJECT) {
+        mailId = consts.mailId.MODIFY_REQUEST
+    }
+
+    if (!Boolean(mailId)) {
+
+        let oDocProp = await getDocumentProp(iRequest.data.REQUEST_ID, consts.firstId, iRequest.data.STEPID)
+
+        if (oDocProp.docType === consts.documentType.KA || oDocProp.docType === consts.documentType.KB) {
+            mailId = consts.mailId.KA_KB_CREATED
+        }
+
+        if (oDocProp.docType === consts.documentType.KZ || oDocProp.docType === consts.documentType.KY) {
+
+            let oDocument = await SELECT.one.from(Document).
+                where({
+                    to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                    CLEARING_NUMBER: { '!=': null }
+                })
+
+            if (oDocument) {
+                mailId = consts.mailId.KZ_KY_CREATED
+            }
+        }
+    }
+
+    if (!Boolean(mailId)) {
+
+        let oNextApprover = await SELECT.one.from(ApprovalFlow).
+            where({
+                to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
+                STEP: { '>': iRequest.data.STEPID }
+            })
+            .orderBy('STEP asc');
+
+        if (Boolean(oNextApprover) && oNextApprover.STEP === '50') {
+
+            if (oRequest.PRIORITY === true) {
+                mailId = consts.mailId.PRIORITY
+            }
+
+
+            if (oRequest.REQUESTER_CODE === 'ONERIPV' &&
+                (oRequest.PAYMENT_MODE_CODE === consts.Paymode.CCPOSTALE ||
+                    oRequest.PAYMENT_MODE_CODE === consts.Paymode.FRECCIA)) {
+                mailId = consts.mailId.ONERIPV
+            }
+        }
+    }
+
+    /*
+           if (!Boolean(mailId)) {
+               let errMEssage = "ERROR getMailID: " + " Request" + iRequest.data.REQUEST_ID + " :" + "Mail Id not found";
+               iRequest.error(450, errMEssage, null, 450);
+               LOG.error(errMEssage);
+               return iRequest;
+       
+           }
+               */
+
+    return mailId
+
+
+}
+
+
+async function getRecipient(iRequest, mailId) {
+
+    let aRecipient = []
+
+    let actualUser = iRequest.user.id;
+
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID })
+
+
+    let aApproval = await SELECT.from(ApprovalHistory).
+        where({
+            REQUEST_ID: oRequest.REQUEST_ID,
+            VERSION: oRequest.VERSION
+        }).orderBy('STEP asc');
+
+
+    if (mailId === consts.mailId.REFUSE_REQUEST ||
+        mailId === consts.mailId.MODIFY_REQUEST
+    ) {
+
+        for (let i = 0; i < aApproval.length; i++) {
+            if (Boolean(aApproval[i].REAL_MAIL)) {
+                aRecipient.push(aApproval[i].REAL_MAIL);
+            }
+        }
+
+        aRecipient = _.reject(aRecipient, actualUser)
+
+    }
+
+    if (mailId === consts.mailId.KA_KB_CREATED ||
+        mailId === consts.mailId.KZ_KY_CREATED ||
+        mailId === consts.mailId.ONERIPV) {
+
+        let paramName = ""
+
+        if (mailId === consts.mailId.KA_KB_CREATED) {
+            paramName = "KA_KB_MAIL"
+        }
+
+        if (mailId === consts.mailId.KZ_KY_CREATED) {
+            paramName = "KZ_KY_MAIL"
+        }
+
+        if (mailId === consts.mailId.ONERIPV) {
+            paramName = "ONERIPV_MAIL"
+        }
+
+
+
+        var aParam = await SELECT.from(Param).
+            where({
+                PARAMNAME: paramName
+            });
+
+        for (let i = 0; i < aParam.length; i++) {
+
+            if (Boolean(aParam[i]) && Boolean(aParam[i].VAL_OUTPUT)) {
+                aRecipient.push(aParam[i].VAL_OUTPUT);
+            }
+        }
+
+    }
+
+
+    if (mailId === consts.mailId.PRIORITY) {
+
+        let oApprovalInitiator = await SELECT.one.from(ApprovalHistory).
+            where({
+                REQUEST_ID: iRequest.data.REQUEST_ID,
+                VERSION: oRequest.VERSION,
+                To_Action_ACTION: 'STARTED'
+            });
+
+        if (oApprovalInitiator) {
+            aRecipient.push(oApprovalInitiator.REAL_MAIL)
+        }
+
+    }
+
+
+    if (aRecipient.length <= 0) {
+        let errMEssage = "ERROR getRecipient: " + " Request" + iRequest.data.REQUEST_ID + " :" + "Mail address not found";
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+
+    }
+
+
+    return aRecipient
+
+    /*
+       
+    
+            oReturn = {
+                MTYPE: 'E',
+                TEXT: "Mail address not found"
+            }
+            return oReturn
+    
+        }
+    
+        */
+}
+
+async function getSubjectContentfromBody(iRequest, iBodyMail) {
+
+    const oBundle = getTextBundle(iRequest);
+
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID })
+
+    let oRequester = await SELECT.one.from(Requester).
+        where({ CODE: oRequest.REQUESTER_CODE });
+
+    let oPayMode = await SELECT.one.from(Paymode).
+        where({ CODE: oRequest.PAYMENT_MODE_CODE });
+
+    let aDocument = await SELECT.from(Document).
+        where({ to_Request_REQUEST_ID: iRequest.data.REQUEST_ID }).orderBy('DOC_ID asc', 'ID asc');
+
+    let oTree = await transcodeDocumentToTree(iRequest.data.REQUEST_ID, aDocument)
+
+
+    let subject = iBodyMail.id_subject
+    subject = subject.replaceAll(consts.mailPatterns.REQUEST_ID, iRequest.data.REQUEST_ID);
+
+
+
+    let content = iBodyMail.id_object
+    content = content.replaceAll(consts.mailPatterns.REQUEST_ID, iRequest.data.REQUEST_ID);
+    content = content.replaceAll(consts.mailPatterns.REQUESTER, oRequester.REQUESTER_NAME);
+    content = content.replaceAll(consts.mailPatterns.PAYMENT_MODE, oPayMode.PAYMENT_NAME);
+
+
+
+    let oRejectInfo = await getRejectInfo(iRequest);
+    content = content.replaceAll(consts.mailPatterns.MOD_USER, oRejectInfo.REJECTOR_NAME);
+    content = content.replaceAll(consts.mailPatterns.MOD_MOTIVATION, oRejectInfo.MOTIVATION);
+
+
+    let oTerminatedInfo = await getTerminatedInfo(iRequest);
+    content = content.replaceAll(consts.mailPatterns.REF_USER, oTerminatedInfo.REJECTOR_NAME);
+    content = content.replaceAll(consts.mailPatterns.REF_MOTIVATION, oTerminatedInfo.MOTIVATION);
+
+
+    content = content.replaceAll(consts.mailPatterns.N_DOC, oTree.HEADER.length);
+
+    if (Boolean(oRequest.PRIORITY)) {
+        content = content.replaceAll(consts.mailPatterns.PRIORITY_TEXT, oBundle.getText("PRIORITY_YES_TEXT"))
+    }
+    else {
+        content = content.replaceAll(consts.mailPatterns.PRIORITY_TEXT, oBundle.getText("PRIORITY_NO_TEXT"))
+    }
+
+    return { subject: subject, content: content }
+
+
+}
+
+
+async function sendAllMail(iRequest) {
+
+    let aAttach = []
+
+    /*
+    let o2pDocument = await generateO2PDocument(iRequest,false) 
+
+    aAttach = [{ name         : "Document.pdf", 
+                 contentType  : o2pDocument.type, 
+                 contentBytes : o2pDocument.binary } ]
  
+   */
+
+    /////////////////////////////////////////////////////////////////////
+
+
+
+    let mailId = await getMailId(iRequest)
+    if (Boolean(mailId)) {
+
+        let aRecipient = await getRecipient(iRequest, mailId)
+        if (aRecipient.errors) {
+            return aRecipient;
+        }
+
+        let oBodyMail = await getBodyMail(iRequest.data.REQUEST_ID, mailId, iRequest)
+        if (oBodyMail.errors) {
+            return oBodyMail;
+        }
+
+
+        let mailText = await getSubjectContentfromBody(iRequest, oBodyMail)
+
+
+        let oBody = {
+            "subject": mailText.subject,
+            "content": mailText.content,
+            "toRecipients": aRecipient,
+            "ccRecipients": [],
+            "aAttachment": aAttach,
+        };
+
+        let oSendMail = await sendMail(iRequest.data.REQUEST_ID, mailId, oBody, iRequest);
+        if (oSendMail.errors) {
+            return oSendMail;
+        }
+
+    }
+
+
+
+}
 
 
 module.exports = {
     mailMissingApprovers,
     mailProcessDeleted,
-    mailProcessCompleted, 
+    mailProcessCompleted,
     mailTaskRejected,
     teamsTaskNotification,
-    teamsTaskRejectNotification
+    teamsTaskRejectNotification,
+    testMail,
+    sendAllMail
 }
