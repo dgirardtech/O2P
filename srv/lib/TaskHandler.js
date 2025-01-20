@@ -9,7 +9,7 @@ const { row, and } = require('mathjs');
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
 const { testMail, mailMissingApprovers, mailProcessDeleted, mailProcessCompleted, mailTaskRejected, sendAllMail, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
-const { UPSERT } = require('@sap/cds/lib/ql/cds-ql'); 
+const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
 
 async function saveUserAction(iRequest) {
 
@@ -45,9 +45,9 @@ async function saveUserAction(iRequest) {
         }
 
 
-        let oResponseSendAllMail = await sendAllMail(iRequest,false)
-  
-        let o2pDocument = await generateO2PDocument(iRequest,true) 
+        let oResponseSendAllMail = await sendAllMail(iRequest, false)
+
+        let o2pDocument = await generateO2PDocument(iRequest, true)
 
 
         return response;
@@ -89,12 +89,12 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
             retUpdateRequestStatus = consts.requestStatus.Refused
         }
 
-/*
-        let retsendProcessMail = await sendProcessMail(iRequestId, retUpdateRequestStatus, iUserAction, iRequest);
-        if (retsendProcessMail.errors) {
-            return retsendProcessMail;
-        }
-            */
+        /*
+                let retsendProcessMail = await sendProcessMail(iRequestId, retUpdateRequestStatus, iUserAction, iRequest);
+                if (retsendProcessMail.errors) {
+                    return retsendProcessMail;
+                }
+                    */
 
     }
 
@@ -108,7 +108,7 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
 
 }
 
- 
+
 
 async function emailRejectedProcessTask(iRequestId, iRequest) {
 
@@ -119,9 +119,7 @@ async function emailRejectedProcessTask(iRequestId, iRequest) {
     let actualUser;
     let note = "";
 
-    try 
-    
-    {
+    try {
 
         actualUser = iRequest.user.id;
 
@@ -351,7 +349,7 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
 
     //Update approval history
     let actualUser = iRequest.user.id
- 
+
 
     let returnO2PData = await getRequestData(iRequestId, iRequest);
     let actualVersion = returnO2PData.VERSION;
@@ -373,7 +371,7 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
     let updateRequest;
     updateRequest = await UPDATE(Request).where({ REQUEST_ID: iRequestId }).set({ START_APPROVAL_FLOW: startdt });
 
- 
+
 
     let message = new Object();
     message.MTYPE = consts.SUCCESS;
@@ -381,7 +379,7 @@ async function userActionStart(iRequestId, iStepID, iRequest) {
     message.TEXT = oBundle.getText("ACTION_COMPLETED", [iRequestId]);
     return message;
 }
- 
+
 
 
 
@@ -883,8 +881,8 @@ async function updateRequestVersion(iRequest) {
 
     let respInsertHistory = await insertApprovalHistory(iRequest, requestId, moaApprovers.approvalFlow, newVersion);
 
-    let o2pDocument = await generateO2PDocument(iRequest,true) 
-    
+    let o2pDocument = await generateO2PDocument(iRequest, true)
+
     return respInsertHistory;
 
 }
@@ -989,7 +987,7 @@ async function sendTeamsNotification(iRequest) {
     let aRequestData;
     let taskId;
     let mailList;
-    let aMailList;
+    let aMailList = []
     let taskUrl;
     let retTeamsTaskNotification;
 
@@ -998,7 +996,10 @@ async function sendTeamsNotification(iRequest) {
         requestId = iRequest.data.REQUEST_ID;
         stepID = iRequest.data.STEP;
         mailList = iRequest.data.MAIL_LIST;
-        aMailList = mailList.split(",");
+        if (Boolean(mailList)) {
+            aMailList = mailList.split(",");
+        }
+       
 
         taskId = await updateTaskId(requestId, stepID, iRequest);
         if (taskId.errors) {
@@ -1014,7 +1015,9 @@ async function sendTeamsNotification(iRequest) {
 
         //Notifica di richiesta rifiutata
         if (stepID === 10 && aRequestData.VERSION > 1) {
-               return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+            if (aMailList.length > 0) {
+                return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+            }
         }
 
         //Sul primo step non mandiamo la notifica
@@ -1023,12 +1026,12 @@ async function sendTeamsNotification(iRequest) {
         }
 
 
-        
-        retTeamsTaskNotification = await teamsTaskNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
-        if (retTeamsTaskNotification.errors) {
-            return retTeamsTaskNotification;
+        if (aMailList.length > 0) {
+            retTeamsTaskNotification = await teamsTaskNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+            if (retTeamsTaskNotification.errors) {
+                return retTeamsTaskNotification;
+            }
         }
-            
 
 
     } catch (error) {
@@ -1390,7 +1393,7 @@ async function emailCompletedProcess(iRequestId, iRequest) {
             ccrecipient = reqData.EMAILADDRESSCC.split(/\s*[\s,;]\s*/);
         }
 
- 
+
 
         let columns = ["CONTENT", "MEDIATYPE", "ATTACHMENTTYPE_ATTACHMENTTYPE", "FILENAME"]
         let attachementsRs = await SELECT.columns(columns).from(Attachments).
@@ -1484,7 +1487,7 @@ async function emailTerminatedProcess(iRequestId, iRequest) {
         */
 
         //recipient.push(iRequest.)
- 
+
 
         if (recipient.length <= 0) {
             return iRequest;
@@ -1524,7 +1527,7 @@ module.exports = {
     saveUserAction,
     approversControl,
     updateRequestVersion,
-    sendTeamsNotification, 
+    sendTeamsNotification,
     insertApprovalHistory,
     assignApprover,
     emailStartedProcess,

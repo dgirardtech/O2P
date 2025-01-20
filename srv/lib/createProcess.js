@@ -921,8 +921,8 @@ async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
 
         const userJwt = retrieveJwt(iRequest);
         responseCreateWf = await WorkflowInstancesApi.createV1WorkflowInstances(startPayload)
-            .execute({ destinationName: consts.API_WF_DESTINATION });
-        //.execute({ destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt });
+          //  .execute({ destinationName: consts.API_WF_DESTINATION });
+        .execute({ destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt });
 
     } catch (error) {
         let errMEssage = "startProcess:" + error.message + " REQUESTID: " + iRequestId;

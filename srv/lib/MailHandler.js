@@ -77,10 +77,10 @@ async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iReques
             REQUEST_ID: iO2PRequest.REQUEST_ID,
             VERSION: iO2PRequest.VERSION,
             STEP: 10,
-            To_StepStatus_STEP_STATUS: consts.stepStatus.COMPLETED
+         //   To_StepStatus_STEP_STATUS: consts.stepStatus.COMPLETED
         });
 
-    if (Boolean(approvalH.REAL_FULLNAME)) {
+    if (approvalH && Boolean(approvalH.REAL_FULLNAME)) {
         fullNameCompiler = approvalH.REAL_FULLNAME;
     }
 
