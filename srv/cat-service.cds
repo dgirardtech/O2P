@@ -92,6 +92,7 @@ service O2PModelService @(requires: [
     entity Trib                as projection on KupitO2PModel.Trib;
     entity Currency            as projection on KupitO2PModel.Currency;
     entity Param               as projection on KupitO2PModel.Param;
+    entity F24Entratel         as projection on KupitO2PModel.F24Entratel;
 
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -343,7 +344,7 @@ service O2PModelService @(requires: [
 
 
     function getAssignInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns AssignInfo;
-    function getTemplate()                                              returns getTemplateReturn;
+    function printF23Aut(REQUEST_ID : KupitO2PModel.REQUEST_ID)     returns fileReturn;
 
  
 
@@ -367,7 +368,6 @@ service O2PModelService @(requires: [
     action   createFIDocument(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                               DOC_ID : KupitO2PModel.DOC_ID,
                               SIMULATE : String(1),
-                              CLEARING : String(1),
                               STEPID : KupitO2PModel.STEP_ID)           returns array of createFIDocumentReturn;
 
     function getMOAParams(REQUEST_ID : KupitO2PModel.REQUEST_ID)        returns getMOAParamsReturn;
@@ -599,9 +599,9 @@ service O2PModelService @(requires: [
 
 
     @open
-    type getTemplateReturn {
+    type fileReturn {
 
-        CONTENT       : LargeBinary @Core.MediaType: MEDIATYPE;
+        CONTENT       : String;
         MEDIATYPE     : String      @Core.IsMediaType;
         CONTENTSTRING : LargeString
 

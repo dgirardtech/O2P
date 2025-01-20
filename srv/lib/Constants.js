@@ -9,9 +9,9 @@ exports.firstId = "001"
 
 
 // --------------
-exports.SUCCESS  = "S";
-exports.ERROR    = "E";
-exports.WARNING  = "W";
+exports.SUCCESS = "S";
+exports.ERROR = "E";
+exports.WARNING = "W";
 exports.MOAERROR = "Error";
 
 //Staus BPA - O2P
@@ -40,20 +40,24 @@ exports.UserAction = Object.freeze({
 
 
 exports.Paymode = Object.freeze({
-    BONIFICO : 'BONIFICO',
-    BANK_TRANSFER: 'BANK_TRANSFER',
-    MAV: 'MAV',
-    RAV: 'RAV',
-    CCPOSTALE: 'CCPOSTALE',
-    ASSCIRC_NT: 'ASSCIRC_NT',
-    F24: 'F24',
-    F23: 'F23',
-    FRECCIA: 'FRECCIA',
-    FLBONIFIC: 'FLBONIFIC',
+    BONIFICO: 'BONIFICO',
     ENTRATEL: 'ENTRATEL',
+    F23: 'F23',
+    F24: 'F24',
+    FLBONIFIC: 'FLBONIFIC',
+    MAE: "MAE",
     PAGOPA: "PAGOPA",
-    MAE : "MAE"
+    ASSCIRC_NT: 'ASSCIRC_NT'
+});
 
+exports.creaDocType = Object.freeze({
+    ACCOUNTING: 'A',
+    CLEARING: 'C'
+});
+
+exports.transaction = Object.freeze({
+    FB01: 'FB01',
+    FBZ2: 'FBZ2'
 });
 
 
@@ -64,16 +68,12 @@ exports.stepStatus = Object.freeze({
     NOTASSIGNED: 'NOTASSIGNED'
 });
 
- 
-//exports.idProcessNotification = "O2PPROCESS"
-exports.idProcessNotification = "CIPREGAPPYEARLY" //per test
+
+
 
 exports.idProcessMail = "O2PPROCESS"
-//exports.idProcessMail = "CIPREGPROCESS"
 
- 
-
-exports.mailId = Object.freeze({ 
+exports.mailId = Object.freeze({
     MISSING_APPROVERS: "MISSING_APPROVERS",
     REFUSE_REQUEST: "REFUSE_REQUEST",
     MODIFY_REQUEST: "MODIFY_REQUEST",
@@ -83,32 +83,36 @@ exports.mailId = Object.freeze({
     PRIORITY: "PRIORITY",
 });
 
- 
+
+exports.idProcessNotification = "O2PPROCESS"
+
 // NOTIFICATION ID LIST
 exports.notificationId = Object.freeze({
     TASK_READY: "TEAMSNOTIFICATION",
     TASK_REJECTED: "REJECTNOTIFICATION",
 });
 
-exports.documentType  = Object.freeze({
- KB : "KB",
- KA : "KA",
- KY : "KY",
- KZ : "KZ"
+exports.documentType = Object.freeze({
+    KB: "KB",
+    KA: "KA",
+    KY: "KY",
+    KZ: "KZ"
 });
 
 // SOSTITUTION PATTERNS 
 exports.mailPatterns = Object.freeze({
 
-    REQUEST_ID : "<<REQUEST_ID>>",
-    REQUESTER : "<<REQUESTER>>",
-    REF_USER : "<<REF_USER>>",
-    REF_MOTIVATION : "<<REF_MOTIVATION>>", 
+    REQUEST_ID: "<<REQUEST_ID>>",
+    REQUESTER: "<<REQUESTER>>",
+    REF_USER: "<<REF_USER>>",
+    REF_MOTIVATION: "<<REF_MOTIVATION>>",
     N_DOC: "<<N_DOC>>",
-    PRIORITY_TEXT:"<<PRIORITY_TEXT>>",
-    MOD_USER:"<<MOD_USER>>",
-    MOD_MOTIVATION: "<<MOD_MOTIVATION>>", 
+    PRIORITY_TEXT: "<<PRIORITY_TEXT>>",
+    MOD_USER: "<<MOD_USER>>",
+    MOD_MOTIVATION: "<<MOD_MOTIVATION>>",
     PAYMENT_MODE: "<<PAYMENT_MODE>>",
+    FULL_NAME: "<<FULL_NAME>>",
+    FULL_NAME_COMPILER: "<<FULL_NAME_COMPILER>>"
 
 });
 
@@ -120,7 +124,7 @@ exports.attachmentTypes = Object.freeze({
     CAPI: "CAPI",
     FLBONIFIC: "FLBONIFIC",
     F24: "F24",
-    F23_CONC:"F23_CONC",
-    F23_UFF:"F23_UFF",
-    F23_VERS:"F23_VERS"
+    F23_CONC: "F23_CONC",
+    F23_UFF: "F23_UFF",
+    F23_VERS: "F23_VERS"
 });

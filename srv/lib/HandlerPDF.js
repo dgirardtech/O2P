@@ -6,7 +6,7 @@ const client = require('@sap-cloud-sdk/http-client');
 const connectivity = require('@sap-cloud-sdk/connectivity');
 const consts = require("./Constants");
 const { getEnvParam, getTextBundle } = require('./Utils');
-const { getRejectorName, getDocumentProp, getRejectInfo, getTerminatedInfo, transcodeDocumentToTree } = require('./Handler');
+const { getDocumentProp, transcodeDocumentToTree } = require('./Handler');
 
 
 
@@ -84,7 +84,7 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
     let oBankreq = await SELECT.one.from(Bankreq).
         where({ REQUESTER_CODE: oRequest.REQUESTER_CODE, BANK_CODE: oRequest.BANK_ACCOUNT });
     if (!oBankreq) {
-        let oBankreq = await SELECT.one.from(Bankreq).
+        oBankreq = await SELECT.one.from(Bankreq).
             where({ REQUESTER_CODE: '*', BANK_CODE: oRequest.BANK_ACCOUNT });
     }
 
@@ -223,7 +223,208 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
     returnCreatePdf = await createPdf(jsonData, iRequest.data.REQUEST_ID, iRequest,
         'kupit_o2p_document/kupito2pdocument');
 
-        
+
+    if (Boolean(iSaveAttach)) {
+        let oResponseSaveAttach = await saveAttach(returnCreatePdf, iRequest.data.REQUEST_ID, iRequest)
+    }
+
+    return { binary: returnCreatePdf, type: "application/pdf" }
+
+    /*
+if (returnCreatePdf.errors) {
+return returnCreatePdf;
+}
+*/
+
+}
+
+
+async function generateO2PF23Aut(iRequest, iSaveAttach) {
+
+    const oBundle = getTextBundle(iRequest);
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequest.data.REQUEST_ID })
+
+    let requesterText = ''
+    let oRequester = await SELECT.one.from(Requester).
+        where({ CODE: oRequest.REQUESTER_CODE });
+    if (oRequester) {
+        requesterText = oRequester.REQUESTER_NAME
+    }
+
+    let paymentModeText = ''
+    let oPayMode = await SELECT.one.from(Paymode).
+        where({ CODE: oRequest.PAYMENT_MODE_CODE });
+    if (oPayMode) {
+        paymentModeText = oPayMode.PAYMENT_NAME
+    }
+
+
+
+    let bankCode = ''
+    let bankName = ''
+    let bankIban = ''
+    let bankAddress1 = ''
+    let bankAddress2 = ''
+    let bankAddress3 = ''
+
+    let oBankreq = await SELECT.one.from(Bankreq).
+        where({ REQUESTER_CODE: oRequest.REQUESTER_CODE, BANK_CODE: oRequest.BANK_ACCOUNT });
+    if (!oBankreq) {
+        oBankreq = await SELECT.one.from(Bankreq).
+            where({ REQUESTER_CODE: '*', BANK_CODE: oRequest.BANK_ACCOUNT });
+    }
+
+
+
+    if (oBankreq) {
+
+        bankCode = oBankreq.BANK_CODE
+        bankName = oBankreq.BANK_NAME
+        bankIban = oBankreq.IBAN
+
+        let oBank = await SELECT.one.from(Bank).
+            where({ CODE: bankCode });
+
+        if (oBank) {
+            bankAddress1 = oBank.ADDRESS1
+            bankAddress2 = oBank.ADDRESS2
+            bankAddress3 = oBank.ADDRESS3
+        }
+
+    }
+
+    let oGsBankDet = {
+
+        BANK_CODE: bankCode,
+        ADDRESS1: bankAddress1,
+        ADDRESS2: bankAddress2,
+        ADDRESS3: bankAddress3,
+        BANK_NAME: bankName
+
+    }
+
+
+
+    let startApprovalFlow = ''
+    if (Boolean(oRequest.START_APPROVAL_FLOW)) {
+        startApprovalFlow = oRequest.START_APPROVAL_FLOW
+    } else {
+        startApprovalFlow = moment(new Date).format('YYYYMMDD')
+    }
+
+
+
+    let oGsRequest = oRequest
+
+    oGsRequest.PAYMENT_MODE = oRequest.PAYMENT_MODE_CODE
+    oGsRequest.START_APPROVAL_FLOW = startApprovalFlow
+    oGsRequest.WAERS = oRequest.WAERS_CODE
+    oGsRequest.REQUESTER_TEXT = requesterText
+    oGsRequest.PAYMENT_MODE_TEXT = paymentModeText
+
+    let docQuantity = 0
+    let aDocument = await SELECT.from(Document).
+        where({ to_Request_REQUEST_ID: iRequest.data.REQUEST_ID }).orderBy('DOC_ID asc', 'ID asc');
+
+    let oTree = await transcodeDocumentToTree(iRequest.data.REQUEST_ID, aDocument)
+
+    let aDocHeader = oTree.HEADER
+    for (let i = 0; i < aDocHeader.length; i++) {
+        let aPosition = aDocHeader[i].POSITION
+        for (let x = 0; x < aPosition.length; x++) {
+            //aPosition[x];
+            docQuantity = docQuantity + 1
+        }
+    }
+
+
+    let gvDate = moment(new Date).format('YYYYMMDD')
+
+    let gvSignature = ''
+    var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
+    const { CompanySet } = EccServiceAfe.entities;
+    let aCompany = await EccServiceAfe.run(
+        SELECT.from(CompanySet).where({ Bukrs: oRequester.BUKRS }));
+
+    if (aCompany.length > 0) {
+        gvSignature = aCompany[0].Butxt
+    }
+
+
+
+    //
+
+    let startIndex = bankIban.length - 8
+    //let endIndex = bankIban.length
+    let subStrIban = bankIban.substring(startIndex)
+
+    let gvBody1 = ['Con la presente si autorizza il pagamento di n.',
+        docQuantity.toString(),
+        'F23',
+        oRequest.ADDITIONAL_MAIL_TEXT,
+        'sul conto',
+        gvSignature,
+        'c/o',
+        bankName,
+        'n.',
+        subStrIban,
+        'per un importo di euro',
+        oRequest.TOTAL.toString(),
+        'a favore di',
+        aDocHeader[0].VENDOR_DESC,
+        'in data',
+        moment(oRequest.VALUE_DATE).format('DD/MM/YYYY'),
+        'e causale',
+        aDocHeader[0].REASON,
+        '\r\n',
+        '\r\n'      
+    ].join(' ')
+
+
+    let gvBody2 = [
+        'La suddetta operazione, certificata dal rilascio di Vs. Contabile Bancaria, dovrà essere addebbitata sul conto corrente',
+        bankName,
+        'n.',
+        bankIban,
+        'operativo per',
+        gvSignature,
+        '.' 
+    ].join(' ')
+
+    let gvBody = gvBody1 + gvBody2
+
+    let oCreatePDF = {
+        data: {
+            GS_REQUEST: oGsRequest,
+            GS_BANK_DET: oGsBankDet,
+            GV_BODY: gvBody,
+            GV_DATE: gvDate,
+            GV_SIGNATURE: gvSignature
+        }
+    }
+
+
+
+    try {
+
+        let sCreatePDF = JSON.stringify(oCreatePDF);
+
+        jsonData = JSON.parse(sCreatePDF);
+
+    } catch (error) {
+        let errMEssage = "ERROR generateO2PF23Aut " + iRequest.data.REQUEST_ID + " :" + error.message;
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+    }
+
+
+    returnCreatePdf = await createPdf(jsonData, iRequest.data.REQUEST_ID, iRequest,
+        'kupit_o2p_document/kupito2pf23aut');
+
+
     if (Boolean(iSaveAttach)) {
         let oResponseSaveAttach = await saveAttach(returnCreatePdf, iRequest.data.REQUEST_ID, iRequest)
     }
@@ -290,5 +491,6 @@ async function saveAttach(iPdfContent, iRequestId, iRequest) {
 module.exports = {
     createPdf,
     generateO2PDocument,
+    generateO2PF23Aut,
     saveAttach
 }

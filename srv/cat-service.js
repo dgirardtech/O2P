@@ -1,13 +1,14 @@
 
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
-const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter,getMOAParams } = require('./lib/createProcess');
-const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,  
-    updateRequest, getTemplate, getRejectInfo, formatMonitoring, formatMonitoringDetail, formatDocument,manageDocPopupData, getDocStatus,
-    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument,getAssignInfo,isCreationStep ,manageMainData } = require('./lib/Handler');
-const { getStepParams, getStepList, saveUserAction, assignApprover, 
-    emailStartedProcess, emailCompletedProcess, emailTerminatedProcess, emailRejectedProcessTask } = require('./lib/TaskHandler');
-    const { testMail } = require('./lib/MailHandler'); 
+const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams } = require('./lib/createProcess');
+const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,
+    updateRequest, getNameMotivationAction, formatMonitoring, formatMonitoringDetail, formatDocument, manageDocPopupData, getDocStatus,
+    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument, getAssignInfo, isCreationStep, manageMainData } = require('./lib/Handler');
+const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
+const { testMail } = require('./lib/MailHandler'); 
+const { generateO2PF23Aut } = require('./lib/HandlerPDF'); 
+
 
 module.exports = cds.service.impl(async function () {
 
@@ -17,24 +18,24 @@ module.exports = cds.service.impl(async function () {
     global.MoaExtraction = await cds.connect.to('MoaExtraction');
     global.WorkDayProxy = await cds.connect.to('WorkDayProxy');
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
- 
+
 
     /////////////////////////////////////////////////////////////////////////////////////
 
     const { Requester, Paymode, AttachmentType, Attachments, Notes,
         ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView,
         Request, Document, Currencies, Accountreq, Bank, Bankexc, Bankreq, Bankdefault, Clearacc,
-        Doclog, Docparam, Orgunitreq, Parameters, Proclog, Tribreq, Currency, Param } = this.entities;
+        Doclog, Docparam, Orgunitreq, Parameters, Proclog, Tribreq, Currency, Param,F24Entratel } = this.entities;
     const { WorkDay } = this.entities;
     const { UserTaskCounter } = this.entities;
     const { CostCenterTextSet, AfeLocationSet } = this.entities;
-    const { VendorSet,AccDocHeaderSet, AccDocPositionSet,GlAccountCompanySet} = this.entities;
- 
+    const { VendorSet, AccDocHeaderSet, AccDocPositionSet, GlAccountCompanySet } = this.entities;
+
 
 
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
     global.ZFI_O2P_COMMON_SRV = await cds.connect.to('ZFI_O2P_COMMON_SRV');
- 
+
 
     global.ApprovalView = ApprovalView;
     global.StepDescription = StepDescription;
@@ -63,6 +64,7 @@ module.exports = cds.service.impl(async function () {
     global.Proclog = Proclog;
     global.Tribreq = Tribreq;
     global.Currency = Currency;
+    global.F24Entratel = F24Entratel;
     global.Param = Param;
 
     global.CostCenterTextSet = CostCenterTextSet;
@@ -74,7 +76,7 @@ module.exports = cds.service.impl(async function () {
     global.AccDocPositionSet = AccDocPositionSet
     global.GlAccountCompanySet = GlAccountCompanySet
 
- 
+
 
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -82,10 +84,7 @@ module.exports = cds.service.impl(async function () {
     this.after('READ', 'UserTaskCounter', userTaskCounter);
 
     this.on('*', [WorkDay], async (req) => {
-
-        let result = await WorkDayProxy.run(req.query);
-        return result;
-
+        return await WorkDayProxy.run(req.query);
     });
 
     //-------------ACTION AVVIO PROCESSO-------------------
@@ -104,15 +103,14 @@ module.exports = cds.service.impl(async function () {
     //this.after('READ', 'Request', getRequest);
     this.after('UPDATE', 'Request', updateRequest);
 
- 
-       //---------Function Assign info----
-   this.on('getAssignInfo', getAssignInfo);   
 
-   this.on('getMOAParams', async (req) => {
-    let requestId = req.data.REQUEST_ID;
-    return await getMOAParams(requestId);
-});
-  
+    //---------Function Assign info----
+    this.on('getAssignInfo', getAssignInfo);
+
+    this.on('getMOAParams', async (req) => {
+        return await getMOAParams(req.data.REQUEST_ID);
+    });
+
 
     //-------------ATTACHMENTS-------------------
     this.before('CREATE', 'Attachments', createAttachment);
@@ -123,29 +121,43 @@ module.exports = cds.service.impl(async function () {
     this.before('CREATE', 'Notes', createNote);
     this.after('READ', 'Notes', readNote);
     this.before('DELETE', 'Notes', deleteNote);
- 
-    this.on('getTemplate', getTemplate);
- 
-    //this.on('manageMainData', manageMainData);
 
-    this.on('manageMainData', async (req) => {
-       // let requestId = req.data.REQUEST_ID;
-        return await manageMainData( req );
+ 
+    this.on('printF23Aut', async (req) => {
+       // return await generateO2PF23Aut(req);
+        let o2pF23Aut = await generateO2PF23Aut(req, false) 
+
+
+        let oResult =
+    
+        {
+    
+            CONTENT: o2pF23Aut.binary.toString(),
+            MEDIATYPE: o2pF23Aut.type,
+            CONTENTSTRING: o2pF23Aut.toString('base64')
+    
+        }
+    
+        return oResult
+
     });
 
-   // this.on('manageDocPopupData', manageDocPopupData)
+    
+    this.on('manageMainData', async (req) => {
+        return await manageMainData(req);
+    });
 
 
-   this.on('manageDocPopupData',  async (req) => {
-    // let requestId = req.data.REQUEST_ID;
-     return await manageDocPopupData( req , false );
- });
+
+    this.on('manageDocPopupData', async (req) => {
+        return await manageDocPopupData(req, false);
+    });
 
 
     this.on('getDocStatus', getDocStatus);
 
     this.on('isCreationStep', isCreationStep);
-    
+
 
     //-------------MONITORING--------------
     this.after('READ', 'MonitorRequest', formatMonitoring);
@@ -157,13 +169,22 @@ module.exports = cds.service.impl(async function () {
 
 
     this.on('getMonitorTaskLink', async (req) => {
-        let requestId = req.data.REQUEST_ID;
-        return await getMonitorTaskLink(requestId, req);
+        return await getMonitorTaskLink(req.data.REQUEST_ID, req);
     });
 
 
     //---------Function Reject info----
-    this.on('getRejectInfo', getRejectInfo);
+    this.on('getRejectInfo', async (req) => {
+
+        let oResultNameMotivation = await getNameMotivationAction(req, req.data.REQUEST_ID, "REJECTED", "" );
+
+        return {
+            REJECTOR_NAME: oResultNameMotivation.name,
+            MOTIVATION: oResultNameMotivation.motivation
+        }
+
+    });
+
 
 
     this.on('fromDocumentToTree', fromDocumentToTree);
@@ -176,7 +197,7 @@ module.exports = cds.service.impl(async function () {
     this.on('assignApprover', assignApprover);
 
 
-    this.on('testMail' , testMail)
+    this.on('testMail', testMail)
 
 
     this.on('READ', CostCenterTextSet, async (request) => {
@@ -205,8 +226,8 @@ module.exports = cds.service.impl(async function () {
         return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
     });
 
-   
-    
+
+
 
 }
 ) 

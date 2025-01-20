@@ -1,6 +1,6 @@
 {
  "meta": {
-  "creator": "cds-dk 8.4.2"
+  "creator": "cds-dk 8.5.1"
  },
  "$version": "2.0",
  "definitions": {
@@ -4896,7 +4896,7 @@
      "type": "cds.String",
      "length": 2,
      "@sap.unicode": "false",
-     "@sap.label": "P&L state. acct",
+     "@sap.label": "PL state. acct",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
@@ -8143,7 +8143,7 @@
      "type": "cds.String",
      "length": 1,
      "@sap.unicode": "false",
-     "@sap.label": "Oil-JV:Dummy (<40B=JV_RECID_M)",
+     "@sap.label": "Oil-JV:Dummy (40B=JV_RECID_M)",
      "@sap.creatable": "false",
      "@sap.updatable": "false",
      "@sap.sortable": "false",
@@ -8626,17 +8626,9 @@
      "@sap.filterable": "false",
      "notNull": true
     },
-    "ToAccountPayable": {
+    "ToAccountGL": {
      "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.AccountPayableSet",
-     "cardinality": {
-      "max": "*"
-     },
-     "keys": []
-    },
-    "ToAccReturn": {
-     "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.AccReturnSet",
+     "target": "ZFI_O2P_COMMON_SRV.AccountglSet",
      "cardinality": {
       "max": "*"
      },
@@ -8647,9 +8639,17 @@
      "target": "ZFI_O2P_COMMON_SRV.DocumentHeaderSet",
      "keys": []
     },
-    "ToAccountGL": {
+    "ToAccReturn": {
      "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.AccountglSet",
+     "target": "ZFI_O2P_COMMON_SRV.AccReturnSet",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    },
+    "ToAccountPayable": {
+     "type": "cds.Association",
+     "target": "ZFI_O2P_COMMON_SRV.AccountPayableSet",
      "cardinality": {
       "max": "*"
      },
@@ -10620,17 +10620,17 @@
      "@sap.filterable": "false",
      "notNull": true
     },
-    "ToDocumentHeader": {
-     "type": "cds.Association",
-     "target": "ZFI_O2P_COMMON_SRV.ClearDocumentHeaderSet",
-     "keys": []
-    },
     "ToAccReturn": {
      "type": "cds.Association",
      "target": "ZFI_O2P_COMMON_SRV.AccReturnSet",
      "cardinality": {
       "max": "*"
      },
+     "keys": []
+    },
+    "ToDocumentHeader": {
+     "type": "cds.Association",
+     "target": "ZFI_O2P_COMMON_SRV.ClearDocumentHeaderSet",
      "keys": []
     }
    }
@@ -11568,6 +11568,77 @@
     "FercInd": {
      "type": "cds.String",
      "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    }
+   }
+  },
+  "ZFI_O2P_COMMON_SRV.StandardTextSet": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "@sap.creatable": "false",
+   "@sap.updatable": "false",
+   "@sap.deletable": "false",
+   "@sap.pageable": "false",
+   "@sap.addressable": "false",
+   "@sap.content.version": "1",
+   "elements": {
+    "Id": {
+     "key": true,
+     "type": "cds.String",
+     "length": 4,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Spras": {
+     "key": true,
+     "type": "cds.String",
+     "length": 1,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Name": {
+     "key": true,
+     "type": "cds.String",
+     "length": 70,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Object": {
+     "key": true,
+     "type": "cds.String",
+     "length": 10,
+     "@sap.unicode": "false",
+     "@sap.label": "",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Text": {
+     "type": "cds.LargeString",
      "@sap.unicode": "false",
      "@sap.label": "",
      "@sap.creatable": "false",

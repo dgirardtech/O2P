@@ -157,12 +157,7 @@ Authorization: Basic ale:ale
 GET {{server}}/odata/v4/kupito2pmodel-srv/Month
 Content-Type: application/json;IEEE754Compatible=true
 Authorization: Basic ale:ale
-
-### ----------------------------------------------------------------------
-GET {{server}}/odata/v4/kupito2pmodel-srv/getTemplate()
-Content-Type: application/json;IEEE754Compatible=true
-Authorization: Basic ale:ale
-
+ 
 ### ----------------------------------------------------------------------
 POST {{server}}/odata/v4/kupito2pmodel-srv/saveUserAction
 Content-Type: application/json;IEEE754Compatible=true
@@ -196,12 +191,7 @@ Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LX
 GET http://localhost:4004/odata/v2/kupito2pmodel-srv/Currencies
 Content-Type: application/json;IEEE754Compatible=true
 Authorization: Basic ale:ale
-
-### ----------------------------------------------------------------------
-GET http://localhost:4004/odata/v2/kupito2pmodel-srv/getTemplate()
-Content-Type: application/json;IEEE754Compatible=true
-Authorization: Basic ale:ale
-
+ 
 ### ----------------------------------------------------------------------
 POST http://localhost:37773/odata/v4/kupito2pmodel-srv/checkData
 Content-Type: application/json;IEEE754Compatible=true

@@ -45,7 +45,7 @@ async function saveUserAction(iRequest) {
         }
 
 
-        let oResponseSendAllMail = await sendAllMail(iRequest)
+        let oResponseSendAllMail = await sendAllMail(iRequest,false)
   
         let o2pDocument = await generateO2PDocument(iRequest,true) 
 
@@ -109,152 +109,6 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
 }
 
  
-
-
-
- 
-async function sendStep70Mail(iRequestId, iProcessStatus, iUserAction, iRequest) {
-
-    let recipient = [];
-    let ccrecipient = [];
-    let aAttach = [];
-    let reqData;
-    let oBundle;
-
-    try {
-
-        oBundle = getTextBundle(iRequest);
-
-        reqData = await getRequestData(iRequestId, iRequest)
-        if (reqData.errors) {
-            return reqData;
-        }
-
-        let approval = await SELECT.one.from(ApprovalHistory).
-            where({
-                REQUEST_ID: iRequestId,
-                VERSION: reqData.VERSION,
-                STEP: 40
-            });
-
-        if (approval && approval.REAL_MAIL !== null) {
-            recipient.push(approval.REAL_MAIL);
-        }
-
-        /*
-              approval.forEach(element => {
-                  if (element.REAL_MAIL !== null) {
-                      recipient.push(element.REAL_MAIL);
-                  }
-              });
-      
-            
-              let returnGetApprovers = await getNextApprovers(iRequestId, 0, iRequest);
-              if (returnGetApprovers.errors) {
-                  return returnGetApprovers;
-              }
-              returnGetApprovers.approvalFlow.forEach(element => {
-                  if (element.MAIL !== null) {
-                      recipient.push(element.MAIL);
-                  }
-              });
-      
-              */
-
-        /*  if (reqData.EMAILADDRESS !== null) {
-              recipient.push(reqData.EMAILADDRESS);
-          }
-  
-           */
-
- 
-
-        /*
- 
-        let attachementsRs = await SELECT.columns(["CONTENT", "MEDIATYPE", "ATTACHMENTTYPE_ATTACHMENTTYPE", "FILENAME"]).from(Attachments).
-            where({
-                REQUEST_ID: iRequestId
-            });
-        for (let index = 0; index < attachementsRs.length; index++) {
-            const attachement = attachementsRs[index];
-            let addAttach = false;
-             switch (attachement.ATTACHMENTTYPE_ATTACHMENTTYPE) {
-              case consts.attachmentTypes.O2PCOMP:
-                 addAttach = true;
-                 break;
-             }
-
-            if (addAttach) {
-                let oAttach = {};
-                //conversione Readable to binary
-                let binaryData = await convertToBinaryType(attachement.CONTENT);
-                let sXmlBase64 = Buffer.from(binaryData, 'binary').toString('base64');
-                oAttach.name = attachement.FILENAME;
-                oAttach.contentType = attachement.MEDIATYPE;
-                oAttach.contentBytes = sXmlBase64;
-                aAttach.push(oAttach);
-            }
-        }
-
-*/
-
-        let retMailProcedeleted = await mailProcessCompleted(iRequestId, reqData, recipient, aAttach, iRequest, ccrecipient)
-        if (retMailProcedeleted.errors) {
-            return retMailProcedeleted;
-        }
-
-    } catch (error) {
-        let errMEssage = "ERROR emailProcess " + iRequestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return iRequest;
-
-    /*
- if (response !== undefined) {
-        return response;
-    } else {
-        return iRequest;
-    }
-        */
-
-}
-
-
-
-async function sendProcessMail(iRequestId, iProcessStatus, iUserAction, iRequest) {
-
-
-    /*
-    let response;
-
-    switch (iProcessStatus) {
-        case consts.requestStatus.Completed:
-            response = await emailCompletedProcess(iRequestId, iRequest);
-            break;
-        case consts.requestStatus.Deleted:
-            response = await emailTerminatedProcess(iRequestId, iRequest);
-            break;
-        case consts.requestStatus.Refused:
-            // response = await emailTerminatedProcess(iRequestId, iRequest);
-            response = await emailRejectedProcessTask(iRequestId, iRequest);
-            break;
-    }
-*/
-
-
-
-
- 
-
-    if (response !== undefined) {
-        return response;
-    } else {
-        return iRequest;
-    }
-
-}
 
 async function emailRejectedProcessTask(iRequestId, iRequest) {
 
@@ -1160,7 +1014,7 @@ async function sendTeamsNotification(iRequest) {
 
         //Notifica di richiesta rifiutata
         if (stepID === 10 && aRequestData.VERSION > 1) {
-            //   return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+               return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
         }
 
         //Sul primo step non mandiamo la notifica
@@ -1169,12 +1023,12 @@ async function sendTeamsNotification(iRequest) {
         }
 
 
-        /*
+        
         retTeamsTaskNotification = await teamsTaskNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
         if (retTeamsTaskNotification.errors) {
             return retTeamsTaskNotification;
         }
-            */
+            
 
 
     } catch (error) {

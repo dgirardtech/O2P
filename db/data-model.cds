@@ -53,10 +53,11 @@ entity Request : managed {
       PAYMENT_NOTE                   : String;
       SKIP_COORD                     : Boolean default false;
       SKIP_COORD_TEXT                : String;
-      TYPE_F24_ENTRATEL              : String(10); // forse associata a tabella F24_ENTRATEL dominio ZFI_O2P_D_F24_ENTRATEL_TYPE
+      TYPE_F24_ENTRATEL              : Association to one F24Entratel; //dominio ZFI_O2P_D_F24_ENTRATEL_TYPE
       F24_ENTRATEL_CLEARING_ACCOUNT  : String(10);
       NEW_PROC_DOC_TYPE              : String(1); // forse associata a tabella DOC_TYPE dominio ZFI_O2P_D_DOC_PROC_TYPE
       ADDITIONAL_CRO_MAIL_RECIPIENTS : String(255);
+      ADDITIONAL_MAIL_TEXT           : String;
 
       to_Attachments                 : Composition of many Attachments
                                          on to_Attachments.to_Request = $self;
@@ -152,6 +153,7 @@ entity Attachments : managed {
       URL                : String;
       ATTACHMENTTYPE     : Association to one AttachmentType;
       CREATOR_FULLNAME   : String(100);
+      DOC_ID             : DOC_ID;
       virtual ISEDITABLE : Boolean;
       virtual ATTACHDESC : String(40);
 
@@ -334,7 +336,8 @@ entity Doclog : managed {
       FISCAL_YEAR  : YEAR;
       STATUS       : String;
       STATUS_TEXT  : String;
-      CLEARING     : Boolean
+      CLEARING     : Boolean;
+      STEP         : STEP;
 }
 
 // ZFI_O2P_DOCPARAM
@@ -391,6 +394,12 @@ entity Trib : managed {
 entity Currency : managed {
   key CODE        : String(3);
       DESCRIPTION : String(40);
+}
+
+// domain F24_ENTRATEL_TYPE
+entity F24Entratel : managed {
+  key CODE        :  String(10);
+      DESCRIPTION : localized String(40);
 }
 
 ////////////////////////////////////////////////////////////
@@ -497,6 +506,7 @@ type NoteType         : String(1) enum {
   Reject      = 'R';
   Assign      = 'A';
   F24         = 'F';
+  Terminate   = 'T';
 }
 
 @assert.range

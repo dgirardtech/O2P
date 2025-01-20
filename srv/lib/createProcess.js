@@ -407,9 +407,12 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                 aResult.push({ INDEX: "70", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
             }
 
+            /*
             if (oMOAParam.addStep80 === 'TRUE') {
                 aResult.push({ INDEX: "80", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Compilatore", ISMANAGER: "false" });
             }
+                */
+
 
         }
 
@@ -651,8 +654,7 @@ async function getMOAParams(iRequestID) {
             if (oRequest.PAYMENT_MODE_CODE !== consts.Paymode.BONIFICO) {
                 oResult.addStep60Cassa = 'TRUE'
 
-                if (oRequest.PAYMENT_MODE_CODE !== consts.Paymode.CCPOSTALE &&
-                    oRequest.PAYMENT_MODE_CODE !== consts.Paymode.ASSCIRC_NT) {
+                if ( oRequest.PAYMENT_MODE_CODE !== consts.Paymode.ASSCIRC_NT) {
 
                     //   Step 70
                     oResult.addStep70 = 'TRUE'
@@ -662,36 +664,7 @@ async function getMOAParams(iRequestID) {
         }
     }
 
-
-    //   Step 80
-
-    if (oRequest) {
-        if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.CCPOSTALE) {
-
-            //  createdAt
-            //  createdBy 
-            //  modifiedAt 
-            //  modifiedBy
-
-            // oResult.addStep80 = 'TRUE'
-
-            if (oRequest.REQUESTER_CODE === 'ONERIPV') {
-                // oRequest.createdBy
-            } else {
-
-                let oApproval = await SELECT.one.from(ApprovalFlow).
-                    where({
-                        to_Request_REQUEST_ID: iRequestID,
-                        STEP: '10'
-                    });
-                if (oApproval) {
-                    //oApproval.MAIL
-                }
-
-            }
-
-        }
-    }
+ 
 
     return oResult
 
