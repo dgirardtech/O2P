@@ -748,12 +748,18 @@ async function formatDocument(iData, iRequest) {
 
 async function getMonitorRequest(iRequest, next) {
 
+    let aResponse = await next()
+
+    if (aResponse.length === 0) {
+        return aResponse
+    }
+
+    if (!Boolean(aResponse[0].REQID)) {
+        return aResponse
+    }
 
     let aSplit = iRequest.entity.split('.');
     let entity = aSplit[1]
-
-
-    let aResponse = await next()
 
     let now = moment(new Date());
 
@@ -765,7 +771,9 @@ async function getMonitorRequest(iRequest, next) {
 
         if (aFilter.length > 0) {
 
-            let requestId = aResponse[i].REQUEST_ID
+            // let requestId = aResponse[i].REQUEST_ID
+
+            let requestId = aResponse[i].REQID
 
             let oClearingStatus = await getClearingStatus(requestId);
 
@@ -773,7 +781,7 @@ async function getMonitorRequest(iRequest, next) {
                 // &&  oFilter.value === "true"
             )
             if (!oFilter) {
-                aResponse = aResponse.filter(oResponse => oResponse.REQUEST_ID !== requestId)
+                aResponse = aResponse.filter(oResponse => oResponse.REQID !== requestId)
                 continue
             }
 
@@ -1774,19 +1782,31 @@ async function getClearingStatus(iRequestId) {
 
             }
 
-            if (oAccDocPosVendClearSet) {
+            try {
 
-                if (oDoclog.DOC_TYPE === 'KA' || oDoclog.DOC_TYPE === 'KB') {
-                    docClearCount = docClearCount + 1
+                if (oAccDocPosVendClearSet) {
+
+
+                    if (oDoclog.DOC_TYPE === 'KA' || oDoclog.DOC_TYPE === 'KB') {
+                        docClearCount = docClearCount + 1
+                    }
+
+                } else {
+
+                    if (oDoclog.DOC_TYPE === 'KZ' || oDoclog.DOC_TYPE === 'KY') {
+                        docClearCount = docClearCount + 1
+                    }
+
                 }
 
-            } else {
 
-                if (oDoclog.DOC_TYPE === 'KZ' || oDoclog.DOC_TYPE === 'KY') {
-                    docClearCount = docClearCount + 1
-                }
-
+            } catch (error) {
+                let errMEssage = error.message
+                // iRequest.error(450, errMEssage, null, 450);
+                // LOG.error(errMEssage);
+                // return iRequest;
             }
+
         }
     }
 
@@ -1804,6 +1824,11 @@ async function getClearingStatus(iRequestId) {
                 oResult.field = 'OC'
             }
         }
+    }
+
+    if (!Boolean(oResult.field)) {
+        oResult.NC = true
+        oResult.field = 'NC'
     }
 
     return oResult
