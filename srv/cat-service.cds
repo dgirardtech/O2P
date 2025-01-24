@@ -220,7 +220,9 @@ service O2PModelService @(requires: [
                 approvalNotAssigned.STEP_TO_END,
                 approvalHistory.DAYS_SPENT,
                 approvalHistory.SHOW_ASSIGNED_AT,
-                virtual null       as PV  : String
+                virtual null       as PC  : Boolean,
+                virtual null       as NC  : Boolean,
+                virtual null       as OC  : Boolean,
 
         }
         order by
@@ -276,7 +278,7 @@ service O2PModelService @(requires: [
                 document.PARTN_BNK_TYPE,
                 document.REF_ID,
                 document.SPECIAL_GL_IND,
-                document.ACCOUNT, 
+                document.ACCOUNT,
                 document.REASON,
                 document.AMOUNT,
                 document.TEXT,
@@ -298,7 +300,9 @@ service O2PModelService @(requires: [
                 virtual null       as VENDOR_DESC                   : String,
                 virtual null       as VENDOR_IBAN                   : String,
                 virtual null       as PAYMODE_DESC                  : String,
-                virtual null       as PV                            : String
+                virtual null       as PC                            : Boolean,
+                virtual null       as NC                            : Boolean,
+                virtual null       as OC                            : Boolean,
 
         }
         where
@@ -344,16 +348,13 @@ service O2PModelService @(requires: [
 
 
     function getAssignInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns AssignInfo;
-    function printF23Aut(REQUEST_ID : KupitO2PModel.REQUEST_ID)     returns fileReturn;
-
- 
-
+    function printF23Aut(REQUEST_ID : KupitO2PModel.REQUEST_ID)         returns fileReturn;
     action   createProcess(REQUESTER : String)                          returns Message;
 
-    action testMail(REQUEST_ID : KupitO2PModel.REQUEST_ID, 
-                    STEPID     : KupitO2PModel.STEP_ID, 
-                    ACTION     : KupitO2PModel.Actionenum ,
-                    MAILID : String )  returns Message;
+    action   testMail(REQUEST_ID : KupitO2PModel.REQUEST_ID,
+                      STEPID : KupitO2PModel.STEP_ID,
+                      ACTION : KupitO2PModel.Actionenum,
+                      MAILID : String)                                  returns Message;
 
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
@@ -393,14 +394,13 @@ service O2PModelService @(requires: [
                             NOTE : String,
                             EMAIL : String)                             returns Message;
 
- 
-    action   manageMainData(request    : Request,
-                            document   : array of Document, 
-                            attachment : array of Attachments) 
-                                 returns array of manageMainDataReturn;
+
+    action   manageMainData(request : Request,
+                            document : array of Document,
+                            attachment : array of Attachments)          returns array of manageMainDataReturn;
 
 
-    type manageMainDataReturn : {
+    type manageMainDataReturn     : {
 
         VIS_PRIORITY                     : Boolean;
         VIS_ADD_CRO_MAIL                 : Boolean;
@@ -410,7 +410,6 @@ service O2PModelService @(requires: [
         VIS_F24_ENTRATEL_TYPE            : Boolean;
         VIS_F24_ENTRATEL_TYPE_CL_ACCOUNT : Boolean;
         VIS_SEND_TASK_BTN                : Boolean;
-
         ERROR                            : array of checkDataReturn
 
     }
@@ -424,11 +423,11 @@ service O2PModelService @(requires: [
                                 COST_CENTER : KupitO2PModel.COST_CENTER,
                                 INT_ORDER : KupitO2PModel.INT_ORDER,
                                 ACCOUNT : KupitO2PModel.ACCOUNT,
-                                AMOUNT :  Decimal(13, 2),
+                                AMOUNT : Decimal(13, 2),
                                 REASON : KupitO2PModel.REASON,
-                                IBAN : KupitO2PModel.IBAN, 
+                                IBAN : KupitO2PModel.IBAN,
                                 NOTE : String,
-                                ATTRIBUZIONE : String(18) )    returns manageDocPopupDataReturn;
+                                ATTRIBUZIONE : String(18))              returns manageDocPopupDataReturn;
 
 
     type manageDocPopupDataReturn : {
@@ -459,7 +458,7 @@ service O2PModelService @(requires: [
         REQ_AMOUNT       : Boolean default true;
         VIS_AMOUNT       : Boolean default true;
         REQ_VENDOR       : Boolean default true;
-        VIS_VENDOR       : Boolean default true; 
+        VIS_VENDOR       : Boolean default true;
         IBAN             : array of IBAN;
         ACCOUNT          : array of ACCOUNT;
         ERROR            : array of checkDataReturn
@@ -502,7 +501,6 @@ service O2PModelService @(requires: [
         STATUS_TEXT : String
     }
 
- 
 
     type IBAN                     : {
         CODE : KupitO2PModel.IBAN
@@ -562,9 +560,9 @@ service O2PModelService @(requires: [
 
 
     type checkDataReturn          : {
-        MTYPE : MessageType;
-        TEXT  : String;
-        REF_FIELD: String
+        MTYPE     : MessageType;
+        TEXT      : String;
+        REF_FIELD : String
     }
 
     type createFIDocumentReturn   : {
@@ -602,11 +600,10 @@ service O2PModelService @(requires: [
     type fileReturn {
 
         CONTENT       : String;
-        MEDIATYPE     : String      @Core.IsMediaType;
+        MEDIATYPE     : String @Core.IsMediaType;
         CONTENTSTRING : LargeString
 
     }
 
- 
 
 }

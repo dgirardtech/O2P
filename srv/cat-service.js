@@ -1,13 +1,15 @@
 
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
-const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams } = require('./lib/createProcess');
+const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams, getNextRequestId } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,
-    updateRequest, getNameMotivationAction, formatMonitoring, formatMonitoringDetail, formatDocument, manageDocPopupData, getDocStatus,
-    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument, getAssignInfo, isCreationStep, manageMainData } = require('./lib/Handler');
+    updateRequest, getNameMotivationAction, getMonitorRequest, formatDocument, manageDocPopupData, getDocStatus,
+    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument, getAssignInfo, isCreationStep, manageMainData,
+    getClearingStatus, getClearingFilter } = require('./lib/Handler');
 const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
-const { testMail } = require('./lib/MailHandler'); 
-const { generateO2PF23Aut } = require('./lib/HandlerPDF'); 
+const { testMail } = require('./lib/MailHandler');
+const { generateO2PF23Aut } = require('./lib/HandlerPDF');
+const { constants } = require('@sap/xssec');
 
 
 module.exports = cds.service.impl(async function () {
@@ -25,7 +27,7 @@ module.exports = cds.service.impl(async function () {
     const { Requester, Paymode, AttachmentType, Attachments, Notes,
         ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView,
         Request, Document, Currencies, Accountreq, Bank, Bankexc, Bankreq, Bankdefault, Clearacc,
-        Doclog, Docparam, Orgunitreq, Parameters, Proclog, Tribreq, Currency, Param,F24Entratel } = this.entities;
+        Doclog, Docparam, Orgunitreq, Parameters, Proclog, Tribreq, Currency, Param, F24Entratel } = this.entities;
     const { WorkDay } = this.entities;
     const { UserTaskCounter } = this.entities;
     const { CostCenterTextSet, AfeLocationSet } = this.entities;
@@ -122,27 +124,27 @@ module.exports = cds.service.impl(async function () {
     this.after('READ', 'Notes', readNote);
     this.before('DELETE', 'Notes', deleteNote);
 
- 
+
     this.on('printF23Aut', async (req) => {
-       // return await generateO2PF23Aut(req);
-        let o2pF23Aut = await generateO2PF23Aut(req, false) 
+        // return await generateO2PF23Aut(req);
+        let o2pF23Aut = await generateO2PF23Aut(req, false)
 
 
         let oResult =
-    
+
         {
-    
+
             CONTENT: o2pF23Aut.binary.toString(),
             MEDIATYPE: o2pF23Aut.type,
             CONTENTSTRING: o2pF23Aut.toString('base64')
-    
+
         }
-    
+
         return oResult
 
     });
 
-    
+
     this.on('manageMainData', async (req) => {
         return await manageMainData(req);
     });
@@ -160,9 +162,16 @@ module.exports = cds.service.impl(async function () {
 
 
     //-------------MONITORING--------------
-    this.after('READ', 'MonitorRequest', formatMonitoring);
 
-    this.after('READ', 'MonitorRequestDetail', formatMonitoringDetail);
+    this.on('READ', 'MonitorRequest', async (request, next) => {
+        return await getMonitorRequest( request , next);
+    });
+
+    this.on('READ', 'MonitorRequestDetail', async (request, next) => {
+        return await getMonitorRequest( request , next);
+    });
+
+     
 
     this.after('READ', 'Document', formatDocument);
 
@@ -176,7 +185,7 @@ module.exports = cds.service.impl(async function () {
     //---------Function Reject info----
     this.on('getRejectInfo', async (req) => {
 
-        let oResultNameMotivation = await getNameMotivationAction(req, req.data.REQUEST_ID, "REJECTED", "" );
+        let oResultNameMotivation = await getNameMotivationAction(req, req.data.REQUEST_ID, "REJECTED", "");
 
         return {
             REJECTOR_NAME: oResultNameMotivation.name,

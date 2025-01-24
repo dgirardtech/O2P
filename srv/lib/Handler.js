@@ -717,7 +717,7 @@ async function manageMainData(iRequest) {
 
 
 
- 
+
 
 async function formatDocument(iData, iRequest) {
 
@@ -746,72 +746,69 @@ async function formatDocument(iData, iRequest) {
 
 }
 
+async function getMonitorRequest(iRequest, next) {
 
-async function formatMonitoring(iData, iRequest) {
-    LOG.info("formatMonitorng");
-    try {
-        let now = moment(new Date());
-        //let requestID = new Array();
 
-        iData.forEach(data => {
-            let started = moment(data.ASSIGNED_AT);
-            let dayDiff = now.diff(started, 'days')
-            data.DAYS_SPENT = dayDiff;
+    let aSplit = iRequest.entity.split('.');
+    let entity = aSplit[1]
 
-            if (data.STATUS_code === consts.requestStatus.Refused ||
-                data.STATUS_code === consts.requestStatus.Deleted ||
-                data.STATUS_code === consts.requestStatus.Completed) {
-                data.DAYS_SPENT = 0;
-                data.STEP_TO_END = 0;
-                data.SHOW_ASSIGNED_AT = false;
+
+    let aResponse = await next()
+
+    let now = moment(new Date());
+
+    let aFilter = await getClearingFilter(iRequest);
+
+
+    for (let i = 0; i < aResponse.length; i++) {
+
+
+        if (aFilter.length > 0) {
+
+            let requestId = aResponse[i].REQUEST_ID
+
+            let oClearingStatus = await getClearingStatus(requestId);
+
+            let oFilter = aFilter.find(oFilter => oFilter.field === oClearingStatus.field
+                // &&  oFilter.value === "true"
+            )
+            if (!oFilter) {
+                aResponse = aResponse.filter(oResponse => oResponse.REQUEST_ID !== requestId)
+                continue
             }
 
+            aResponse[i].NC = oClearingStatus.NC
+            aResponse[i].PC = oClearingStatus.PC
+            aResponse[i].OC = oClearingStatus.OC
 
-        });
+        }
 
-    } catch (error) {
-        let errMEssage = "ERROR monitoring: " + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
+
+        if (entity === 'MonitorRequest') {
+
+            let started = moment(aResponse[i].ASSIGNED_AT);
+            let dayDiff = now.diff(started, 'days')
+
+            aResponse[i].DAYS_SPENT = dayDiff;
+
+            if (aResponse[i].STATUS_code === consts.requestStatus.Refused ||
+                aResponse[i].STATUS_code === consts.requestStatus.Deleted ||
+                aResponse[i].STATUS_code === consts.requestStatus.Completed) {
+                aResponse[i].DAYS_SPENT = 0;
+                aResponse[i].STEP_TO_END = 0;
+                aResponse[i].SHOW_ASSIGNED_AT = false;
+            }
+
+        }
+
     }
-}
 
 
-async function formatMonitoringDetail(iData, iRequest) {
-
-    /*
-     LOG.info("formatMonitoringDetail");
-      try {
-          let now = moment(new Date());
-          //let requestID = new Array();
-  
-          iData.forEach(data => {
-              let started = moment(data.ASSIGNED_AT);
-              let dayDiff = now.diff(started, 'days')
-              data.DAYS_SPENT = dayDiff;
-  
-              if (data.STATUS_code === consts.requestStatus.Refused ||
-                  data.STATUS_code === consts.requestStatus.Deleted ||
-                  data.STATUS_code === consts.requestStatus.Completed) {
-                  data.DAYS_SPENT = 0;
-                  data.STEP_TO_END = 0;
-                  data.SHOW_ASSIGNED_AT = false;
-              }
-  
-  
-          });
-  
-      } catch (error) {
-          let errMEssage = "ERROR monitoring detail: " + error.message;
-          iRequest.error(450, errMEssage, null, 450);
-          LOG.error(errMEssage);
-          return iRequest;
-      }
-         */
-
+    return aResponse
 
 }
+
+
 
 async function transcodeDocumentToTree(iRequestId, aDocument) {
 
@@ -908,7 +905,7 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
         })
 
         oHeader.TOT_AMOUNT = Number(aDocument[i].AMOUNT) + Number(oHeader.TOT_AMOUNT)
-        
+
 
         if (i === aDocument.length - 1) {
             oResult.HEADER.push(oHeader)
@@ -1672,6 +1669,148 @@ async function getDocStatus(iRequest) {
 
 }
 
+async function getClearingFilter(iRequest) {
+
+    let aResponse = []
+
+    if (Boolean(iRequest._queryOptions) && Boolean(iRequest._queryOptions.$filter)) {
+
+        let aSplit = iRequest._queryOptions.$filter.split(' and ')
+
+        for (let i = 0; i < aSplit.length; i++) {
+
+            if (aSplit[i].substring(0, 2) === 'PC' ||
+                aSplit[i].substring(0, 2) === 'NC' ||
+                aSplit[i].substring(0, 2) === 'OC') {
+
+                if (aSplit[i].substring(6) === "true") {
+                    aResponse.push({ field: aSplit[i].substring(0, 2), value: aSplit[i].substring(6) })
+                }
+
+            }
+        }
+    }
+
+    return aResponse
+
+}
+
+async function getClearingStatus(iRequestId) {
+
+    let oResult = {
+        NC: false,
+        PC: false,
+        OC: false,
+        field: ""
+    }
+
+
+    let docNum = 0
+    let docClearCount = 0
+
+
+    let oRequest = await SELECT.one.from(Request).
+        where({
+            REQUEST_ID: iRequestId
+        });
+
+    let aDocument = await SELECT.from(Document).
+        where({
+            to_Request_REQUEST_ID: oRequest.REQUEST_ID
+        }).orderBy('DOC_ID asc', 'ID asc')
+
+
+    let aDoclog = await SELECT.from(Doclog).
+        where({
+            to_Request_REQUEST_ID: oRequest.REQUEST_ID,
+            // STATUS: 'C'
+        })
+
+
+    let aAccountreq = await SELECT.from(Accountreq).
+        where({
+            REQUESTER_CODE: oRequest.REQUESTER_CODE
+        });
+
+
+
+    let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+
+    const { AccDocPosVendClearSet } = EccServiceO2P.entities;
+
+
+
+    for (let x = 0; x < aDocument.length; x++) {
+        if (Boolean(aDocument[x].DOCUMENT_NUMBER)) {
+
+            docNum = docNum + 1
+
+            let oAccountreq = aAccountreq.find(oAccountreq => oAccountreq.ACCOUNT === aDocument[x].ACCOUNT)
+
+            let oDoclog = aDoclog.find(oDoclog => oDoclog.DOC_NUMBER === aDocument[x].DOCUMENT_NUMBER)
+
+
+            let oAccDocPosVendClearSet
+
+            if (oAccountreq.ACCOUNT_ADVANCE === true) {
+
+                oAccDocPosVendClearSet = await EccServiceO2P.run(
+                    SELECT.one.from(AccDocPosVendClearSet).where({
+                        Belnr: aDocument[x].DOCUMENT_NUMBER,
+                        Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
+                        Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR,
+                        Bschl: '31'
+                    }));
+
+
+            } else {
+
+                oAccDocPosVendClearSet = await EccServiceO2P.run(
+                    SELECT.one.from(AccDocPosVendClearSet).where({
+                        Belnr: aDocument[x].DOCUMENT_NUMBER,
+                        Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
+                        Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR
+                    }));
+
+            }
+
+            if (oAccDocPosVendClearSet) {
+
+                if (oDoclog.DOC_TYPE === 'KA' || oDoclog.DOC_TYPE === 'KB') {
+                    docClearCount = docClearCount + 1
+                }
+
+            } else {
+
+                if (oDoclog.DOC_TYPE === 'KZ' || oDoclog.DOC_TYPE === 'KY') {
+                    docClearCount = docClearCount + 1
+                }
+
+            }
+        }
+    }
+
+
+    if (docClearCount === 0 && docNum > 0) {
+        oResult.NC = true
+        oResult.field = 'NC'
+    } else {
+        if (docClearCount > 0 && docClearCount < docNum) {
+            oResult.PC = true
+            oResult.field = 'PC'
+        } else {
+            if (docClearCount > 0 && docClearCount === docNum) {
+                oResult.OC = true
+                oResult.field = 'OC'
+            }
+        }
+    }
+
+    return oResult
+
+}
+
+
 async function checkBeforeFIDocument(iBodyReq) {
 
 
@@ -1726,9 +1865,10 @@ async function checkBeforeFIDocument(iBodyReq) {
 
                         let aAccDocPosition = await EccServiceO2P.run(
                             SELECT.from(AccDocPositionSet).where({
+                                Belnr: aAccDocHeader[x].Belnr,
                                 Bukrs: aAccDocHeader[x].Bukrs,
                                 Gjahr: aAccDocHeader[x].Gjahr,
-                                // Koart: 'K',
+                                Koart: 'K',
                                 Lifnr: aAccountPayable[0].VendorNo,
                                 Wrbtr: wrbtr,
                                 Shkzg: shkzg
@@ -2873,9 +3013,8 @@ module.exports = {
     createNote,
     readNote,
     deleteNote,
-    updateRequest, 
-    formatMonitoring,
-    formatMonitoringDetail,
+    updateRequest,
+    getMonitorRequest,
     formatDocument,
     fromDocumentToTree,
     fromRequestIdToTree,
@@ -2889,6 +3028,8 @@ module.exports = {
     manageMainData,
     getDocumentProp,
     transcodeDocumentToTree,
-    getNameMotivationAction
+    getNameMotivationAction,
+    getClearingStatus,
+    getClearingFilter
 
 }

@@ -356,7 +356,11 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                     { attribute: "DEPRE_ACCOUNT", value: oMOAParam.depreAccount },
                     { attribute: "ADD_STEP_30_COORD", value: oMOAParam.addStep30Coord },
                     { attribute: "ADD_STEP_30_COORD_LINEA", value: oMOAParam.addStep30CoordLinea },
+                    
                     { attribute: "ADD_STEP_40", value: oMOAParam.addStep40 },
+                    { attribute: "WDIDMANAGER", value: oMOAParam.managerExceptStep40WDID },
+                    { attribute: "ADDED_FROM_EXCEPTION" , value: oMOAParam.addedFromException },
+
                     { attribute: "ADD_STEP_45", value: oMOAParam.addStep45 },
                     { attribute: "ADD_STEP_60_CONTROLLER", value: oMOAParam.addStep60Controller },
                     { attribute: "ADD_STEP_60_CASSA", value: oMOAParam.addStep60Cassa },
@@ -413,48 +417,52 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
             }
                 */
 
+            /*
+            if (oMOAParam.addStep40 === 'TRUE' && Boolean(oMOAParam.managerExceptStep40)) {
+
+                let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
+                    oMOAParam.managerExceptStep40 + "'");
+    
+                if (oResponse && oResponse.d.results.length > 0) {
+    
+                    let wd = oResponse.d.results[0].WDPOSITION;
+                    let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
+                    if (oInfoWDPosition) {
+    
+                        let idx = aResult.findIndex((oResult) => oResult.INDEX === "40")
+    
+                        if (idx >= 0) {
+    
+                            aResult[idx].WDID = oInfoWDPosition.WorkdayEmployeeID
+                            aResult[idx].SAPUSER = oInfoWDPosition.UtenteSAP
+                            aResult[idx].MAIL = oInfoWDPosition.MailDipendente
+                            aResult[idx].FNAME = oInfoWDPosition.Nome
+                            aResult[idx].LNAME = oInfoWDPosition.Cognome
+    
+                        }
+                        else {
+    
+                            aResult.push({
+                                INDEX: "40", WDID: oInfoWDPosition.WorkdayEmployeeID,
+                                SAPUSER: oInfoWDPosition.UtenteSAP, MAIL: oInfoWDPosition.MailDipendente,
+                                FNAME: oInfoWDPosition.Nome, LNAME: oInfoWDPosition.Cognome,
+                                IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false"
+                            });
+                        }
+    
+                    }
+                }
+            }
+
+*/
+
 
         }
 
         // sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
         //  if (sendFakeMail === "false") {
 
-
-        if (oMOAParam.addStep40 === 'TRUE' && Boolean(oMOAParam.managerExceptStep40)) {
-
-            let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
-                oMOAParam.managerExceptStep40 + "'");
-
-            if (oResponse && oResponse.d.results.length > 0) {
-
-                let wd = oResponse.d.results[0].WDPOSITION;
-                let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
-                if (oInfoWDPosition) {
-
-                    let idx = aResult.findIndex((oResult) => oResult.INDEX === "40")
-
-                    if (idx >= 0) {
-
-                        aResult[idx].WDID = oInfoWDPosition.WorkdayEmployeeID
-                        aResult[idx].SAPUSER = oInfoWDPosition.UtenteSAP
-                        aResult[idx].MAIL = oInfoWDPosition.MailDipendente
-                        aResult[idx].FNAME = oInfoWDPosition.Nome
-                        aResult[idx].LNAME = oInfoWDPosition.Cognome
-
-                    }
-                    else {
-
-                        aResult.push({
-                            INDEX: "40", WDID: oInfoWDPosition.WorkdayEmployeeID,
-                            SAPUSER: oInfoWDPosition.UtenteSAP, MAIL: oInfoWDPosition.MailDipendente,
-                            FNAME: oInfoWDPosition.Nome, LNAME: oInfoWDPosition.Cognome,
-                            IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false"
-                        });
-                    }
-
-                }
-            }
-        }
+ 
 
 
         if (Boolean(oMOAParam.managerStep42)) {
@@ -491,7 +499,9 @@ async function getMOAParams(iRequestID) {
         addStep30Coord: 'FALSE',
         addStep30CoordLinea: 'FALSE',
         managerExceptStep40: "",
+        managerExceptStep40WDID: "",
         addStep40: 'FALSE',
+        addedFromException: 'FALSE',
         managerStep42: '',
         addStep45: 'FALSE',
         addStep60Controller: 'FALSE',
@@ -581,6 +591,27 @@ async function getMOAParams(iRequestID) {
 
             if (Boolean(oParam) && Boolean(oParam.VAL_OUTPUT)) {
                 oResult.managerExceptStep40 = oParam.VAL_OUTPUT
+
+                oResult.addedFromException = 'TRUE'
+ 
+
+                    let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
+                        oResult.managerExceptStep40 + "'");
+        
+                    if (oResponse && oResponse.d.results.length > 0) {
+        
+                        let wd = oResponse.d.results[0].WDPOSITION;
+                        let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
+                        if (oInfoWDPosition) {
+        
+                            oResult.managerExceptStep40WDID = oInfoWDPosition.WorkdayEmployeeID
+
+                        }
+                    }
+      
+
+
+
             }
         }
     }
