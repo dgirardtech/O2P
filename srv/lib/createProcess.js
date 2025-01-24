@@ -378,14 +378,41 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
         } else {
 
+            let wdId = ''
+            let sapUser = ''
+             let mail = ''
+              let fname = ''
+               let lname = ''
+            let sysLandscape = getEnvParam("SYS_LANDSCAPE", false);
+            if (Boolean(sysLandscape) || sysLandscape === "DEV" ) {
 
-            aResult.push({ INDEX: "10", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
-            aResult.push({ INDEX: "20", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });  // o Uffcio Attività Fisse
+                
+                wdId = '702302'
+                sapUser = 'IT_RCAO'
+                mail = 'rcao@q8.it'
+                fname = 'ROBERTO'
+                lname = 'CAO'
+            } else {
 
-            aResult.push({ INDEX: "30", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Coordinatore", ISMANAGER: "false" });
+            if (Boolean(sysLandscape) || sysLandscape === "TEST" ) {
+
+                wdId = '702302'
+                sapUser = 'IT_ASACCARD'
+                mail = 'asaccard@q8.it'
+                fname = 'ALESSANDRA'
+                lname = 'SACCARDO'
+
+            } }
+
+            
+
+            aResult.push({ INDEX: "10", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
+            aResult.push({ INDEX: "20", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });  // o Uffcio Attività Fisse
+
+            aResult.push({ INDEX: "30", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDRETE", DESCROLE: "Coordinatore", ISMANAGER: "false" });
 
             // if (oMOAParam.addStep40 === 'TRUE') {
-            aResult.push({ INDEX: "40", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
+            aResult.push({ INDEX: "40",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
             // }
 
             // if (Boolean(oMOAParam.managerStep42)) {
@@ -394,26 +421,26 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
 
             if (oMOAParam.addStep45 === 'TRUE') {
-                aResult.push({ INDEX: "45", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
+                aResult.push({ INDEX: "45",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
             }
 
-            aResult.push({ INDEX: "50", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
+            aResult.push({ INDEX: "50",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
 
 
             if (oMOAParam.addStep60Controller === 'TRUE' ||
                 oMOAParam.addStep60Cassa === 'TRUE' ||
                 oMOAParam.addStep60Finanza === 'TRUE'
             ) {
-                aResult.push({ INDEX: "60", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza ", ISMANAGER: "false" }); // o Addetto Cassa o Controller
+                aResult.push({ INDEX: "60",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza ", ISMANAGER: "false" }); // o Addetto Cassa o Controller
             }
 
             if (oMOAParam.addStep70 === 'TRUE') {
-                aResult.push({ INDEX: "70", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
+                aResult.push({ INDEX: "70",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
             }
 
             /*
             if (oMOAParam.addStep80 === 'TRUE') {
-                aResult.push({ INDEX: "80", WDID: "702302", SAPUSER: "IT_RCAO", MAIL: "rcao@q8.it", FNAME: "ROBERTO", LNAME: "CAO", IDROLE: "COORDRETE", DESCROLE: "Compilatore", ISMANAGER: "false" });
+                aResult.push({ INDEX: "80", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COORDRETE", DESCROLE: "Compilatore", ISMANAGER: "false" });
             }
                 */
 
