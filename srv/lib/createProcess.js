@@ -356,10 +356,10 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                     { attribute: "DEPRE_ACCOUNT", value: oMOAParam.depreAccount },
                     { attribute: "ADD_STEP_30_COORD", value: oMOAParam.addStep30Coord },
                     { attribute: "ADD_STEP_30_COORD_LINEA", value: oMOAParam.addStep30CoordLinea },
-                    
+
                     { attribute: "ADD_STEP_40", value: oMOAParam.addStep40 },
                     { attribute: "WDIDMANAGER", value: oMOAParam.managerExceptStep40WDID },
-                    { attribute: "ADDED_FROM_EXCEPTION" , value: oMOAParam.addedFromException },
+                    { attribute: "ADDED_FROM_EXCEPTION", value: oMOAParam.addedFromException },
 
                     { attribute: "ADD_STEP_45", value: oMOAParam.addStep45 },
                     { attribute: "ADD_STEP_60_CONTROLLER", value: oMOAParam.addStep60Controller },
@@ -380,19 +380,49 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
             let wdId = ''
             let sapUser = ''
-             let mail = ''
-              let fname = ''
-               let lname = ''
-            let sysLandscape = getEnvParam("SYS_LANDSCAPE", false);
-            if (Boolean(sysLandscape) || sysLandscape === "DEV" ) {
+            let mail = ''
+            let fname = ''
+            let lname = ''
 
-                
+            let fakeApproversUser = getEnvParam("FAKE_APPROVERS_USER", false);
+
+            let approver = ''
+            if (Boolean(fakeApproversUser)) {
+
+                approver = fakeApproversUser
+
+
+            } else {
+                approver = iRequest.user.id
+            }
+
+            
+
+            let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
+                .where({ MailDipendente: approver }));
+            if (oInfoWDPosition) {
+
+                wdId = oInfoWDPosition.WorkdayEmployeeID
+                sapUser = oInfoWDPosition.UtenteSAP
+                mail = oInfoWDPosition.MailDipendente
+                fname = oInfoWDPosition.Nome
+                lname = oInfoWDPosition.Cognome
+
+            }
+
+            /*
                 wdId = '702302'
                 sapUser = 'IT_RCAO'
                 mail = 'rcao@q8.it'
                 fname = 'ROBERTO'
                 lname = 'CAO'
-            } else {
+                */
+
+
+
+
+            /*
+            else {
 
             if (Boolean(sysLandscape) || sysLandscape === "TEST" ) {
 
@@ -402,9 +432,13 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                 fname = 'ALESSANDRA'
                 lname = 'SACCARDO'
 
-            } }
+            }  
+            }
 
-            
+            */
+
+
+
 
             aResult.push({ INDEX: "10", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COMPILER", DESCROLE: "Compilatore", ISMANAGER: "false" });
             aResult.push({ INDEX: "20", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });  // o Uffcio Attività Fisse
@@ -412,7 +446,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
             aResult.push({ INDEX: "30", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDRETE", DESCROLE: "Coordinatore", ISMANAGER: "false" });
 
             // if (oMOAParam.addStep40 === 'TRUE') {
-            aResult.push({ INDEX: "40",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
+            aResult.push({ INDEX: "40", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COMPILER", DESCROLE: "Manager", ISMANAGER: "false" });
             // }
 
             // if (Boolean(oMOAParam.managerStep42)) {
@@ -421,21 +455,21 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
 
 
             if (oMOAParam.addStep45 === 'TRUE') {
-                aResult.push({ INDEX: "45",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
+                aResult.push({ INDEX: "45", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COMPILER", DESCROLE: "Direttore", ISMANAGER: "false" });
             }
 
-            aResult.push({ INDEX: "50",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
+            aResult.push({ INDEX: "50", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDVEND", DESCROLE: "Controller", ISMANAGER: "false" });
 
 
             if (oMOAParam.addStep60Controller === 'TRUE' ||
                 oMOAParam.addStep60Cassa === 'TRUE' ||
                 oMOAParam.addStep60Finanza === 'TRUE'
             ) {
-                aResult.push({ INDEX: "60",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza ", ISMANAGER: "false" }); // o Addetto Cassa o Controller
+                aResult.push({ INDEX: "60", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza ", ISMANAGER: "false" }); // o Addetto Cassa o Controller
             }
 
             if (oMOAParam.addStep70 === 'TRUE') {
-                aResult.push({ INDEX: "70",  WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname,  IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
+                aResult.push({ INDEX: "70", WDID: wdId, SAPUSER: sapUser, MAIL: mail, FNAME: fname, LNAME: lname, IDROLE: "COORDRETE", DESCROLE: "Addetto Finanza", ISMANAGER: "false" }); // o Addetto Cassa 
             }
 
             /*
@@ -489,7 +523,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
         // sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
         //  if (sendFakeMail === "false") {
 
- 
+
 
 
         if (Boolean(oMOAParam.managerStep42)) {
@@ -620,22 +654,22 @@ async function getMOAParams(iRequestID) {
                 oResult.managerExceptStep40 = oParam.VAL_OUTPUT
 
                 oResult.addedFromException = 'TRUE'
- 
 
-                    let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
-                        oResult.managerExceptStep40 + "'");
-        
-                    if (oResponse && oResponse.d.results.length > 0) {
-        
-                        let wd = oResponse.d.results[0].WDPOSITION;
-                        let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
-                        if (oInfoWDPosition) {
-        
-                            oResult.managerExceptStep40WDID = oInfoWDPosition.WorkdayEmployeeID
 
-                        }
+                let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
+                    oResult.managerExceptStep40 + "'");
+
+                if (oResponse && oResponse.d.results.length > 0) {
+
+                    let wd = oResponse.d.results[0].WDPOSITION;
+                    let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
+                    if (oInfoWDPosition) {
+
+                        oResult.managerExceptStep40WDID = oInfoWDPosition.WorkdayEmployeeID
+
                     }
-      
+                }
+
 
 
 
@@ -712,7 +746,7 @@ async function getMOAParams(iRequestID) {
             if (oRequest.PAYMENT_MODE_CODE !== consts.Paymode.BONIFICO) {
                 oResult.addStep60Cassa = 'TRUE'
 
-                if ( oRequest.PAYMENT_MODE_CODE !== consts.Paymode.ASSCIRC_NT) {
+                if (oRequest.PAYMENT_MODE_CODE !== consts.Paymode.ASSCIRC_NT) {
 
                     //   Step 70
                     oResult.addStep70 = 'TRUE'
@@ -722,7 +756,7 @@ async function getMOAParams(iRequestID) {
         }
     }
 
- 
+
 
     return oResult
 
@@ -979,8 +1013,8 @@ async function startBPAProcess(iRequest, iRequestId, iMoaApprovers) {
 
         const userJwt = retrieveJwt(iRequest);
         responseCreateWf = await WorkflowInstancesApi.createV1WorkflowInstances(startPayload)
-          //  .execute({ destinationName: consts.API_WF_DESTINATION });
-        .execute({ destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt });
+            //  .execute({ destinationName: consts.API_WF_DESTINATION });
+            .execute({ destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt });
 
     } catch (error) {
         let errMEssage = "startProcess:" + error.message + " REQUESTID: " + iRequestId;
