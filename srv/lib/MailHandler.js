@@ -649,7 +649,10 @@ async function getSubjectContentfromBody(iRequest, iBodyMail) {
     let content = iBodyMail.id_object
     content = content.replaceAll(consts.mailPatterns.REQUEST_ID, iRequest.data.REQUEST_ID);
     content = content.replaceAll(consts.mailPatterns.REQUESTER, oRequester.REQUESTER_NAME);
+
+    if (oPayMode) { 
     content = content.replaceAll(consts.mailPatterns.PAYMENT_MODE, oPayMode.PAYMENT_NAME);
+}
 
  
     let oResultNameMotivation = await getNameMotivationAction(iRequest, iRequest.data.REQUEST_ID , consts.UserAction.REJECTED, oRequest.VERSION )

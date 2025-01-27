@@ -10,6 +10,7 @@ const moment = require('moment');
 const { retrieveJwt } = require('@sap-cloud-sdk/connectivity');
 const SapCfAxios = require('sap-cf-axios').default;
 const axiosMyInboxService = SapCfAxios("sap_inbox_task_api", { logger: console });
+const { generateO2PDocument, generateO2PF23Aut } = require('./HandlerPDF');
 
 
 async function getRequestData(iRequestId, iRequest) {
@@ -111,6 +112,9 @@ async function createProcess(iRequest) {
         if (returnUpdateWfInstanceId.errors) {
             return returnUpdateWfInstanceId;
         }
+
+
+      //  let o2pDocument = await generateO2PDocument(iRequest, true)
 
 
 
