@@ -1,16 +1,12 @@
-const LOG = cds.log('KupitO2PSrv');
-const client = require('@sap-cloud-sdk/http-client');
-const connectivity = require('@sap-cloud-sdk/connectivity');
+const LOG = cds.log('KupitO2PSrv'); 
 const _ = require('underscore');
 const consts = require("./Constants");
 const { getEnvParam, getTextBundle } = require('./Utils');
 const SequenceHelper = require("./SequenceHelper");
-const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
-const moment = require('moment');
+const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF); 
 const { retrieveJwt } = require('@sap-cloud-sdk/connectivity');
 const SapCfAxios = require('sap-cf-axios').default;
-const axiosMyInboxService = SapCfAxios("sap_inbox_task_api", { logger: console });
-const { generateO2PDocument, generateO2PF23Aut } = require('./HandlerPDF');
+const axiosMyInboxService = SapCfAxios("sap_inbox_task_api", { logger: console }); 
 
 
 async function getRequestData(iRequestId, iRequest) {

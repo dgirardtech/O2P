@@ -95,7 +95,8 @@ entity Document : managed {
       DOCUMENT_FISCAL_YEAR : YEAR;
       DOCUMENT_NUMBER      : DOCNUM;
       CLEARING_NUMBER      : DOCNUM;
-      CONTABILE_NICKNAME   : String(10);
+      ACCOUNT_ADVANCE      : Boolean default false;
+      CONTABILE_NICKNAME   : String(10) default '0';
       CONTABILE_SEND_DATE  : Date;
       NOTE                 : String(250);
       ATTRIBUZIONE         : String(18);
@@ -103,8 +104,7 @@ entity Document : managed {
       REFKEY2              : String(12);
       VALUT                : Date;
       IS_FROM_EXCEL        : Boolean default false;
-      virtual VENDOR_DESC  : String; 
-      virtual ACCOUNT_ADVANCE: Boolean
+      virtual VENDOR_DESC  : String;  
 }
 
 //ZFI_O2P_APPRFLOW

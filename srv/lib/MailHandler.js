@@ -1,33 +1,13 @@
-const LOG = cds.log('KupitO2PSrv');
-const client = require('@sap-cloud-sdk/http-client');
-const connectivity = require('@sap-cloud-sdk/connectivity');
+const LOG = cds.log('KupitO2PSrv'); 
 const _ = require('underscore');
 const consts = require("./Constants");
-const {  getDocumentProp,  getNameMotivationAction, transcodeDocumentToTree } = require('./Handler');
+const {  getNameMotivationAction } = require('./Handler');
+const { transcodeDocumentToTree,getDocumentProp } = require('./ManageDocument') 
+const { getEnvParam, getTextBundle } = require('./Utils'); 
+const {  generateO2PF23Aut } = require('./HandlerPDF');
 
-const { getEnvParam, getTextBundle } = require('./Utils');
-const moment = require('moment');
-const { generateO2PDocument, generateO2PF23Aut } = require('./HandlerPDF');
 
-
-function convertToBinaryType(iData) {
-    return new Promise((resolve, reject) => {
-        const stream = new PassThrough();
-        const chunks = [];
-
-        stream.on('data', function (chunk) {
-            chunks.push(chunk)
-        })
-        stream.on('end', () => {
-            resolve(Buffer.concat(chunks))
-        })
-        stream.on('error', (error) => {
-            reject(error)
-        })
-        iData.pipe(stream)
-    });
-}
-
+ 
 async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, iRequest) {
 
     let returnBodyNotification = await getBodyNotification(iRequest.REQUEST_ID, consts.notificationId.TASK_REJECTED, iRequest)

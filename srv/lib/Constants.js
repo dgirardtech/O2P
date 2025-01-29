@@ -39,6 +39,13 @@ exports.UserAction = Object.freeze({
 });
 
 
+exports.PDFPath = Object.freeze({
+    DOCUMENT: 'kupit_o2p_document/kupito2pdocument',
+    F23AUT: 'kupit_o2p_document/kupito2pf23aut',
+    ACCOUNTING: 'kupit_o2p_document/kupito2paccounting'
+});
+
+
 exports.Paymode = Object.freeze({
     BONIFICO: 'BONIFICO',
     ENTRATEL: 'ENTRATEL',

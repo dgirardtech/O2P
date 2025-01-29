@@ -2,12 +2,12 @@ const LOG = cds.log('KupitO2PSrv');
 const _ = require('underscore');
 const convert = require('xml-js'); // https://www.npmjs.com/package/xml-js
 const moment = require('moment');
+const { getTextBundle } = require('./Utils');
+const { transcodeDocumentToTree } = require('./ManageDocument')
+const fs = require('fs')
+const consts = require("./Constants");
 const client = require('@sap-cloud-sdk/http-client');
 const connectivity = require('@sap-cloud-sdk/connectivity');
-const consts = require("./Constants");
-const { getEnvParam, getTextBundle } = require('./Utils');
-const { getDocumentProp, transcodeDocumentToTree } = require('./Handler');
-
 
 
 async function _getDestination() {
@@ -221,7 +221,8 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
 
 
     returnCreatePdf = await createPdf(jsonData, iRequest.data.REQUEST_ID, iRequest,
-        'kupit_o2p_document/kupito2pdocument');
+        consts.PDFPath.DOCUMENT);
+
 
 
     if (Boolean(iSaveAttach)) {
@@ -230,11 +231,7 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
 
     return { binary: returnCreatePdf, type: "application/pdf" }
 
-    /*
-if (returnCreatePdf.errors) {
-return returnCreatePdf;
-}
-*/
+
 
 }
 
@@ -379,7 +376,7 @@ async function generateO2PF23Aut(iRequest, iSaveAttach) {
         'e causale',
         aDocHeader[0].REASON,
         '\r\n',
-        '\r\n'      
+        '\r\n'
     ].join(' ')
 
 
@@ -390,7 +387,7 @@ async function generateO2PF23Aut(iRequest, iSaveAttach) {
         bankIban,
         'operativo per',
         gvSignature,
-        '.' 
+        '.'
     ].join(' ')
 
     let gvBody = gvBody1 + gvBody2
@@ -421,8 +418,9 @@ async function generateO2PF23Aut(iRequest, iSaveAttach) {
     }
 
 
+
     returnCreatePdf = await createPdf(jsonData, iRequest.data.REQUEST_ID, iRequest,
-        'kupit_o2p_document/kupito2pf23aut');
+        consts.PDFPath.F23AUT);
 
 
     if (Boolean(iSaveAttach)) {
@@ -431,14 +429,128 @@ async function generateO2PF23Aut(iRequest, iSaveAttach) {
 
     return { binary: returnCreatePdf, type: "application/pdf" }
 
-    /*
-if (returnCreatePdf.errors) {
-return returnCreatePdf;
-}
-*/
+
 
 }
 
+
+async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDetail, iSaveAttach) {
+
+    let oReturn = {
+        binary: '',
+        type: '',
+        error: []
+    }
+
+    const oBundle = getTextBundle(iRequest);
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequestId })
+
+
+    let aDocument = await SELECT.from(Document).
+        where({ to_Request_REQUEST_ID: iRequestId, DOC_ID: iDocId, })
+        .orderBy('DOC_ID asc', 'ID asc');
+
+    let oTree = await transcodeDocumentToTree(iRequestId, aDocument)
+
+    let oDocHeader = oTree.HEADER[0]
+
+
+    let bankText = ''
+    let oBankreq = await SELECT.one.from(Bankreq).
+        where({ REQUESTER_CODE: oRequest.REQUESTER_CODE, BANK_CODE: oRequest.BANK_ACCOUNT });
+    if (!oBankreq) {
+        oBankreq = await SELECT.one.from(Bankreq).
+            where({ REQUESTER_CODE: '*', BANK_CODE: oRequest.BANK_ACCOUNT });
+    }
+
+    if (oBankreq) {
+        bankText = oBankreq.BANK_NAME
+    }
+
+
+    let beneficiaryDate = ''
+    let orderingABI = iDocumentDetail.uiban.substring(5, 10)
+    let beneficiaryABI = oDocHeader.IBAN.substring(5, 10)
+
+    let oBankexc = await SELECT.one.from(Bankexc).
+        where({ ABI_Q8: orderingABI, ABI_VENDOR: beneficiaryABI });
+
+    if (oBankexc || orderingABI === beneficiaryABI) {
+        beneficiaryDate = iDocumentDetail.executionDate
+    } else {
+        beneficiaryDate = iDocumentDetail.valut
+    }
+
+
+
+    let oGsAccountingPdf = {
+        REQUEST_ID: iRequestId,
+        DOCUMENT: oDocHeader.DOCUMENT_NUMBER,
+        COMPANY_CODE: oDocHeader.DOCUMENT_COMP_CODE,
+        FISCAL_YEAR: oDocHeader.DOCUMENT_FISCAL_YEAR,
+        VENDOR: oDocHeader.VENDOR,
+        VENDOR_NAME: oDocHeader.VENDOR_DESC,
+        VENDOR_IBAN: oDocHeader.IBAN,
+        AMOUNT: oDocHeader.TOT_AMOUNT,
+        CURRENCY: oRequest.WAERS_CODE,
+        REASON: oDocHeader.REASON,
+        CRO: iDocumentDetail.xblnr,
+        DIRECTING_BANK_CODE: oRequest.BANK_ACCOUNT,
+        DIRECTING_BANK_NAME: bankText,
+        VALUE_DATE: iDocumentDetail.executionDate,
+        BENEFICIARY_DATE: beneficiaryDate,
+
+    }
+
+
+    let gvLogoQuaser = fs.readFileSync('srv/pdf/images/ZLOGO_Q8_BW_3.bmp').toString('base64')
+
+    let oCreatePDF = {
+        data: {
+            GS_ACCOUNTING_PDF: oGsAccountingPdf,
+            GV_LOGO_QUASER: gvLogoQuaser
+        }
+    }
+
+
+    try {
+
+        let sCreatePDF = JSON.stringify(oCreatePDF);
+
+        jsonData = JSON.parse(sCreatePDF);
+
+        returnCreatePdf = await createPdf(jsonData, iRequestId, iRequest, consts.PDFPath.ACCOUNTING)
+
+        if (Boolean(iSaveAttach)) {
+
+            let oResponseSaveAttach = await saveAttach(returnCreatePdf, iRequestId, iRequest)
+            if (oResponseSaveAttach.errors) {
+                return oResponseSaveAttach;
+            }
+
+            let resUpdate = await UPDATE(Document).set({ CONTABILE_NICKNAME: '1' }).where({
+                to_Request_REQUEST_ID: iRequestId,
+                DOC_ID: iDocId
+
+            });
+
+        }
+
+        oReturn = { binary: returnCreatePdf, type: "application/pdf", error: [] }
+
+    } catch (error) {
+
+        oReturn.error.push({ text: error.message })
+    }
+
+
+
+    return oReturn
+
+
+}
 
 async function saveAttach(iPdfContent, iRequestId, iRequest) {
 
@@ -492,5 +604,6 @@ module.exports = {
     createPdf,
     generateO2PDocument,
     generateO2PF23Aut,
+    generateO2PAccounting,
     saveAttach
 }

@@ -1,13 +1,15 @@
 
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
-const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams, getNextRequestId } = require('./lib/createProcess');
+const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,
-    updateRequest, getNameMotivationAction, getMonitorRequest, formatDocument, manageDocPopupData, getDocStatus,
-    fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, getEccServices, createFIDocument, getAssignInfo, isCreationStep, manageMainData,
-    getClearingStatus, getClearingFilter } = require('./lib/Handler');
+    updateRequest, getNameMotivationAction, getMonitorRequest,  manageDocPopupData, getDocStatus,
+     getEccServices, getAssignInfo, isCreationStep, manageMainData, getCountingCreate} = require('./lib/Handler');
 const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
 const { testMail } = require('./lib/MailHandler');
+const { fromDocumentToTree, fromRequestIdToTree, 
+    fromTreeToDocument ,formatDocument,createFIDocument } = require('./lib/ManageDocument');
+
 const { generateO2PF23Aut } = require('./lib/HandlerPDF');
 const { constants } = require('@sap/xssec');
 
@@ -129,7 +131,6 @@ module.exports = cds.service.impl(async function () {
         // return await generateO2PF23Aut(req);
         let o2pF23Aut = await generateO2PF23Aut(req, false)
 
-
         let oResult =
 
         {
@@ -172,6 +173,10 @@ module.exports = cds.service.impl(async function () {
     });
 
      
+    this.on('CountingCreate', async (request, next) => {
+        return await getCountingCreate( request , next);
+    });
+
 
     this.after('READ', 'Document', formatDocument);
 
@@ -234,9 +239,6 @@ module.exports = cds.service.impl(async function () {
     this.on('READ', GlAccountCompanySet, async (request) => {
         return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
     });
-
-
-
 
 }
 ) 

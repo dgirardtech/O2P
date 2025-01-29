@@ -347,6 +347,7 @@ service O2PModelService @(requires: [
         };
 
 
+    function CountingCreate(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns array of checkDataReturn;
     function getAssignInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns AssignInfo;
     function printF23Aut(REQUEST_ID : KupitO2PModel.REQUEST_ID)         returns fileReturn;
     action   createProcess(REQUESTER : String)                          returns Message;
