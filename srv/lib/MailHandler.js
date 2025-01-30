@@ -1,13 +1,13 @@
-const LOG = cds.log('KupitO2PSrv'); 
+const LOG = cds.log('KupitO2PSrv');
 const _ = require('underscore');
 const consts = require("./Constants");
-const {  getNameMotivationAction } = require('./Handler');
-const { transcodeDocumentToTree,getDocumentProp } = require('./ManageDocument') 
-const { getEnvParam, getTextBundle } = require('./Utils'); 
-const {  generateO2PF23Aut } = require('./HandlerPDF');
+const { getNameMotivationAction } = require('./Handler');
+const { transcodeDocumentToTree, getDocumentProp } = require('./ManageDocument')
+const { getEnvParam, getTextBundle } = require('./Utils');
+const { generateO2PF23Aut } = require('./HandlerPDF');
 
 
- 
+
 async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, iRequest) {
 
     let returnBodyNotification = await getBodyNotification(iRequest.REQUEST_ID, consts.notificationId.TASK_REJECTED, iRequest)
@@ -16,13 +16,13 @@ async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, i
     }
 
 
-   
+
 
     let subject = returnBodyNotification.title.replaceAll(consts.mailPatterns.REQUESTID, iO2PRequest.REQUEST_ID);
 
     let content = returnBodyNotification.message.replaceAll(consts.mailPatterns.REQUESTID, iO2PRequest.REQUEST_ID);
-  
-    let oResultNameMotivation = await getNameMotivationAction(iRequest,iO2PRequest.REQUEST_ID, consts.UserAction.REJECTED, "")
+
+    let oResultNameMotivation = await getNameMotivationAction(iRequest, iO2PRequest.REQUEST_ID, consts.UserAction.REJECTED, "")
     content = content.replaceAll(consts.mailPatterns.FULL_NAME, oResultNameMotivation.name);
     content = content.replaceAll(consts.mailPatterns.TASK_URL, iTaskUrl);
 
@@ -57,7 +57,7 @@ async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iReques
             REQUEST_ID: iO2PRequest.REQUEST_ID,
             VERSION: iO2PRequest.VERSION,
             STEP: 10,
-         //   To_StepStatus_STEP_STATUS: consts.stepStatus.COMPLETED
+            //   To_StepStatus_STEP_STATUS: consts.stepStatus.COMPLETED
         });
 
     if (approvalH && Boolean(approvalH.REAL_FULLNAME)) {
@@ -398,7 +398,7 @@ function getFakeBody(iMailBody) {
 
 async function testMail(iRequest) {
 
-    let oReturnSendMail = await sendAllMail(iRequest,true)
+    let oReturnSendMail = await sendAllMail(iRequest, true)
 
 }
 
@@ -630,19 +630,19 @@ async function getSubjectContentfromBody(iRequest, iBodyMail) {
     content = content.replaceAll(consts.mailPatterns.REQUEST_ID, iRequest.data.REQUEST_ID);
     content = content.replaceAll(consts.mailPatterns.REQUESTER, oRequester.REQUESTER_NAME);
 
-    if (oPayMode) { 
-    content = content.replaceAll(consts.mailPatterns.PAYMENT_MODE, oPayMode.PAYMENT_NAME);
-}
+    if (oPayMode) {
+        content = content.replaceAll(consts.mailPatterns.PAYMENT_MODE, oPayMode.PAYMENT_NAME);
+    }
 
- 
-    let oResultNameMotivation = await getNameMotivationAction(iRequest, iRequest.data.REQUEST_ID , consts.UserAction.REJECTED, oRequest.VERSION )
+
+    let oResultNameMotivation = await getNameMotivationAction(iRequest, iRequest.data.REQUEST_ID, consts.UserAction.REJECTED, oRequest.VERSION)
     content = content.replaceAll(consts.mailPatterns.MOD_USER, oResultNameMotivation.name);
     content = content.replaceAll(consts.mailPatterns.MOD_MOTIVATION, oResultNameMotivation.motivation);
 
 
-    oResultNameMotivation = await getNameMotivationAction(iRequest, iRequest.data.REQUEST_ID , consts.UserAction.TERMINATED, oRequest.VERSION)
+    oResultNameMotivation = await getNameMotivationAction(iRequest, iRequest.data.REQUEST_ID, consts.UserAction.TERMINATED, oRequest.VERSION)
     content = content.replaceAll(consts.mailPatterns.REF_USER, oResultNameMotivation.name);
-    content = content.replaceAll(consts.mailPatterns.REF_MOTIVATION,  oResultNameMotivation.motivation);
+    content = content.replaceAll(consts.mailPatterns.REF_MOTIVATION, oResultNameMotivation.motivation);
 
 
     content = content.replaceAll(consts.mailPatterns.N_DOC, oTree.HEADER.length);
@@ -660,20 +660,22 @@ async function getSubjectContentfromBody(iRequest, iBodyMail) {
 }
 
 
-async function sendAllMail(iRequest,isTest) {
+async function sendAllMail(iRequest, isTest) {
 
     let aAttach = []
 
-   if (Boolean(isTest)) {
-     
+    if (Boolean(isTest)) {
 
-    let o2pDocument = await generateO2PF23Aut(iRequest,false) 
 
-    aAttach = [{ name         : "Document.pdf", 
-                 contentType  : o2pDocument.type, 
-                 contentBytes : o2pDocument.binary } ]
- 
-                }
+        let o2pDocument = await generateO2PF23Aut(iRequest, false)
+
+        aAttach = [{
+            name: "Document.pdf",
+            contentType: o2pDocument.type,
+            contentBytes: o2pDocument.binary
+        }]
+
+    }
 
     /////////////////////////////////////////////////////////////////////
 

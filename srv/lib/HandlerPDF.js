@@ -226,10 +226,13 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
 
 
     if (Boolean(iSaveAttach)) {
-        let oResponseSaveAttach = await saveAttach(returnCreatePdf, iRequest.data.REQUEST_ID, iRequest)
+
+        let filename = "O2P_" + iRequest.data.REQUEST_ID + ".pdf"
+        let oResponseSaveAttach = await saveAttach(returnCreatePdf,
+            iRequest.data.REQUEST_ID, iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.DOC, filename)
     }
 
-    return { binary: returnCreatePdf, type: "application/pdf" }
+    return { binary: returnCreatePdf, type: consts.attachmentFormat.PDF }
 
 
 
@@ -423,18 +426,21 @@ async function generateO2PF23Aut(iRequest, iSaveAttach) {
         consts.PDFPath.F23AUT);
 
 
+
     if (Boolean(iSaveAttach)) {
-        let oResponseSaveAttach = await saveAttach(returnCreatePdf, iRequest.data.REQUEST_ID, iRequest)
+        // let oResponseSaveAttach = await saveAttach(returnCreatePdf,
+        //     iRequest.data.REQUEST_ID, iRequest, consts.attachmentFormat.PDF, '', '')
     }
 
-    return { binary: returnCreatePdf, type: "application/pdf" }
+    return { binary: returnCreatePdf, type: consts.attachmentFormat.PDF }
 
 
 
 }
 
 
-async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDetail, iSaveAttach) {
+async function generateO2PAccounting(iRequest, iDocumentDetail, iSaveAttach) {
+
 
     let oReturn = {
         binary: '',
@@ -442,22 +448,34 @@ async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDeta
         error: []
     }
 
+    let bankText = ''
+    let beneficiaryDate = ''
+    let orderingABI = ''
+    let beneficiaryABI = ''
+    let directingLocation = ''
+    let directingName = ''
+    let directingStreet = ''
+    let transferType = ''
+
     const oBundle = getTextBundle(iRequest);
 
     let oRequest = await SELECT.one.from(Request).
-        where({ REQUEST_ID: iRequestId })
+        where({ REQUEST_ID: iDocumentDetail.requestId })
 
 
     let aDocument = await SELECT.from(Document).
-        where({ to_Request_REQUEST_ID: iRequestId, DOC_ID: iDocId, })
+        where({
+            to_Request_REQUEST_ID: iDocumentDetail.requestId,
+            DOC_ID: iDocumentDetail.docId
+        })
         .orderBy('DOC_ID asc', 'ID asc');
 
-    let oTree = await transcodeDocumentToTree(iRequestId, aDocument)
+    let oTree = await transcodeDocumentToTree(iDocumentDetail.requestId, aDocument)
 
     let oDocHeader = oTree.HEADER[0]
 
 
-    let bankText = ''
+
     let oBankreq = await SELECT.one.from(Bankreq).
         where({ REQUESTER_CODE: oRequest.REQUESTER_CODE, BANK_CODE: oRequest.BANK_ACCOUNT });
     if (!oBankreq) {
@@ -470,9 +488,14 @@ async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDeta
     }
 
 
-    let beneficiaryDate = ''
-    let orderingABI = iDocumentDetail.uiban.substring(5, 10)
-    let beneficiaryABI = oDocHeader.IBAN.substring(5, 10)
+
+    if (Boolean(iDocumentDetail.uiban)) {
+        orderingABI = iDocumentDetail.uiban.substring(5, 10)
+    }
+
+    if (Boolean(oDocHeader.IBAN)) {
+        beneficiaryABI = oDocHeader.IBAN.substring(5, 10)
+    }
 
     let oBankexc = await SELECT.one.from(Bankexc).
         where({ ABI_Q8: orderingABI, ABI_VENDOR: beneficiaryABI });
@@ -484,9 +507,36 @@ async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDeta
     }
 
 
+    let aParam = await SELECT.from(Param).where({ PARAMNAME: 'ACCOUNT_PDF_' + iDocumentDetail.bukrs });
+
+    if (aParam.length === 0) {
+        aParam = await SELECT.from(Param).where({ PARAMNAME: 'ACCOUNT_PDF' });
+    }
+
+
+
+    for (let i = 0; i < aParam.length; i++) {
+
+        if (aParam[i].VAL_INPUT === 'DIRECTING_LOCATION') {
+            directingLocation = aParam[i].VAL_OUTPUT
+        }
+
+        if (aParam[i].VAL_INPUT === 'DIRECTING_NAME') {
+            directingName = aParam[i].VAL_OUTPUT
+        }
+
+        if (aParam[i].VAL_INPUT === 'DIRECTING_STREET') {
+            directingStreet = aParam[i].VAL_OUTPUT
+        }
+
+        if (aParam[i].VAL_INPUT === 'TRANSFER_TYPE') {
+            transferType = aParam[i].VAL_OUTPUT
+        }
+    }
+
 
     let oGsAccountingPdf = {
-        REQUEST_ID: iRequestId,
+        REQUEST_ID: iDocumentDetail.requestId,
         DOCUMENT: oDocHeader.DOCUMENT_NUMBER,
         COMPANY_CODE: oDocHeader.DOCUMENT_COMP_CODE,
         FISCAL_YEAR: oDocHeader.DOCUMENT_FISCAL_YEAR,
@@ -497,8 +547,16 @@ async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDeta
         CURRENCY: oRequest.WAERS_CODE,
         REASON: oDocHeader.REASON,
         CRO: iDocumentDetail.xblnr,
+
         DIRECTING_BANK_CODE: oRequest.BANK_ACCOUNT,
         DIRECTING_BANK_NAME: bankText,
+
+        DIRECTING_NAME: directingName,
+        DIRECTING_STREET: directingStreet,
+        DIRECTING_LOCATION: directingLocation,
+        DIRECTING_BANK_IBAN: iDocumentDetail.uiban,
+        TRANSFER_TYPE: transferType,
+
         VALUE_DATE: iDocumentDetail.executionDate,
         BENEFICIARY_DATE: beneficiaryDate,
 
@@ -521,28 +579,31 @@ async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDeta
 
         jsonData = JSON.parse(sCreatePDF);
 
-        returnCreatePdf = await createPdf(jsonData, iRequestId, iRequest, consts.PDFPath.ACCOUNTING)
+        returnCreatePdf = await createPdf(jsonData, iDocumentDetail.requestId, iRequest, consts.PDFPath.ACCOUNTING)
 
         if (Boolean(iSaveAttach)) {
 
-            let oResponseSaveAttach = await saveAttach(returnCreatePdf, iRequestId, iRequest)
+            let filename = "ContabileBPM " + iDocumentDetail.requestId + iDocumentDetail.docId + ".pdf"
+
+            let oResponseSaveAttach = await saveAttach(returnCreatePdf, iDocumentDetail.requestId,
+                iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.COUNTING, filename)
             if (oResponseSaveAttach.errors) {
                 return oResponseSaveAttach;
             }
 
             let resUpdate = await UPDATE(Document).set({ CONTABILE_NICKNAME: '1' }).where({
-                to_Request_REQUEST_ID: iRequestId,
-                DOC_ID: iDocId
+                to_Request_REQUEST_ID: iDocumentDetail.requestId,
+                DOC_ID: iDocumentDetail.docId
 
             });
 
         }
 
-        oReturn = { binary: returnCreatePdf, type: "application/pdf", error: [] }
+        oReturn = { binary: returnCreatePdf, type: consts.attachmentFormat.PDF, error: [] }
 
     } catch (error) {
 
-        oReturn.error.push({ text: error.message })
+        oReturn.error.push(error.message)
     }
 
 
@@ -552,7 +613,7 @@ async function generateO2PAccounting(iRequest, iRequestId, iDocId, iDocumentDeta
 
 }
 
-async function saveAttach(iPdfContent, iRequestId, iRequest) {
+async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAttachType, iFileName) {
 
     let fullName;
     let attach = {};
@@ -560,6 +621,20 @@ async function saveAttach(iPdfContent, iRequestId, iRequest) {
 
     let actualUser = iRequest.user.id;
     var fileSizeInBytes = iPdfContent.length;
+    let filename = ''
+    let attachFormat = ''
+
+    if (Boolean(iFileName)) {
+        filename = iFileName
+    } else {
+        filename = "O2P_" + iRequestId + ".pdf";
+    }
+
+    if (Boolean(iAttachFormat)) {
+        attachFormat = iAttachFormat
+    } else {
+        attachFormat = consts.attachmentFormat.PDF
+    }
 
     try {
 
@@ -571,14 +646,37 @@ async function saveAttach(iPdfContent, iRequestId, iRequest) {
             fullName = oInfoWDPosition.FullName;
         }
 
+
+        let maxId = 0
+
+        let oAttachmentDb = await SELECT.one.from(Attachments)
+            .where({
+                REQUEST_ID: iRequestId,
+                ATTACHMENTTYPE_ATTACHMENTTYPE: iAttachType
+            });
+
+        if (oAttachmentDb) {
+
+            maxId = oAttachmentDb.ID;
+
+        } else {
+
+            let queryMaxResult = await SELECT.one.from(Attachments).columns(["max(ID) as maxId"])
+                .where({ REQUEST_ID: iRequestId });
+
+            maxId = queryMaxResult.maxId + 10;
+
+        }
+
+
         attach.to_Request_REQUEST_ID = iRequestId;
-        attach.ID = 1;
+        attach.ID = maxId;
         attach.CONTENT = iPdfContent;
-        attach.MEDIATYPE = "application/pdf";
-        attach.FILENAME = "O2P_" + iRequestId + ".pdf";
+        attach.MEDIATYPE = attachFormat;
+        attach.FILENAME = filename
         attach.SIZE = fileSizeInBytes
-        attach.URL = "/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=" + iRequestId + ",ID=1)/CONTENT";
-        // attach.ATTACHMENTTYPE_ATTACHMENTTYPE = consts.attachmentTypes.O2PCOMP;
+        attach.URL = "/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=" + iRequestId + ",ID=" + maxId + ")/CONTENT";
+        attach.ATTACHMENTTYPE_ATTACHMENTTYPE = iAttachType;
         attach.CREATOR_FULLNAME = fullName;
         attach.createdAt = new Date();
         attach.createdBy = actualUser;

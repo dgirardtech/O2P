@@ -474,9 +474,14 @@ async function createFIDocument(iRequest) {
 
 }
 
-async function getDocumentDetail(iDocument) {
+async function getDocumentDetail(iRequestId,iDocId) {
 
-    let oDocument = iDocument
+    let oDocument = await SELECT.one.from(Document).
+    where({
+        to_Request_REQUEST_ID: iRequestId,
+        DOC_ID: iDocId
+    })
+ 
 
     let oResult = {
         augbl: '',
@@ -486,7 +491,11 @@ async function getDocumentDetail(iDocument) {
         batch: '',
         datum: '',
         uiban: '',
-        executionDate:''
+        executionDate:'',
+        bukrs: oDocument.DOCUMENT_COMP_CODE,
+        requestId: iRequestId,
+        docId: iDocId,
+        documentNumber: oDocument.DOCUMENT_NUMBER 
     }
 
 
@@ -498,12 +507,12 @@ async function getDocumentDetail(iDocument) {
     const { PaySettlementSet } = EccServiceO2P.entities;
 
 
-    let oAccDocPosVendClearSet
+    let oAccDocPosVendClear
 
 
-    if (iDocument.ACCOUNT_ADVANCE === true) {
+    if (oDocument.ACCOUNT_ADVANCE === true) {
 
-        oAccDocPosVendClearSet = await EccServiceO2P.run(
+        oAccDocPosVendClear = await EccServiceO2P.run(
             SELECT.one.from(AccDocPosVendClearSet).where({
                 Belnr: oDocument.DOCUMENT_NUMBER,
                 Bukrs: oDocument.DOCUMENT_COMP_CODE,
@@ -515,7 +524,7 @@ async function getDocumentDetail(iDocument) {
 
     } else {
 
-        oAccDocPosVendClearSet = await EccServiceO2P.run(
+        oAccDocPosVendClear = await EccServiceO2P.run(
             SELECT.one.from(AccDocPosVendClearSet).where({
                 Belnr: oDocument.DOCUMENT_NUMBER,
                 Bukrs: oDocument.DOCUMENT_COMP_CODE,
@@ -525,15 +534,21 @@ async function getDocumentDetail(iDocument) {
 
     }
 
-    if (oAccDocPosVendClearSet) {
+    // per TEST 
+     oAccDocPosVendClear = { Augbl : '5210674586' }
+ 
 
-        oResult.augbl = oAccDocPosVendClearSet.Augbl
+    if (oAccDocPosVendClear) {
+ 
+        oResult.augbl = oAccDocPosVendClear.Augbl
+ 
 
         let oAccDocHeader = await EccServiceO2P.run(
             SELECT.one.from(AccDocHeaderSet).where({
-                Belnr: oAccDocPosVendClearSet.Augbl,
+                Belnr: oAccDocPosVendClear.Augbl,
                 Bukrs: oDocument.DOCUMENT_COMP_CODE,
-                Gjahr: oDocument.DOCUMENT_FISCAL_YEAR
+                Gjahr: '2021'
+              //  Gjahr: oDocument.DOCUMENT_FISCAL_YEAR
             }));
 
         if (oAccDocHeader) {
@@ -544,15 +559,19 @@ async function getDocumentDetail(iDocument) {
             //if (Boolean(oAccDocHeader.Xblnr) && oAccDocHeader.Blart === 'ZP') {
             if (Boolean(oAccDocHeader.Xblnr)) { // per TEST
 
+
+               // oAccDocHeader.Bktxt = '20240519-EST01'
+
                 oResult.datum = oAccDocHeader.Bktxt.substring(0, 8)
                 oResult.batch = oAccDocHeader.Bktxt.substring(9, 14)
+
 
 
                 let aPaySettlement = await EccServiceO2P.run(
                     SELECT.from(PaySettlementSet).where({
                         Laufd: oResult.datum,
                         Laufi: oResult.batch,
-                        vblnr: oAccDocPosVendClearSet.Augbl
+                        Vblnr: oAccDocPosVendClear.Augbl
                     }));
                 if (aPaySettlement.length > 0) {
                     oResult.uiban = aPaySettlement[0].Uiban
@@ -562,9 +581,10 @@ async function getDocumentDetail(iDocument) {
 
                 let aAccDocPosition = await EccServiceO2P.run(
                     SELECT.from(AccDocPositionSet).where({
-                        Belnr: oAccDocPosVendClearSet.Augbl,
+                        Belnr: oAccDocPosVendClear.Augbl,
                         Bukrs: oDocument.DOCUMENT_COMP_CODE,
-                        Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
+                        Gjahr: '2021',
+                        //Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
                         Koart: 'S'
                     }));
 

@@ -122,42 +122,70 @@ service O2PModelService @(requires: [
 
     //////////////////////////////////////////////////////////////////////////////////
 
-    /*
-        view DocStatus as
-            select from Document as document
-            left outer join (
-                select
-                      key  to_Request.REQUEST_ID as REQUEST_ID,
-                      key  DOC_ID,
-                           LOG_TIME,
-                           DOC_TYPE,
-                           DOC_NUMBER,
-                           COMPANY_CODE,
-                           FISCAL_YEAR,
-                           STATUS,
-                           STATUS_TEXT
 
-               from Doclog  order by REQUEST_ID asc, DOC_ID asc , LOG_TIME desc  limit 1
+    view CountingSend as
+        select from Request as request
+        inner join Document as document
+            on  document.to_Request.REQUEST_ID =      request.REQUEST_ID
+            and ID                             =      '001'
+            and DOCUMENT_NUMBER                is not null
+            and CONTABILE_NICKNAME             <>     '0'
+            and CONTABILE_NICKNAME             is not null
+            and CONTABILE_SEND_DATE            is     null
+        {
+            key request.REQUEST_ID,
+            key document.DOC_ID,
+                document.DOCUMENT_NUMBER,
+                document.CONTABILE_NICKNAME,
+                request.ENDDATE,
+                request.REQUESTER.CODE    as REQUESTER_CODE,
+                request.PAYMENT_MODE.CODE as PAYMENT_MODE_CODE,
+                request.STATUS.code       as STATUS_CODE,
+                request.PRIORITY,
+                virtual null              as RESULT_TEXT : Boolean,
+                virtual null              as RESULT_TYPE : Boolean
+        }
+        where
+                request.PAYMENT_MODE.CODE = 'BONIFICO'
+            and request.STATUS.code       = 'COM'
+            and request.PRIORITY          = false
+
+        order by
+            request.REQUEST_ID desc,
+            document.DOC_ID    asc ;
 
 
-            ) as doclog
-                on doclog.REQUEST_ID = document.to_Request.REQUEST_ID and
-                   doclog.DOC_ID     = document.DOC_ID
+    view CountingCreate as
+        select from Request as request
+        inner join Document as document
+            on  document.to_Request.REQUEST_ID =      request.REQUEST_ID
+            and ID                             =      '001'
+            and DOCUMENT_NUMBER                is not null
+            and (
+                   CONTABILE_NICKNAME =  '0'
+                or CONTABILE_NICKNAME is null
+            )
+        {
+            key request.REQUEST_ID,
+            key document.DOC_ID,
+                document.DOCUMENT_NUMBER,
+                document.CONTABILE_NICKNAME,
+                request.ENDDATE,
+                request.REQUESTER.CODE    as REQUESTER_CODE,
+                request.PAYMENT_MODE.CODE as PAYMENT_MODE_CODE,
+                request.STATUS.code       as STATUS_CODE,
+                request.PRIORITY,
+                virtual null              as RESULT_TEXT : Boolean,
+                virtual null              as RESULT_TYPE : Boolean
+        }
+        where
+                request.PAYMENT_MODE.CODE = 'BONIFICO'
+            and request.STATUS.code       = 'COM'
+            and request.PRIORITY          = false
 
-            {
-                key document.to_Request.REQUEST_ID as REQUEST_ID,
-                key document.DOC_ID as DOC_ID,
-                    doclog.LOG_TIME,
-                    doclog.DOC_TYPE,
-                    doclog.DOC_NUMBER,
-                    doclog.COMPANY_CODE,
-                    doclog.FISCAL_YEAR,
-                    doclog.STATUS,
-                    doclog.STATUS_TEXT
-
-            }  order by  REQUEST_ID, DOC_ID   ;
-
-            */
+        order by
+            request.REQUEST_ID desc,
+            document.DOC_ID    asc ;
 
 
     view MonitorRequest as
@@ -347,7 +375,9 @@ service O2PModelService @(requires: [
         };
 
 
-    function CountingCreate(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns array of checkDataReturn;
+    //  function CountingCreate(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns array of checkDataReturn;
+
+
     function getAssignInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns AssignInfo;
     function printF23Aut(REQUEST_ID : KupitO2PModel.REQUEST_ID)         returns fileReturn;
     action   createProcess(REQUESTER : String)                          returns Message;

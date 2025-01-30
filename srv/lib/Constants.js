@@ -123,7 +123,10 @@ exports.mailPatterns = Object.freeze({
 
 });
 
-
+//Attachment Format
+exports.attachmentFormat = Object.freeze({
+    PDF: "application/pdf" 
+});
 
 
 //Attachment Type
@@ -133,5 +136,7 @@ exports.attachmentTypes = Object.freeze({
     F24: "F24",
     F23_CONC: "F23_CONC",
     F23_UFF: "F23_UFF",
-    F23_VERS: "F23_VERS"
+    F23_VERS: "F23_VERS",
+    COUNTING: "COUNTING",
+    DOC : "DOC"
 });

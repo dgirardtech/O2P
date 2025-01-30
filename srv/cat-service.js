@@ -3,12 +3,12 @@ const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,
-    updateRequest, getNameMotivationAction, getMonitorRequest,  manageDocPopupData, getDocStatus,
-     getEccServices, getAssignInfo, isCreationStep, manageMainData, getCountingCreate} = require('./lib/Handler');
+    updateRequest, getNameMotivationAction, getMonitorRequest, manageDocPopupData, getDocStatus,
+    getEccServices, getAssignInfo, isCreationStep, manageMainData, enrichCountingCreate,enrichCountingSend } = require('./lib/Handler');
 const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
 const { testMail } = require('./lib/MailHandler');
-const { fromDocumentToTree, fromRequestIdToTree, 
-    fromTreeToDocument ,formatDocument,createFIDocument } = require('./lib/ManageDocument');
+const { fromDocumentToTree, fromRequestIdToTree,
+    fromTreeToDocument, formatDocument, createFIDocument } = require('./lib/ManageDocument');
 
 const { generateO2PF23Aut } = require('./lib/HandlerPDF');
 const { constants } = require('@sap/xssec');
@@ -165,17 +165,37 @@ module.exports = cds.service.impl(async function () {
     //-------------MONITORING--------------
 
     this.on('READ', 'MonitorRequest', async (request, next) => {
-        return await getMonitorRequest( request , next);
+        return await getMonitorRequest(request, next);
     });
 
     this.on('READ', 'MonitorRequestDetail', async (request, next) => {
-        return await getMonitorRequest( request , next);
+        return await getMonitorRequest(request, next);
     });
 
-     
-    this.on('CountingCreate', async (request, next) => {
-        return await getCountingCreate( request , next);
+  
+
+    this.on('READ', 'CountingCreate', async (request, next) => {
+
+        let aCounting = await next()
+
+        let aResult = await enrichCountingCreate(request, aCounting);
+
+        return aResult
+
     });
+
+
+    
+    this.on('READ', 'CountingSend', async (request, next) => {
+
+        let aCounting = await next()
+
+        let aResult = await enrichCountingSend(request, aCounting);
+
+        return aResult
+
+    });
+
 
 
     this.after('READ', 'Document', formatDocument);

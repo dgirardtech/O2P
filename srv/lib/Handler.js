@@ -1658,88 +1658,71 @@ async function getAssignInfo(iRequest) {
     return returninfo;
 }
 
-
-
-
-
-async function getCountingCreate(iRequest, next) {
-
-
-    let aResult = []
+async function enrichCountingSend(iRequest, iCounting) {
 
     const oBundle = getTextBundle(iRequest);
 
-    let oRequest = await SELECT.one.from(Request).
-        where({ REQUEST_ID: iRequest.data.REQUEST_ID });
+    let aCounting = iCounting
+
+ 
+    return aCounting
+}
+
+async function enrichCountingCreate(iRequest, iCounting) {
+
+    const oBundle = getTextBundle(iRequest);
+
+    let aCounting = iCounting
 
 
-    let aDocument = await SELECT.from(Document).
-        where({
-            to_Request_REQUEST_ID: oRequest.REQUEST_ID,
-            ID: consts.firstId,
-            DOCUMENT_NUMBER: { '!=': null },
-            CONTABILE_NICKNAME: '0'
-        }).orderBy('DOC_ID asc', 'ID asc');
+    for (let x = 0; x < aCounting.length; x++) {
 
-
-
-    for (let x = 0; x < aDocument.length; x++) {
-
-        let oDocumentDetail = await getDocumentDetail(aDocument[x])
+        let oDocumentDetail = await getDocumentDetail(aCounting[x].REQUEST_ID, aCounting[x].DOC_ID)
  
 
         //  if (Boolean(oDocumentDetail.augbl) && Boolean(oDocumentDetail.xblnr) && oDocumentDetail.blart === 'ZP') {
         if (Boolean(oDocumentDetail.augbl) && Boolean(oDocumentDetail.xblnr)) { // per test
 
 
-            let o2pAccounting = await generateO2PAccounting(
-                iRequest, oRequest.REQUEST_ID, aDocument[x].ID, oDocumentDetail, true)
+            let o2pAccounting = await generateO2PAccounting( iRequest, oDocumentDetail, true)
 
             let aError = o2pAccounting.error
 
             if (aError.length > 0) {
-
-                let errorText = ''
-
-                for (let i = 0; i < aError.length; i++) {
-                    if (i === 0) {
-                        errorText = aError[i].text
-                    } else {
-                        errorText = [errorText, aError[i].text].join(' , ')
-                    }
-                }
-                aResult.push({
-                    MTYPE: consts.ERROR, REF_FIELD: "", TEXT: oBundle.getText("CRO_NOT_CREATED",
-                        [oRequest.REQUEST_ID, aDocument[x].DOC_ID, aDocument[x].DOCUMENT_NUMBER, errorText])
-                })
+ 
+                aCounting[x].RESULT_TYPE = consts.ERROR
+                aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_CREATED",
+                 [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber, aError.join(' , ')])
+            
 
             } else {
 
-                aResult.push({
-                    MTYPE: consts.SUCCESS, REF_FIELD: "", TEXT: oBundle.getText("CRO_CREATED",
-                        [oRequest.REQUEST_ID, aDocument[x].DOC_ID, aDocument[x].DOCUMENT_NUMBER])
-                })
+                aCounting[x].RESULT_TYPE = consts.SUCCESS
+                aCounting[x].RESULT_TEXT = oBundle.getText("CRO_CREATED",
+                    [oDocumentDetail.requestId,oDocumentDetail.docId, oDocumentDetail.documentNumber])
 
             }
 
         } else {
 
-            aResult.push({
-                MTYPE: consts.ERROR, REF_FIELD: "", TEXT: oBundle.getText("CRO_NOT_AVAILABLE",
-                    [oRequest.REQUEST_ID, aDocument[x].DOCUMENT_NUMBER])
-            })
-
+            aCounting[x].RESULT_TYPE = consts.ERROR
+            aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_AVAILABLE",
+                [oDocumentDetail.requestId, oDocumentDetail.documentNumber])
+       
         }
     }
 
 
+    if (aCounting.length === 0) {
 
-    if (aResult.length === 0) {
-        aResult.push({ MTYPE: consts.ERROR, REF_FIELD: "", TEXT: oBundle.getText("CRO_NOT_REQUEST") })
+        aCounting.push({REQUEST_ID  : '',
+                        DOC_ID      : '',
+                        RESULT_TYPE : consts.ERROR,
+                        RESULT_TEXT : oBundle.getText("CRO_NOT_REQUEST")})
+
     }
 
-    return aResult
-
+    return aCounting
 
 }
 
@@ -1763,6 +1746,7 @@ module.exports = {
     getNameMotivationAction,
     getClearingStatus,
     getClearingFilter,
-    getCountingCreate
+    enrichCountingCreate,
+    enrichCountingSend
 
 }
