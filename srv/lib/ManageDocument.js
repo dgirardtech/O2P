@@ -215,11 +215,11 @@ async function formatDocument(iData, iRequest) {
 
         for (let i = 0; i < iData.length; i++) {
 
-            let aVendor = await EccServiceO2P.run(
-                SELECT.from(VendorSet).where({ Lifnr: iData[i].VENDOR }));
+            let oVendor = await EccServiceO2P.run(
+                SELECT.one.from(VendorSet).where({ Lifnr: iData[i].VENDOR }));
 
-            if (aVendor.length > 0) {
-                iData[i].VENDOR_DESC = aVendor[0].Name1
+            if (oVendor) {
+                iData[i].VENDOR_DESC = oVendor.Name1
             }
 
 
@@ -269,7 +269,10 @@ async function createFIDocument(iRequest) {
 
                 ////////////////////////////////////////////////////////////////////////
 
-                /*
+                let noCheckFIDocument = getEnvParam("NO_CHECK_FI_DOCUMENT", false);
+                if (noCheckFIDocument !== "true") {
+
+
                 let errPreviousDoc = await checkBeforeFIDocument(oBodyReq)
                 if (Boolean(errPreviousDoc)) {
                     aResult.push({
@@ -279,7 +282,7 @@ async function createFIDocument(iRequest) {
         
                     return aResult
                 }
-                    */
+              }
 
                 ///////////////////////////////////////////////////////////////  
 
@@ -474,14 +477,14 @@ async function createFIDocument(iRequest) {
 
 }
 
-async function getDocumentDetail(iRequestId,iDocId) {
+async function getDocumentDetail(iRequestId, iDocId) {
 
     let oDocument = await SELECT.one.from(Document).
-    where({
-        to_Request_REQUEST_ID: iRequestId,
-        DOC_ID: iDocId
-    })
- 
+        where({
+            to_Request_REQUEST_ID: iRequestId,
+            DOC_ID: iDocId
+        })
+
 
     let oResult = {
         augbl: '',
@@ -491,11 +494,11 @@ async function getDocumentDetail(iRequestId,iDocId) {
         batch: '',
         datum: '',
         uiban: '',
-        executionDate:'',
+        executionDate: '',
         bukrs: oDocument.DOCUMENT_COMP_CODE,
         requestId: iRequestId,
         docId: iDocId,
-        documentNumber: oDocument.DOCUMENT_NUMBER 
+        documentNumber: oDocument.DOCUMENT_NUMBER
     }
 
 
@@ -513,19 +516,21 @@ async function getDocumentDetail(iRequestId,iDocId) {
     if (oDocument.ACCOUNT_ADVANCE === true) {
 
         oAccDocPosVendClear = await EccServiceO2P.run(
-            SELECT.one.from(AccDocPosVendClearSet).where({
-                Belnr: oDocument.DOCUMENT_NUMBER,
-                Bukrs: oDocument.DOCUMENT_COMP_CODE,
-                Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
-                Lifnr: oDocument.VENDOR,
-                Bschl: '31'
-            }));
+            SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl','Bukrs','Gjahr'])
+                .where({
+                    Belnr: oDocument.DOCUMENT_NUMBER,
+                    Bukrs: oDocument.DOCUMENT_COMP_CODE,
+                    Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
+                    Lifnr: oDocument.VENDOR,
+                    Bschl: '31'
+                }));
 
 
     } else {
 
         oAccDocPosVendClear = await EccServiceO2P.run(
-            SELECT.one.from(AccDocPosVendClearSet).where({
+            SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl','Bukrs','Gjahr'])
+            .where({
                 Belnr: oDocument.DOCUMENT_NUMBER,
                 Bukrs: oDocument.DOCUMENT_COMP_CODE,
                 Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
@@ -535,20 +540,28 @@ async function getDocumentDetail(iRequestId,iDocId) {
     }
 
     // per TEST 
-     oAccDocPosVendClear = { Augbl : '5210674586' }
- 
+    let fakeClearDoc = getEnvParam("FAKE_CLEAR_DOC", false);
+    if (fakeClearDoc) {
+
+        let aSplit = fakeClearDoc.split(',')
+
+        oAccDocPosVendClear = { Bukrs: aSplit[0], Augbl: aSplit[1], Gjahr: aSplit[2] }
+
+        // oAccDocPosVendClear = { Bukrs: 'IT02', Augbl : '5210674586', Gjahr : '2021'}
+
+    }
+
 
     if (oAccDocPosVendClear) {
- 
+
         oResult.augbl = oAccDocPosVendClear.Augbl
- 
+
 
         let oAccDocHeader = await EccServiceO2P.run(
-            SELECT.one.from(AccDocHeaderSet).where({
+            SELECT.one.from(AccDocHeaderSet).columns(['Xblnr', 'Blart', 'Bktxt']).where({
                 Belnr: oAccDocPosVendClear.Augbl,
-                Bukrs: oDocument.DOCUMENT_COMP_CODE,
-                Gjahr: '2021'
-              //  Gjahr: oDocument.DOCUMENT_FISCAL_YEAR
+                Bukrs: oAccDocPosVendClear.Bukrs,
+                Gjahr: oAccDocPosVendClear.Gjahr
             }));
 
         if (oAccDocHeader) {
@@ -556,41 +569,50 @@ async function getDocumentDetail(iRequestId,iDocId) {
             oResult.xblnr = oAccDocHeader.Xblnr
             oResult.blart = oAccDocHeader.Blart
 
-            //if (Boolean(oAccDocHeader.Xblnr) && oAccDocHeader.Blart === 'ZP') {
-            if (Boolean(oAccDocHeader.Xblnr)) { // per TEST
+            let checkOk = false
+            if(fakeClearDoc){
+                if (Boolean(oAccDocHeader.Xblnr)) {
+                checkOk = true
+                }
+            } else {
+                if (Boolean(oAccDocHeader.Xblnr) && oAccDocHeader.Blart === 'ZP') {
+                    checkOk = true
+                }
+            }
+           
+            
+            if (Boolean(checkOk)) { 
 
-
-               // oAccDocHeader.Bktxt = '20240519-EST01'
+                // oAccDocHeader.Bktxt = '20240519-EST01'
 
                 oResult.datum = oAccDocHeader.Bktxt.substring(0, 8)
                 oResult.batch = oAccDocHeader.Bktxt.substring(9, 14)
 
 
 
-                let aPaySettlement = await EccServiceO2P.run(
-                    SELECT.from(PaySettlementSet).where({
+                let oPaySettlement = await EccServiceO2P.run(
+                    SELECT.one.from(PaySettlementSet).columns(['Uiban']).where({
                         Laufd: oResult.datum,
                         Laufi: oResult.batch,
                         Vblnr: oAccDocPosVendClear.Augbl
                     }));
-                if (aPaySettlement.length > 0) {
-                    oResult.uiban = aPaySettlement[0].Uiban
+                if (oPaySettlement) {
+                    oResult.uiban = oPaySettlement.Uiban
                 }
 
                 const { AccDocPositionSet } = EccServiceO2P.entities;
 
-                let aAccDocPosition = await EccServiceO2P.run(
-                    SELECT.from(AccDocPositionSet).where({
+                let oAccDocPosition = await EccServiceO2P.run(
+                    SELECT.one.from(AccDocPositionSet).columns(['Valut']).where({
                         Belnr: oAccDocPosVendClear.Augbl,
-                        Bukrs: oDocument.DOCUMENT_COMP_CODE,
-                        Gjahr: '2021',
-                        //Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
+                        Bukrs: oAccDocPosVendClear.Bukrs,
+                        Gjahr: oAccDocPosVendClear.Gjahr,
                         Koart: 'S'
                     }));
 
-                if (aAccDocPosition.length > 0) {
+                if (oAccDocPosition) {
 
-                    oResult.valut = aAccDocPosition[0].Valut
+                    oResult.valut = oAccDocPosition.Valut
 
                     let oWorkingDay = await EccServiceO2P.run(
                         SELECT.one.from(WorkingDaySet).byKey({
@@ -644,7 +666,7 @@ async function checkBeforeFIDocument(iBodyReq) {
                 for (let i = 0; i < aCurrencyAmount.length; i++) {
 
                     let aAccDocHeader = await EccServiceO2P.run(
-                        SELECT.from(AccDocHeaderSet).where({
+                        SELECT.from(AccDocHeaderSet).columns(['Bukrs','Belnr','Gjahr']).where({
                             Bldat: oDocumentHeader.DocDate,
                             Bukrs: oDocumentHeader.CompCode,
                             Xblnr: oDocumentHeader.RefDocNo.toUpperCase(),
@@ -664,8 +686,8 @@ async function checkBeforeFIDocument(iBodyReq) {
                             wrbtr = aCurrencyAmount[i].AmtDoccur.toString()
                         }
 
-                        let aAccDocPosition = await EccServiceO2P.run(
-                            SELECT.from(AccDocPositionSet).where({
+                        let oAccDocPosition = await EccServiceO2P.run(
+                            SELECT.one.from(AccDocPositionSet).columns(['Bukrs','Belnr','Gjahr']).where({
                                 Belnr: aAccDocHeader[x].Belnr,
                                 Bukrs: aAccDocHeader[x].Bukrs,
                                 Gjahr: aAccDocHeader[x].Gjahr,
@@ -675,8 +697,8 @@ async function checkBeforeFIDocument(iBodyReq) {
                                 Shkzg: shkzg
                             }));
 
-                        if (aAccDocPosition.length > 0) {
-                            let previousDoc = [aAccDocPosition[0].Bukrs, aAccDocPosition[0].Belnr, aAccDocPosition[0].Gjahr].join(' ')
+                        if (oAccDocPosition) {
+                            let previousDoc = [oAccDocPosition.Bukrs, oAccDocPosition.Belnr, oAccDocPosition.Gjahr].join(' ')
                             return ['Check whether document has already been entered under number', previousDoc].join(' ')
                         }
 
@@ -1144,14 +1166,15 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                     const { GlAccountCompanySet } = EccServiceO2P.entities;
 
 
-                    let aGlAccountCompany = await EccServiceO2P.run(SELECT.from(GlAccountCompanySet).where({
+                    let oGlAccountCompany = await EccServiceO2P.run(
+                        SELECT.onefrom(GlAccountCompanySet).columns(['Mitkz','Mwskz']).where({
                         Saknr: aDocument[i].ACCOUNT,
                         Bukrs: oRequester.BUKRS
                     }))
 
-                    if (aGlAccountCompany > 0 &&
-                        !Boolean(aGlAccountCompany[0].Mitkz) &&
-                        !Boolean(aGlAccountCompany[0].Mwskz)) {
+                    if (oGlAccountCompany &&
+                        !Boolean(oGlAccountCompany.Mitkz) &&
+                        !Boolean(oGlAccountCompany.Mwskz)) {
                         taxCode = ''
                     }
 

@@ -177,6 +177,11 @@ module.exports = cds.service.impl(async function () {
     this.on('READ', 'CountingCreate', async (request, next) => {
 
         let aCounting = await next()
+ 
+    
+        if (aCounting.length > 0 && !Boolean(aCounting[0].REQUEST_ID)) {
+            return aCounting
+        }
 
         let aResult = await enrichCountingCreate(request, aCounting);
 
@@ -189,6 +194,10 @@ module.exports = cds.service.impl(async function () {
     this.on('READ', 'CountingSend', async (request, next) => {
 
         let aCounting = await next()
+ 
+        if (aCounting.length > 0 && !Boolean(aCounting[0].REQUEST_ID)) {
+            return aCounting
+        }
 
         let aResult = await enrichCountingSend(request, aCounting);
 

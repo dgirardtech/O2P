@@ -988,11 +988,11 @@ async function manageDocPopupData(iRequest, fromMain) {
 
         if (Boolean(iRequest.data.VENDOR)) {
 
-            let aVendor = await EccServiceO2P.run(
-                SELECT.from(VendorSet).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
+            let oVendor = await EccServiceO2P.run(
+                SELECT.one.from(VendorSet).columns(['Name1']).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
 
-            if (aVendor.length > 0) {
-                oResult.VENDOR_DESC = aVendor[0].Name1
+            if (oVendor) {
+                oResult.VENDOR_DESC = oVendor.Name1
             } else {
                 //  Vendor does not exist or it is not created for company code &
                 aError.push({
@@ -1004,7 +1004,7 @@ async function manageDocPopupData(iRequest, fromMain) {
 
 
             let aVendorBank = await EccServiceO2P.run(
-                SELECT.from(VendorBankSet).where({ Lifnr: iRequest.data.VENDOR }));
+                SELECT.from(VendorBankSet).columns(['Iban']).where({ Lifnr: iRequest.data.VENDOR }));
 
             if (aVendorBank.length > 0) {
                 for (let i = 0; i < aVendorBank.length; i++) {
@@ -1117,10 +1117,10 @@ async function manageDocPopupData(iRequest, fromMain) {
 
         let nowDate = moment(new Date).format('YYYYMMDD')
 
-        let aCostCenterO2P = await EccServiceO2P.run(
-            SELECT.from(CostCenterSet).where({ Kostl: costCenter, Datbi: { '>=': nowDate } }));
+        let oCostCenter = await EccServiceO2P.run(
+            SELECT.one.from(CostCenterSet).where({ Kostl: costCenter, Datbi: { '>=': nowDate } }));
 
-        if (aCostCenterO2P.length > 0) {
+        if (oCostCenter) {
 
             let aCostCenterText = await EccServiceAfe.run(
                 SELECT.from(CostCenterTextSet).where({ Kostl: costCenter }));
@@ -1132,32 +1132,32 @@ async function manageDocPopupData(iRequest, fromMain) {
                 // "if cost center the cost center is going to be closed soon then a warning message is triggered
 
 
-                let difference = Number(aCostCenterO2P[0].Datbi) - Number(nowDate)
+                let difference = Number(oCostCenter.Datbi) - Number(nowDate)
 
                 if (difference <= 7) {
                     // The cost center {0} will be not valid from {1}
                     aError.push({
                         MTYPE: consts.WARNING, REF_TAB: "DOC_ITEM", REF_FIELD: "COST_CENTER",
-                        TEXT: oBundle.getText("COST_CENTER_VALIDITY", [iRequest.data.COST_CENTER, aCostCenterO2P[0].Datbi])
+                        TEXT: oBundle.getText("COST_CENTER_VALIDITY", [iRequest.data.COST_CENTER, oCostCenter.Datbi])
                     })
                 }
 
-                let aCostCenterCompany = await EccServiceO2P.run(
-                    SELECT.from(CostCenterCompanySet).where({
+                let oCostCenterCompany = await EccServiceO2P.run(
+                    SELECT.one.from(CostCenterCompanySet).columns(['Bukrs']).where({
                         Kokrs: 'KPCA',
-                        Prctr: aCostCenterO2P[0].Prctr,
+                        Prctr: oCostCenter.Prctr,
                         Bukrs: oRequester.BUKRS
                     }));
 
-                if (aCostCenterCompany.length === 0) {
+                if (!oCostCenterCompany) {
 
-                    let aCostCenterCompany = await EccServiceO2P.run(
-                        SELECT.from(CostCenterCompanySet).where({
+                    let oCostCenterCompany = await EccServiceO2P.run(
+                        SELECT.one.from(CostCenterCompanySet).columns(['Bukrs']).where({
                             Kokrs: 'KPCA',
-                            Prctr: aCostCenterO2P[0].Prctr
+                            Prctr: oCostCenter.Prctr
                         }));
 
-                    if (aCostCenterCompany.length > 0) {
+                    if (oCostCenterCompany) {
                         //   "If i have found at least one record then, it means that the profit center is valid for some companies but not mine
                         //   "If i don't find any record then it means that the profit center is valid for all companies
 
@@ -1212,10 +1212,10 @@ async function manageDocPopupData(iRequest, fromMain) {
                 })
             }
 
-            let aOrderType = await EccServiceO2P.run(
-                SELECT.from(OrderTypeSet).where({ Auart: aOrder[0].OrderType }));
-            if (aOrderType.length > 0) {
-                if (aOrderType[0].Aprof === '000050') {
+            let oOrderType = await EccServiceO2P.run(
+                SELECT.one.from(OrderTypeSet).columns(['Aprof']).where({ Auart: aOrder[0].OrderType }));
+            if (oOrderType) {
+                if (oOrderType.Aprof === '000050') {
 
                     oResult.CHECK_ATTACH_CAPI = true
 
@@ -1377,11 +1377,11 @@ async function getDocStatus(iRequest) {
             let callECC = getEnvParam("CALL_ECC", false);
             if (callECC === "true") {
 
-                let aVendor = await EccServiceO2P.run(
-                    SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+                let oVendor = await EccServiceO2P.run(
+                    SELECT.one.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
 
-                if (aVendor.length > 0) {
-                    vendorDesc = aVendor[0].Name1
+                if (oVendor) {
+                    vendorDesc = oVendor.Name1
                 }
             }
 
@@ -1533,7 +1533,7 @@ async function getClearingStatus(iRequestId) {
             if (aDocument[x].ACCOUNT_ADVANCE === true) {
 
                 oAccDocPosVendClearSet = await EccServiceO2P.run(
-                    SELECT.one.from(AccDocPosVendClearSet).where({
+                    SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
                         Belnr: aDocument[x].DOCUMENT_NUMBER,
                         Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
                         Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR,
@@ -1544,7 +1544,7 @@ async function getClearingStatus(iRequestId) {
             } else {
 
                 oAccDocPosVendClearSet = await EccServiceO2P.run(
-                    SELECT.one.from(AccDocPosVendClearSet).where({
+                    SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
                         Belnr: aDocument[x].DOCUMENT_NUMBER,
                         Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
                         Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR
@@ -1674,6 +1674,24 @@ async function enrichCountingCreate(iRequest, iCounting) {
 
     let aCounting = iCounting
 
+    let save = true
+
+    if (Boolean(iRequest._queryOptions) && Boolean(iRequest._queryOptions.$filter)) {
+
+        let aSplit = iRequest._queryOptions.$filter.split(' and ')
+
+        for (let i = 0; i < aSplit.length; i++) {
+
+            if (aSplit[i].substring(0, 4) === 'TEST' ) {
+
+                if (aSplit[i].substring(8) === "true") {
+                    save = false
+                }
+
+            }
+        }
+    }
+
 
     for (let x = 0; x < aCounting.length; x++) {
 
@@ -1684,7 +1702,7 @@ async function enrichCountingCreate(iRequest, iCounting) {
         if (Boolean(oDocumentDetail.augbl) && Boolean(oDocumentDetail.xblnr)) { // per test
 
 
-            let o2pAccounting = await generateO2PAccounting( iRequest, oDocumentDetail, true)
+            let o2pAccounting = await generateO2PAccounting( iRequest, oDocumentDetail, save )
 
             let aError = o2pAccounting.error
 

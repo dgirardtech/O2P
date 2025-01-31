@@ -142,8 +142,9 @@ service O2PModelService @(requires: [
                 request.PAYMENT_MODE.CODE as PAYMENT_MODE_CODE,
                 request.STATUS.code       as STATUS_CODE,
                 request.PRIORITY,
-                virtual null              as RESULT_TEXT : Boolean,
-                virtual null              as RESULT_TYPE : Boolean
+                virtual null              as RESULT_TEXT : String,
+                virtual null              as RESULT_TYPE : String(1),
+                virtual null              as TEST : Boolean
         }
         where
                 request.PAYMENT_MODE.CODE = 'BONIFICO'
@@ -175,8 +176,9 @@ service O2PModelService @(requires: [
                 request.PAYMENT_MODE.CODE as PAYMENT_MODE_CODE,
                 request.STATUS.code       as STATUS_CODE,
                 request.PRIORITY,
-                virtual null              as RESULT_TEXT : Boolean,
-                virtual null              as RESULT_TYPE : Boolean
+                virtual null              as RESULT_TEXT : String,
+                virtual null              as RESULT_TYPE : String(1),
+                virtual null              as TEST : Boolean
         }
         where
                 request.PAYMENT_MODE.CODE = 'BONIFICO'
