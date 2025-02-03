@@ -82,7 +82,7 @@ entity Document : managed {
       LOCATION             : LOCATION;
       VENDOR               : VENDOR;
       IBAN                 : IBAN;
-      PARTN_BNK_TYPE       : String(4);
+      PARTN_BNK_TYPE       : PARTN_BNK_TYPE;
       REF_ID               : String(16);
       SPECIAL_GL_IND       : SPECIAL_GL_IND;
       ACCOUNT              : ACCOUNT; 
@@ -478,6 +478,8 @@ type AMOUNT           : Decimal(13, 2) default null;
 type STEP_TO_END      : Integer default 0;
 type LOCATION         : String(10);
 type IBAN             : String(34);
+type PARTN_BNK_TYPE   : String(4);
+
 
 @assert.range
 type StepStatusenum   : String(15) enum {

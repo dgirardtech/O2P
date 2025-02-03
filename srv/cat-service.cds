@@ -536,7 +536,8 @@ service O2PModelService @(requires: [
 
 
     type IBAN                     : {
-        CODE : KupitO2PModel.IBAN
+        CODE : KupitO2PModel.IBAN;
+        PARTN_BNK_TYPE: KupitO2PModel.PARTN_BNK_TYPE
     }
 
     type ACCOUNT                  : {
@@ -562,7 +563,7 @@ service O2PModelService @(requires: [
         AUTHORITY            : String(40);
         TRIBUTE              : Decimal(2, 0);
         DOC_YEAR             : KupitO2PModel.YEAR;
-        PARTN_BNK_TYPE       : String(4);
+        PARTN_BNK_TYPE       : KupitO2PModel.PARTN_BNK_TYPE;
         DOCUMENT_COMP_CODE   : KupitO2PModel.COMPANY;
         DOCUMENT_FISCAL_YEAR : KupitO2PModel.YEAR;
         DOCUMENT_NUMBER      : KupitO2PModel.DOCNUM;

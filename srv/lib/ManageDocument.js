@@ -125,11 +125,12 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
             let callECC = getEnvParam("CALL_ECC", false);
             if (callECC === "true") {
 
-                let aVendor = await EccServiceO2P.run(
-                    SELECT.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+                let oVendor = await EccServiceO2P.run(
+                    SELECT.one.from(VendorSet).columns(['Name1']).
+                    where({ Lifnr: aDocument[i].VENDOR }));
 
-                if (aVendor.length > 0) {
-                    vendorDesc = aVendor[0].Name1
+                if (oVendor) {
+                    vendorDesc = oVendor.Name1
                 }
 
             }
@@ -216,7 +217,8 @@ async function formatDocument(iData, iRequest) {
         for (let i = 0; i < iData.length; i++) {
 
             let oVendor = await EccServiceO2P.run(
-                SELECT.one.from(VendorSet).where({ Lifnr: iData[i].VENDOR }));
+                SELECT.one.from(VendorSet).columns(['Name1']).
+                where({ Lifnr: iData[i].VENDOR }));
 
             if (oVendor) {
                 iData[i].VENDOR_DESC = oVendor.Name1
@@ -649,19 +651,19 @@ async function checkBeforeFIDocument(iBodyReq) {
         let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
 
         const { AccDocHeaderSet } = EccServiceO2P.entities;
-        const { AccDocPositionSet } = EccServiceO2P.entities;
-        const { VendorSet } = EccServiceO2P.entities;
+        const { AccDocPositionSet } = EccServiceO2P.entities; 
+        const { VendorCompanySet } = EccServiceO2P.entities;
 
 
         if (Boolean(aAccountPayable[0].VendorNo)) {
 
-            let aVendor = await EccServiceO2P.run(
-                SELECT.from(VendorSet).where({
+            let oVendor = await EccServiceO2P.run(
+                SELECT.one.from(VendorCompanySet).where({
                     Lifnr: aAccountPayable[0].VendorNo,
                     Bukrs: aAccountPayable[0].CompCode
                 }));
 
-            if (aVendor.length > 0 && aVendor[0].Reprf === 'X') {
+            if (oVendor.length > 0 && oVendor.Reprf === 'X') {
 
                 for (let i = 0; i < aCurrencyAmount.length; i++) {
 

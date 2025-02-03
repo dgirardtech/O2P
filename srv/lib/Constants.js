@@ -88,6 +88,7 @@ exports.mailId = Object.freeze({
     KZ_KY_CREATED: "KZ_KY_CREATED",
     ONERIPV: "ONERIPV",
     PRIORITY: "PRIORITY",
+    COUNTING: "COUNTING"
 });
 
 

@@ -12,49 +12,42 @@ const { PassThrough } = require("stream");
 const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
 
 async function saveUserAction(iRequest) {
-
-    let requestId;
-    let stepID;
-    let bpaUserAction;
-    let message = {};
+ 
     let response;
 
-    try {
-        requestId = iRequest.data.REQUEST_ID;
-        stepID = iRequest.data.STEPID;
-        bpaUserAction = iRequest.data.ACTION;
-
-        switch (bpaUserAction) {
+    try { 
+      
+        switch (iRequest.data.ACTION) {
             case consts.bpaUserAction.START:
-                response = await userActionStart(requestId, stepID, iRequest);
+                response = await userActionStart(iRequest.data.REQUEST_ID, iRequest.data.STEPID, iRequest);
                 break;
             case consts.bpaUserAction.APPROVE:
-                response = await handleUserAction(requestId, stepID, consts.UserAction.APPROVED, iRequest);
+                response = await handleUserAction(iRequest.data.REQUEST_ID, iRequest.data.STEPID, consts.UserAction.APPROVED, iRequest);
                 break;
             case consts.bpaUserAction.REJECT:
-                response = await handleUserAction(requestId, stepID, consts.UserAction.REJECTED, iRequest);
+                response = await handleUserAction(iRequest.data.REQUEST_ID, iRequest.data.STEPID, consts.UserAction.REJECTED, iRequest);
                 break;
             case consts.bpaUserAction.TERMINATE:
-                response = await handleUserAction(requestId, stepID, consts.UserAction.TERMINATED, iRequest);
+                response = await handleUserAction(iRequest.data.REQUEST_ID, iRequest.data.STEPID, consts.UserAction.TERMINATED, iRequest);
                 break;
             default:
-                let errMEssage = "ERROR saveUserAction " + requestId + " : unhandled user action:" + bpaUserAction;
+                let errMEssage = "ERROR saveUserAction " + iRequest.data.REQUEST_ID + " : unhandled user action:" + iRequest.data.ACTION;
                 iRequest.error(450, errMEssage, null, 450);
                 LOG.error(errMEssage);
                 return iRequest;
         }
 
 
-        let oResponseSendAllMail = await sendAllMail(iRequest, false)
+        let oResponseSendAllMail = await sendAllMail(iRequest,  '' )
 
         let o2pDocument = await generateO2PDocument(iRequest, true)
 
 
         return response;
-        //return iRequest;
+ 
 
     } catch (error) {
-        let errMEssage = "ERROR UserAction " + requestId + " :" + error.message;
+        let errMEssage = "ERROR UserAction " + iRequest.data.REQUEST_ID + " :" + error.message;
         iRequest.error(450, errMEssage, null, 450);
         LOG.error(errMEssage);
         return iRequest;

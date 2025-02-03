@@ -7,7 +7,7 @@ const { getEnvParam, getTextBundle } = require('./Utils');
 const { getMoaApprovers } = require('./createProcess');
 const { generateO2PAccounting } = require('./HandlerPDF');
 const { getDocumentProp, getDocumentDetail } = require('./ManageDocument')
-
+const {  sendAllMail } = require('./MailHandler');
 
 
 async function updateRequest(iData, iRequest) {
@@ -795,7 +795,10 @@ async function manageDocPopupData(iRequest, fromMain) {
     var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
 
     const { VendorBankSet } = EccServiceO2P.entities;
+    const { TibanSet } = EccServiceO2P.entities;
     const { VendorSet } = EccServiceO2P.entities;
+    const { VendorCompanySet } = EccServiceO2P.entities;
+
     const { OrderTypeSet } = EccServiceO2P.entities;
     const { CostCenterCompanySet } = EccServiceO2P.entities;
     const { CostCenterSet } = EccServiceO2P.entities;
@@ -988,11 +991,19 @@ async function manageDocPopupData(iRequest, fromMain) {
 
         if (Boolean(iRequest.data.VENDOR)) {
 
-            let oVendor = await EccServiceO2P.run(
-                SELECT.one.from(VendorSet).columns(['Name1']).where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
+            let oVendorCompany = await EccServiceO2P.run(
+                SELECT.one.from(VendorCompanySet).columns(['Bukrs'])
+                    .where({ Lifnr: iRequest.data.VENDOR, Bukrs: oRequester.BUKRS }));
 
-            if (oVendor) {
+
+            if (oVendorCompany) {
+
+                let oVendor = await EccServiceO2P.run(
+                    SELECT.one.from(VendorSet).columns(['Name1'])
+                        .where({ Lifnr: iRequest.data.VENDOR }));
+
                 oResult.VENDOR_DESC = oVendor.Name1
+
             } else {
                 //  Vendor does not exist or it is not created for company code &
                 aError.push({
@@ -1002,15 +1013,32 @@ async function manageDocPopupData(iRequest, fromMain) {
             }
 
 
-
             let aVendorBank = await EccServiceO2P.run(
-                SELECT.from(VendorBankSet).columns(['Iban']).where({ Lifnr: iRequest.data.VENDOR }));
+                SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn'])
+                    .where({ Lifnr: iRequest.data.VENDOR }));
 
-            if (aVendorBank.length > 0) {
-                for (let i = 0; i < aVendorBank.length; i++) {
-                    oResult.IBAN.push({ CODE: aVendorBank[i].Iban })
+
+
+            for (let i = 0; i < aVendorBank.length; i++) {
+
+                let oTibanSet = await EccServiceO2P.run(
+                    SELECT.one.from(TibanSet).columns(['Banks', 'Bankl', 'Bankn', 'Iban'])
+                        .where({
+                            Banks: aVendorBank[i].Banks,
+                            Bankl: aVendorBank[i].Bankl,
+                            Bankn: aVendorBank[i].Bankn
+                        }));
+
+                if (oTibanSet) {
+                    oResult.IBAN.push({
+                        CODE: oTibanSet.Iban,
+                        PARTN_BNK_TYPE: aVendorBank[i].Bvtyp
+                    })
                 }
-            } else {
+            }
+
+
+            if (oResult.IBAN.length === 0) {
 
                 if (iRequest.data.PAYMODE === consts.Paymode.BONIFICO) {
                     // For Vendor selected there are no IBANs
@@ -1118,7 +1146,7 @@ async function manageDocPopupData(iRequest, fromMain) {
         let nowDate = moment(new Date).format('YYYYMMDD')
 
         let oCostCenter = await EccServiceO2P.run(
-            SELECT.one.from(CostCenterSet).where({ Kostl: costCenter, Datbi: { '>=': nowDate } }));
+            SELECT.one.from(CostCenterSet).columns(['Datbi', 'Prctr']).where({ Kostl: costCenter, Datbi: { '>=': nowDate } }));
 
         if (oCostCenter) {
 
@@ -1378,7 +1406,8 @@ async function getDocStatus(iRequest) {
             if (callECC === "true") {
 
                 let oVendor = await EccServiceO2P.run(
-                    SELECT.one.from(VendorSet).where({ Lifnr: aDocument[i].VENDOR }));
+                    SELECT.one.from(VendorSet).columns(['Name1']).
+                        where({ Lifnr: aDocument[i].VENDOR }));
 
                 if (oVendor) {
                     vendorDesc = oVendor.Name1
@@ -1658,13 +1687,55 @@ async function getAssignInfo(iRequest) {
     return returninfo;
 }
 
+async function isTest(iRequest) {
+
+    let result = false
+
+    if (Boolean(iRequest._queryOptions) && Boolean(iRequest._queryOptions.$filter)) {
+
+        let aSplit = iRequest._queryOptions.$filter.split(' and ')
+
+        for (let i = 0; i < aSplit.length; i++) {
+
+            if (aSplit[i].substring(0, 4) === 'TEST') {
+
+                if (aSplit[i].substring(8) === "true") {
+                    result = true
+                }
+
+            }
+        }
+    }
+
+    return result
+
+}
+
 async function enrichCountingSend(iRequest, iCounting) {
 
     const oBundle = getTextBundle(iRequest);
 
     let aCounting = iCounting
 
- 
+    let save = true
+
+    let test = await isTest(iRequest)
+    if (Boolean(test)) {
+        save = false
+    }
+
+
+    for (let x = 0; x < aCounting.length; x++) {
+
+
+      //  let oResponseSendAllMail = await sendAllMail(iRequest, consts.mailId.COUNTING)
+
+
+    }
+
+
+
+
     return aCounting
 }
 
@@ -1676,48 +1747,37 @@ async function enrichCountingCreate(iRequest, iCounting) {
 
     let save = true
 
-    if (Boolean(iRequest._queryOptions) && Boolean(iRequest._queryOptions.$filter)) {
-
-        let aSplit = iRequest._queryOptions.$filter.split(' and ')
-
-        for (let i = 0; i < aSplit.length; i++) {
-
-            if (aSplit[i].substring(0, 4) === 'TEST' ) {
-
-                if (aSplit[i].substring(8) === "true") {
-                    save = false
-                }
-
-            }
-        }
+    let test = await isTest(iRequest)
+    if (Boolean(test)) {
+        save = false
     }
 
 
     for (let x = 0; x < aCounting.length; x++) {
 
         let oDocumentDetail = await getDocumentDetail(aCounting[x].REQUEST_ID, aCounting[x].DOC_ID)
- 
+
 
         //  if (Boolean(oDocumentDetail.augbl) && Boolean(oDocumentDetail.xblnr) && oDocumentDetail.blart === 'ZP') {
         if (Boolean(oDocumentDetail.augbl) && Boolean(oDocumentDetail.xblnr)) { // per test
 
 
-            let o2pAccounting = await generateO2PAccounting( iRequest, oDocumentDetail, save )
+            let o2pAccounting = await generateO2PAccounting(iRequest, oDocumentDetail, save)
 
             let aError = o2pAccounting.error
 
             if (aError.length > 0) {
- 
+
                 aCounting[x].RESULT_TYPE = consts.ERROR
                 aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_CREATED",
-                 [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber, aError.join(' , ')])
-            
+                    [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber, aError.join(' , ')])
+
 
             } else {
 
                 aCounting[x].RESULT_TYPE = consts.SUCCESS
                 aCounting[x].RESULT_TEXT = oBundle.getText("CRO_CREATED",
-                    [oDocumentDetail.requestId,oDocumentDetail.docId, oDocumentDetail.documentNumber])
+                    [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber])
 
             }
 
@@ -1726,17 +1786,19 @@ async function enrichCountingCreate(iRequest, iCounting) {
             aCounting[x].RESULT_TYPE = consts.ERROR
             aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_AVAILABLE",
                 [oDocumentDetail.requestId, oDocumentDetail.documentNumber])
-       
+
         }
     }
 
 
     if (aCounting.length === 0) {
 
-        aCounting.push({REQUEST_ID  : '',
-                        DOC_ID      : '',
-                        RESULT_TYPE : consts.ERROR,
-                        RESULT_TEXT : oBundle.getText("CRO_NOT_REQUEST")})
+        aCounting.push({
+            REQUEST_ID: '',
+            DOC_ID: '',
+            RESULT_TYPE: consts.ERROR,
+            RESULT_TEXT: oBundle.getText("CRO_NOT_REQUEST")
+        })
 
     }
 

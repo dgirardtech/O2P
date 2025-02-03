@@ -398,7 +398,7 @@ function getFakeBody(iMailBody) {
 
 async function testMail(iRequest) {
 
-    let oReturnSendMail = await sendAllMail(iRequest, true)
+    let oReturnSendMail = await sendAllMail(iRequest, '')
 
 }
 
@@ -464,28 +464,11 @@ async function getMailId(iRequest) {
             if (oRequest.PRIORITY === true) {
                 mailId = consts.mailId.PRIORITY
             }
-
-
-            /*
-            if (oRequest.REQUESTER_CODE === 'ONERIPV' &&
-                (oRequest.PAYMENT_MODE_CODE === consts.Paymode.CCPOSTALE ||
-                    oRequest.PAYMENT_MODE_CODE === consts.Paymode.FRECCIA)) {
-                mailId = consts.mailId.ONERIPV
-            }
-*/
+ 
 
         }
     }
 
-    /*
-           if (!Boolean(mailId)) {
-               let errMEssage = "ERROR getMailID: " + " Request" + iRequest.data.REQUEST_ID + " :" + "Mail Id not found";
-               iRequest.error(450, errMEssage, null, 450);
-               LOG.error(errMEssage);
-               return iRequest;
-       
-           }
-               */
 
     return mailId
 
@@ -587,18 +570,7 @@ async function getRecipient(iRequest, mailId) {
 
     return aRecipient
 
-    /*
-       
-    
-            oReturn = {
-                MTYPE: 'E',
-                TEXT: "Mail address not found"
-            }
-            return oReturn
-    
-        }
-    
-        */
+ 
 }
 
 async function getSubjectContentfromBody(iRequest, iBodyMail) {
@@ -660,11 +632,12 @@ async function getSubjectContentfromBody(iRequest, iBodyMail) {
 }
 
 
-async function sendAllMail(iRequest, isTest) {
+async function sendAllMail(iRequest, iMailId) {
 
     let aAttach = []
 
-    if (Boolean(isTest)) {
+/*
+    if (Boolean(iAddAttach)) {
 
 
         let o2pDocument = await generateO2PF23Aut(iRequest, false)
@@ -676,12 +649,18 @@ async function sendAllMail(iRequest, isTest) {
         }]
 
     }
+        */
 
     /////////////////////////////////////////////////////////////////////
 
+    let mailId = ''
+    if (Boolean(iMailId)) {
+        mailId = iMailId
+    } else {
+        mailId = await getMailId(iRequest)
+    }
 
 
-    let mailId = await getMailId(iRequest)
     if (Boolean(mailId)) {
 
         let aRecipient = await getRecipient(iRequest, mailId)
