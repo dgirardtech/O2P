@@ -32,6 +32,10 @@ async function fromTreeToDocument(iRequest) {
 
     let aResult = []
 
+    var EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+    const { TibanSet } = EccServiceO2P.entities;
+    const { VendorBankSet } = EccServiceO2P.entities;
+
     let aHeader = iRequest.data.DOC_TREE.HEADER
 
     for (let i = 0; i < aHeader.length; i++) {
@@ -39,6 +43,34 @@ async function fromTreeToDocument(iRequest) {
         let aPosition = aHeader[i].POSITION
 
         for (let x = 0; x < aPosition.length; x++) {
+
+            let partnBnkType = ''
+
+            if (Boolean(aHeader[i].IBAN) && Boolean(aHeader[i].VENDOR)) {
+
+                let aVendorBank = await EccServiceO2P.run(
+                    SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn', 'Bvtyp'])
+                        .where({ Lifnr: aHeader[i].VENDOR }));
+ 
+                for (let i = 0; i < aVendorBank.length; i++) {
+
+                    let oTibanSet = await EccServiceO2P.run(
+                        SELECT.one.from(TibanSet).columns(['Banks', 'Bankl', 'Bankn', 'Iban'])
+                            .where({
+                                Banks: aVendorBank[i].Banks,
+                                Bankl: aVendorBank[i].Bankl,
+                                Bankn: aVendorBank[i].Bankn,
+                                Iban: aHeader[i].IBAN
+                            }));
+
+
+                    if (oTibanSet) {
+                        partnBnkType = oTibanSet.Bvtyp
+                        break
+                    }
+                }
+
+            }
 
             aResult.push({
                 to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
@@ -54,7 +86,9 @@ async function fromTreeToDocument(iRequest) {
                 AUTHORITY: aHeader[i].AUTHORITY,
                 TRIBUTE: aHeader[i].TRIBUTE,
                 DOC_YEAR: aHeader[i].DOC_YEAR,
-                PARTN_BNK_TYPE: aHeader[i].PARTN_BNK_TYPE,
+
+                // PARTN_BNK_TYPE: aHeader[i].PARTN_BNK_TYPE,
+                PARTN_BNK_TYPE: partnBnkType,
                 DOCUMENT_COMP_CODE: aHeader[i].DOCUMENT_COMP_CODE,
                 DOCUMENT_FISCAL_YEAR: aHeader[i].DOCUMENT_FISCAL_YEAR,
                 DOCUMENT_NUMBER: aHeader[i].DOCUMENT_NUMBER,
@@ -127,7 +161,7 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
 
                 let oVendor = await EccServiceO2P.run(
                     SELECT.one.from(VendorSet).columns(['Name1']).
-                    where({ Lifnr: aDocument[i].VENDOR }));
+                        where({ Lifnr: aDocument[i].VENDOR }));
 
                 if (oVendor) {
                     vendorDesc = oVendor.Name1
@@ -218,7 +252,7 @@ async function formatDocument(iData, iRequest) {
 
             let oVendor = await EccServiceO2P.run(
                 SELECT.one.from(VendorSet).columns(['Name1']).
-                where({ Lifnr: iData[i].VENDOR }));
+                    where({ Lifnr: iData[i].VENDOR }));
 
             if (oVendor) {
                 iData[i].VENDOR_DESC = oVendor.Name1
@@ -275,16 +309,16 @@ async function createFIDocument(iRequest) {
                 if (noCheckFIDocument !== "true") {
 
 
-                let errPreviousDoc = await checkBeforeFIDocument(oBodyReq)
-                if (Boolean(errPreviousDoc)) {
-                    aResult.push({
-                        MTYPE: consts.ERROR,
-                        TEXT: errPreviousDoc
-                    })
-        
-                    return aResult
+                    let errPreviousDoc = await checkBeforeFIDocument(oBodyReq)
+                    if (Boolean(errPreviousDoc)) {
+                        aResult.push({
+                            MTYPE: consts.ERROR,
+                            TEXT: errPreviousDoc
+                        })
+
+                        return aResult
+                    }
                 }
-              }
 
                 ///////////////////////////////////////////////////////////////  
 
@@ -518,7 +552,7 @@ async function getDocumentDetail(iRequestId, iDocId) {
     if (oDocument.ACCOUNT_ADVANCE === true) {
 
         oAccDocPosVendClear = await EccServiceO2P.run(
-            SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl','Bukrs','Gjahr'])
+            SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl', 'Bukrs', 'Gjahr'])
                 .where({
                     Belnr: oDocument.DOCUMENT_NUMBER,
                     Bukrs: oDocument.DOCUMENT_COMP_CODE,
@@ -531,13 +565,13 @@ async function getDocumentDetail(iRequestId, iDocId) {
     } else {
 
         oAccDocPosVendClear = await EccServiceO2P.run(
-            SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl','Bukrs','Gjahr'])
-            .where({
-                Belnr: oDocument.DOCUMENT_NUMBER,
-                Bukrs: oDocument.DOCUMENT_COMP_CODE,
-                Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
-                Lifnr: oDocument.VENDOR
-            }));
+            SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl', 'Bukrs', 'Gjahr'])
+                .where({
+                    Belnr: oDocument.DOCUMENT_NUMBER,
+                    Bukrs: oDocument.DOCUMENT_COMP_CODE,
+                    Gjahr: oDocument.DOCUMENT_FISCAL_YEAR,
+                    Lifnr: oDocument.VENDOR
+                }));
 
     }
 
@@ -572,18 +606,18 @@ async function getDocumentDetail(iRequestId, iDocId) {
             oResult.blart = oAccDocHeader.Blart
 
             let checkOk = false
-            if(fakeClearDoc){
+            if (fakeClearDoc) {
                 if (Boolean(oAccDocHeader.Xblnr)) {
-                checkOk = true
+                    checkOk = true
                 }
             } else {
                 if (Boolean(oAccDocHeader.Xblnr) && oAccDocHeader.Blart === 'ZP') {
                     checkOk = true
                 }
             }
-           
-            
-            if (Boolean(checkOk)) { 
+
+
+            if (Boolean(checkOk)) {
 
                 // oAccDocHeader.Bktxt = '20240519-EST01'
 
@@ -651,7 +685,7 @@ async function checkBeforeFIDocument(iBodyReq) {
         let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
 
         const { AccDocHeaderSet } = EccServiceO2P.entities;
-        const { AccDocPositionSet } = EccServiceO2P.entities; 
+        const { AccDocPositionSet } = EccServiceO2P.entities;
         const { VendorCompanySet } = EccServiceO2P.entities;
 
 
@@ -668,7 +702,7 @@ async function checkBeforeFIDocument(iBodyReq) {
                 for (let i = 0; i < aCurrencyAmount.length; i++) {
 
                     let aAccDocHeader = await EccServiceO2P.run(
-                        SELECT.from(AccDocHeaderSet).columns(['Bukrs','Belnr','Gjahr']).where({
+                        SELECT.from(AccDocHeaderSet).columns(['Bukrs', 'Belnr', 'Gjahr']).where({
                             Bldat: oDocumentHeader.DocDate,
                             Bukrs: oDocumentHeader.CompCode,
                             Xblnr: oDocumentHeader.RefDocNo.toUpperCase(),
@@ -689,7 +723,7 @@ async function checkBeforeFIDocument(iBodyReq) {
                         }
 
                         let oAccDocPosition = await EccServiceO2P.run(
-                            SELECT.one.from(AccDocPositionSet).columns(['Bukrs','Belnr','Gjahr']).where({
+                            SELECT.one.from(AccDocPositionSet).columns(['Bukrs', 'Belnr', 'Gjahr']).where({
                                 Belnr: aAccDocHeader[x].Belnr,
                                 Bukrs: aAccDocHeader[x].Bukrs,
                                 Gjahr: aAccDocHeader[x].Gjahr,
@@ -1169,10 +1203,10 @@ async function fillTableFIDocument(iRequest, iDocProp) {
 
 
                     let oGlAccountCompany = await EccServiceO2P.run(
-                        SELECT.onefrom(GlAccountCompanySet).columns(['Mitkz','Mwskz']).where({
-                        Saknr: aDocument[i].ACCOUNT,
-                        Bukrs: oRequester.BUKRS
-                    }))
+                        SELECT.one.from(GlAccountCompanySet).columns(['Mitkz', 'Mwskz']).where({
+                            Saknr: aDocument[i].ACCOUNT,
+                            Bukrs: oRequester.BUKRS
+                        }))
 
                     if (oGlAccountCompany &&
                         !Boolean(oGlAccountCompany.Mitkz) &&
@@ -1265,7 +1299,7 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                 aAccountGL.push({
                     ItemnoAcc: '2',
                     GlAccount: oRequest.BANK_ACCOUNT,
-                    ValueDate: oRequest.VALUE_DATE,
+                    ValueDate:  moment(oRequest.VALUE_DATE).format('YYYYMMDD'),
                     AllocNmbr: oPayMode.TREASURY_CODE,
                     ItemText: oPayMode.TREASURY_CODE +
                         moment(oRequest.VALUE_DATE).format('YYYYMMDD').substring(6, 8) +

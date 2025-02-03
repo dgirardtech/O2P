@@ -1014,7 +1014,7 @@ async function manageDocPopupData(iRequest, fromMain) {
 
 
             let aVendorBank = await EccServiceO2P.run(
-                SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn'])
+                SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn','Bvtyp'])
                     .where({ Lifnr: iRequest.data.VENDOR }));
 
 
