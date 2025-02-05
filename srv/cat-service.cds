@@ -107,6 +107,8 @@ service O2PModelService @(requires: [
     @cds.persistence.skip
     entity VendorSet           as projection on ZFI_O2P_COMMON_SRV.VendorSet;
 
+    @cds.persistence.skip
+    entity VendorSHSet           as projection on ZFI_O2P_COMMON_SRV.VendorSHSet;
 
     @cds.persistence.skip
     entity AccDocHeaderSet     as projection on ZFI_O2P_COMMON_SRV.AccDocHeaderSet;

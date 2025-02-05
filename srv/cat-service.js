@@ -34,7 +34,7 @@ module.exports = cds.service.impl(async function () {
     const { WorkDay } = this.entities;
     const { UserTaskCounter } = this.entities;
     const { CostCenterTextSet, AfeLocationSet } = this.entities;
-    const { VendorSet, AccDocHeaderSet, AccDocPositionSet, GlAccountCompanySet } = this.entities;
+    const { VendorSet,VendorSHSet, AccDocHeaderSet, AccDocPositionSet, GlAccountCompanySet } = this.entities;
 
 
 
@@ -76,6 +76,7 @@ module.exports = cds.service.impl(async function () {
     global.AfeLocationSet = AfeLocationSet;
 
     global.VendorSet = VendorSet
+    global.VendorSHSet = VendorSHSet
 
     global.AccDocHeaderSet = AccDocHeaderSet
     global.AccDocPositionSet = AccDocPositionSet
@@ -254,6 +255,10 @@ module.exports = cds.service.impl(async function () {
 
 
     this.on('READ', VendorSet, async (request) => {
+        return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
+    });
+
+    this.on('READ', VendorSHSet, async (request) => {
         return await getEccServices(request, 'ZFI_O2P_COMMON_SRV');
     });
 

@@ -8,10 +8,16 @@ Content-Type: application/json;IEEE754Compatible=true
 Authorization: Basic ale:ale
 ### ----------------------------------------------------------------------
  
-GET {{server}}/odata/v4/kupito2pbpa-srv/UpdateTaskId(MAIL_LIST='rcao@q8.it',REQUEST_ID=1000000030,STEP=10)
+POST  {{server}}/odata/v4/kupito2pbpa-srv/UpdateTaskId
 Content-Type: application/json;IEEE754Compatible=true
-Authorization: Basic ale:ale
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vdG9rZW5fa2V5cyIsImtpZCI6ImRlZmF1bHQtand0LWtleS0xOTU0MTAzNjIyIiwidHlwIjoiSldUIiwiamlkIjogImdYZzBwWXJLbVQ3a2NVQlhXTHhhOWJsb2tBUHB2bXNKN2o5TGRGTCsyZEU9In0.eyJqdGkiOiJhZmY3NzhkNDUzYmU0ZjYzODYzNmM2YTRmNWYyODcyNCIsImV4dF9hdHRyIjp7ImVuaGFuY2VyIjoiWFNVQUEiLCJzdWJhY2NvdW50aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJ6ZG4iOiJjZi1rdXBpdC1kZXYteXk2Z3M4M2gifSwic3ViIjoic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwiYXV0aG9yaXRpZXMiOlsidWFhLnJlc291cmNlIl0sInNjb3BlIjpbInVhYS5yZXNvdXJjZSJdLCJjbGllbnRfaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJjaWQiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJhenAiOiJzYi1rdXBpdC1vMnAtS3V3YWl0UGV0cm9sZXVtSXRhbGlhX3NwYS1kZXYteXk2Z3M4M2gtTzJQIXQyMDg3NTUiLCJncmFudF90eXBlIjoiY2xpZW50X2NyZWRlbnRpYWxzIiwicmV2X3NpZyI6IjM3ZjgyOGJjIiwiaWF0IjoxNzM4NzYxMzY1LCJleHAiOjE3Mzg4MDQ1NjUsImlzcyI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LXl5NmdzODNoLmF1dGhlbnRpY2F0aW9uLmV1MTAuaGFuYS5vbmRlbWFuZC5jb20vb2F1dGgvdG9rZW4iLCJ6aWQiOiI4YTZhZmEyMS02ZDNkLTQ1NDUtODM5Yy01ZWVlOTNhZDlhMWQiLCJhdWQiOlsic2Ita3VwaXQtbzJwLUt1d2FpdFBldHJvbGV1bUl0YWxpYV9zcGEtZGV2LXl5NmdzODNoLU8yUCF0MjA4NzU1IiwidWFhIl19.y5WEv3mQGzFMG0HyVpYfC6Hgb1viMmD2q5cDvNB0AhLNFNbPhHqqlhMy8s4kogLGyidlLFVgfYh8m8l8uL6VWPh0bc3fleYVcJ-kzwWfPtUCxqueE5Zp2JGzV7ijeVzXlCJziLbDuHuF74Jr3EkICqXEFG_wtTP6yhcEHg3PWxy-F9ZL46EcFbyniguFA_1PTCP7ruc6iFICbftBGTED8k_kQ-iKzEF5PjP4wJpyrnQ2my8mGGOlGwTUwfXisWFwSWkUpxpaH3VJxRrJSP31sI_LyLz057mcvjgaByFeVPf-UMYwCSo1QZ7qUsI9__dZfnWre2f5g7elGmIfBCR0Gg
 
+{
+"STEP" : 20,
+"MAIL_LIST" : "rcao@q8.it",
+"REQUEST_ID" : 1000000227
+ 
+}
 ### ----------------------------------------------------------------------
 
 

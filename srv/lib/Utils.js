@@ -5,7 +5,7 @@ async function getNameMotivationAction(iRequest, iRequestId, iUserAction, iVersi
 
     let oldVersion = 0;
 
-    let oResult = { name: "", motivation: "", createby: "" }
+    let oResult = { name: "", motivation: "", createby: "" , error : "" }
 
     let oRequest = await SELECT.one.from(Request).
         where({ REQUEST_ID: iRequestId });
@@ -60,10 +60,12 @@ async function getNameMotivationAction(iRequest, iRequestId, iUserAction, iVersi
 
 
     } catch (error) {
-        let errMEssage = "ERROR getNameMotivationAction: " + oRequest.REQUEST_ID + ". " + error.message;
-        iRequest.error(450, errMEssage, oRequest, 450);
-        LOG.error(errMEssage);
-        return iRequest;
+
+        let errorText = "ERROR getNameMotivationAction: " + oRequest.REQUEST_ID + ". " + error.message
+        oResult.error = errorText
+        LOG.error(errorText);
+        return oResult
+
     }
 
 }

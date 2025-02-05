@@ -126,7 +126,8 @@ exports.mailPatterns = Object.freeze({
     MOD_MOTIVATION: "<<MOD_MOTIVATION>>",
     PAYMENT_MODE: "<<PAYMENT_MODE>>",
     FULL_NAME: "<<FULL_NAME>>",
-    FULL_NAME_COMPILER: "<<FULL_NAME_COMPILER>>"
+    FULL_NAME_COMPILER: "<<FULL_NAME_COMPILER>>",
+    TASK_URL: '<<TASK_URL>>'
 
 });
 

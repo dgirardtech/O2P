@@ -19,9 +19,9 @@ async function teamsTaskRejectNotification(iO2PRequest, iTaskUrl, iRecipients, i
 
 
 
-    let subject = returnBodyNotification.title.replaceAll(consts.mailPatterns.REQUESTID, iO2PRequest.REQUEST_ID);
+    let subject = returnBodyNotification.title.replaceAll(consts.mailPatterns.REQUEST_ID, iO2PRequest.REQUEST_ID);
 
-    let content = returnBodyNotification.message.replaceAll(consts.mailPatterns.REQUESTID, iO2PRequest.REQUEST_ID);
+    let content = returnBodyNotification.message.replaceAll(consts.mailPatterns.REQUEST_ID, iO2PRequest.REQUEST_ID);
 
     let oResultNameMotivation = await getNameMotivationAction(iRequest, iO2PRequest.REQUEST_ID, consts.UserAction.REJECTED, "")
     content = content.replaceAll(consts.mailPatterns.FULL_NAME, oResultNameMotivation.name);
@@ -65,9 +65,9 @@ async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iReques
         fullNameCompiler = approvalH.REAL_FULLNAME;
     }
 
-    let subject = returnBodyNotification.title.replaceAll(consts.mailPatterns.REQUESTID, iO2PRequest.REQUEST_ID);
+    let subject = returnBodyNotification.title.replaceAll(consts.mailPatterns.REQUEST_ID, iO2PRequest.REQUEST_ID);
 
-    let content = returnBodyNotification.message.replaceAll(consts.mailPatterns.REQUESTID, iO2PRequest.REQUEST_ID);
+    let content = returnBodyNotification.message.replaceAll(consts.mailPatterns.REQUEST_ID, iO2PRequest.REQUEST_ID);
 
     content = content.replaceAll(consts.mailPatterns.FULL_NAME_COMPILER, fullNameCompiler);
     content = content.replaceAll(consts.mailPatterns.TASK_URL, iTaskUrl);
@@ -89,6 +89,39 @@ async function teamsTaskNotification(iO2PRequest, iTaskUrl, iRecipients, iReques
 
 
 
+async function getBodyNotificationNew(iRequestId, iIdTeams) {
+
+    let oResult = { bodyNotification: '', error: '' }
+    let getResponse
+
+    try {
+
+        let request = "/Teams?$filter=idapplication eq '" + consts.idProcessNotification + "' and idteams eq '" + iIdTeams + "'";
+
+        getResponse = await MailHandler.send('GET', request);
+
+    } catch (error) {
+
+        let errorText = "ERROR getBodyNotification ID: " + iIdTeams + " Request" + iRequestId + " :" + error.message;
+        oResult.error = errorText
+        LOG.error(errorText);
+        return oResult
+
+    }
+
+    if (getResponse.d.results[0] === undefined) {
+
+        let errorText = "ERROR getBodyNotification ID: " + iIdTeams + " Request" + iRequestId + " :" + "Body Notification not found"
+        oResult.error = errorText
+        LOG.error(errorText);
+        return oResult
+
+    }
+
+    oResult.bodyNotification = getResponse.d.results[0]
+    return oResult
+
+}
 
 async function getBodyNotification(iRequestId, iIdTeams, iRequest) {
     let getResponse
@@ -160,6 +193,36 @@ async function getBodyMail(iRequest, iParamForMail) {
     return oResult
 }
 
+async function sendTeamsNotificationNew(iRequestId, iIdNotification, iNotificationBody) {
+
+    let oResult = { error: '' }
+
+    let sendMailResponse;
+
+    try {
+
+        let sendFakeMail = getEnvParam("SEND_FAKE_MAIL", false);
+        if (sendFakeMail) {
+            iNotificationBody = getTeamsFakeBody(iNotificationBody);
+        }
+
+        sendMailResponse = await MailHandler.send('POST', '/sendTeams', iNotificationBody);
+
+    } catch (error) {
+
+        let errorText = "ERROR sendTeamsNotification ID: " + iIdNotification + " Request" + iRequestId + " :" + error.message;
+
+        LOG.error(errorText);
+        oResult.error = errorText
+        return oResult
+    }
+
+    return oResult
+
+}
+
+
+
 async function sendTeamsNotification(iRequestId, iIdNotification, iNotificationBody, iRequest) {
     let sendMailResponse;
 
@@ -183,7 +246,7 @@ async function sendTeamsNotification(iRequestId, iIdNotification, iNotificationB
 }
 
 
-async function sendMail(iRequest, iParamForMail, iMailBody) {
+async function sendMailNew(iRequest, iParamForMail, iMailBody) {
 
     let oResult = { error: '' }
 
@@ -204,13 +267,6 @@ async function sendMail(iRequest, iParamForMail, iMailBody) {
         oResult.error = 'ERROR sendMail ID: ' + error.message
         return oResult
 
-        /*
-        let errMEssage = "ERROR sendMail ID: " + iParamForMail.mailId +
-            " Request" + iParamForMail.requestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-        */
     }
 
 
@@ -498,28 +554,30 @@ async function getSubjectContentfromBody(iRequest, iParamForMail, iBodyMail) {
             content = content.replaceAll(consts.mailPatterns.PRIORITY_TEXT, oBundle.getText("PRIORITY_NO_TEXT"))
         }
 
+        if (Boolean(iParamForMail.docId)) {
 
-        let oDocHeader = oTree.HEADER.find(oDocHeader => oDocHeader.DOC_ID === iParamForMail.docId )
+            let oDocHeader = oTree.HEADER.find(oDocHeader => oDocHeader.DOC_ID === iParamForMail.docId)
 
-       // let oDocDetail = await getDocumentDetail(iParamForMail.requestId, iParamForMail.docId) 
-         
-        let address = oDocHeader.VENDOR_DESC + ' ( ' + oDocHeader.VENDOR + ' )'
-        content = content.replaceAll(consts.mailPatterns.ADDRESS, address )
+            // let oDocDetail = await getDocumentDetail(iParamForMail.requestId, iParamForMail.docId) 
 
-        if (Boolean(oDocHeader.LOCATION)) {
-            content = content.replaceAll(consts.mailPatterns.PV, oDocHeader.LOCATION)
-        } else {
-            content = content.replaceAll(consts.mailPatterns.PV, '')
+            let address = oDocHeader.VENDOR_DESC + ' ( ' + oDocHeader.VENDOR + ' )'
+            content = content.replaceAll(consts.mailPatterns.ADDRESS, address)
+
+            if (Boolean(oDocHeader.LOCATION)) {
+                content = content.replaceAll(consts.mailPatterns.PV, oDocHeader.LOCATION)
+            } else {
+                content = content.replaceAll(consts.mailPatterns.PV, '')
+            }
+
+            content = content.replaceAll(consts.mailPatterns.REASON, oDocHeader.REASON)
+            content = content.replaceAll(consts.mailPatterns.CRO, oDocHeader.CRO)
+
+            let oCurrency = await SELECT.one.from(Currency).where({ code: oRequest.WAERS_CODE });
+
+            let totAmount = oDocHeader.TOT_AMOUNT + ' ' + oCurrency.DESCRIPTION
+            content = content.replaceAll(consts.mailPatterns.TOT_AMOUNT, totAmount)
+
         }
-      
-        content = content.replaceAll(consts.mailPatterns.REASON, oDocHeader.REASON)
-        content = content.replaceAll(consts.mailPatterns.CRO, oDocHeader.CRO)
-
-        let oCurrency = await SELECT.one.from(Currency).where({ code: oRequest.WAERS_CODE });
-
-        let totAmount =  oDocHeader.TOT_AMOUNT + ' ' +  oCurrency.DESCRIPTION
-        content = content.replaceAll(consts.mailPatterns.TOT_AMOUNT, totAmount )
-
 
 
         oResult.subject = subject
@@ -633,7 +691,7 @@ async function getParamForMail(iRequest, iRequestId, iDocId, iRequestPath) {
 async function getAttachment(iRequest, iParamForMail) {
 
     let oResult = { attach: [], error: '' }
-    // let aResult = []
+ 
 
     try {
 
@@ -668,8 +726,7 @@ async function getAttachment(iRequest, iParamForMail) {
                 contentBytes: content,
             })
 
-            return oResult
-
+          
         }
 
     } catch (error) {
@@ -679,64 +736,133 @@ async function getAttachment(iRequest, iParamForMail) {
 
     }
 
+    return oResult
+
 
 }
 
+async function sendAllNotification(iRequest, iNotification, iRequestId, iRecipients, iTaskUrl) {
+
+    let oResult = { error: '' }
+
+    let oRequest = await SELECT.one.from(Request).
+        where({ REQUEST_ID: iRequestId })
+
+
+    let oBodyNotification = await getBodyNotificationNew(iRequestId, iNotification, iRequest)
+    if (oBodyNotification.error) {
+        oResult.error = oBodyNotification.error
+        return oResult
+    }
+
+    //if (iNotification === consts.notificationId.TASK_READY) {
+
+
+
+
+
+    let subject = oBodyNotification.bodyNotification.title
+    subject = subject.replaceAll(consts.mailPatterns.REQUEST_ID, iRequestId);
+
+
+
+
+
+    let content = oBodyNotification.bodyNotification.message
+    content = content.replaceAll(consts.mailPatterns.REQUEST_ID, iRequestId);
+
+    let fullNameCompiler = "";
+    let approvalH = await SELECT.one.from(ApprovalHistory).
+        where({
+            REQUEST_ID: iRequestId,
+            VERSION: oRequest.VERSION,
+            STEP: 10
+        });
+
+    if (approvalH && Boolean(approvalH.REAL_FULLNAME)) {
+        fullNameCompiler = approvalH.REAL_FULLNAME;
+    }
+
+    content = content.replaceAll(consts.mailPatterns.FULL_NAME_COMPILER, fullNameCompiler);
+
+
+    let oResultNameMotivation = await getNameMotivationAction(iRequest, iRequestId, consts.UserAction.REJECTED, "")
+    content = content.replaceAll(consts.mailPatterns.FULL_NAME, oResultNameMotivation.name);
+
+
+    content = content.replaceAll(consts.mailPatterns.TASK_URL, iTaskUrl);
+
+
+    let oBody = {
+        "toRecipients": iRecipients,
+        "title": subject,
+        "message": content,
+        "idapplication": consts.idProcessNotification
+    };
+
+    let oSendTeamsNotification = await sendTeamsNotificationNew(iRequestId, iNotification, oBody);
+    if (oSendTeamsNotification.error) {
+        oResult.error = oSendTeamsNotification.error
+    }
+
+    return oResult
+
+}
 
 async function sendAllMail(iRequest, iRequestId, iDocId, iPath) {
 
-    let oResult = { error : ''}
+    let oResult = { error: '' }
 
     let sendMail = getEnvParam("SEND_MAIL", false);
-    if (sendMail === "true") {   
+    if (sendMail === "true") {
 
-    let oGetParamForMail = await getParamForMail(iRequest, iRequestId, iDocId, iPath)
+        let oGetParamForMail = await getParamForMail(iRequest, iRequestId, iDocId, iPath)
 
 
-    if (Boolean(oGetParamForMail.mailId)) {
+        if (Boolean(oGetParamForMail.mailId)) {
 
-        let oRecipient = await getRecipient(iRequest, oGetParamForMail)
-        if (oRecipient.error) {
-            oResult.error = oRecipient.error 
-            return oResult
+            let oRecipient = await getRecipient(iRequest, oGetParamForMail)
+            if (oRecipient.error) {
+                oResult.error = oRecipient.error
+                return oResult
+            }
+
+            let oBodyMail = await getBodyMail(iRequest, oGetParamForMail)
+            if (oBodyMail.error) {
+                oResult.error = oBodyMail.error
+                return oResult
+            }
+
+
+            let oMailText = await getSubjectContentfromBody(iRequest, oGetParamForMail, oBodyMail.bodyMail)
+            if (oMailText.error) {
+                oResult.error = oMailText.error
+                return oResult
+            }
+
+            let oAttach = await getAttachment(iRequest, oGetParamForMail)
+            if (oAttach.error) {
+                oResult.error = oAttach.error
+                return oResult
+            }
+
+            let oMail = {
+                "subject": oMailText.subject,
+                "content": oMailText.content,
+                "toRecipients": oRecipient.to,
+                "ccRecipients": oRecipient.cc,
+                "aAttachment": oAttach.attach
+            }
+
+            let oSendMail = await sendMailNew(iRequest, oGetParamForMail, oMail)
+            if (oSendMail.error) {
+                oResult.error = oSendMail.error
+                return oResult
+            }
+
         }
 
-        let oBodyMail = await getBodyMail(iRequest, oGetParamForMail)
-        if (oBodyMail.error) {
-            oResult.error = oBodyMail.error 
-            return oResult
-        }
-
-
-        let oMailText = await getSubjectContentfromBody(iRequest, oGetParamForMail, oBodyMail.bodyMail)
-        if (oMailText.error) {
-            oResult.error = oMailText.error 
-            return oResult
-        }
-
-        let oAttach = await getAttachment(iRequest, oGetParamForMail)
-        if (oAttach.error) {
-            oResult.error = oAttach.error 
-            return oResult
-        }
-
-        let oMail = {
-            "subject": oMailText.subject,
-            "content": oMailText.content,
-            "toRecipients": oRecipient.to,
-            "ccRecipients": oRecipient.cc,
-            "aAttachment": oAttach.attach
-        }
-
-        let oSendMail = await sendMail(iRequest, oGetParamForMail, oMail)
-        if (oSendMail.error) {
-            oResult.error = oSendMail.error 
-            return oResult
-        }
- 
     }
-
-}
 
     return oResult
 }
@@ -746,5 +872,7 @@ module.exports = {
     teamsTaskNotification,
     teamsTaskRejectNotification,
     testMail,
-    sendAllMail
+    sendAllMail,
+    sendAllNotification,
+    sendMailNew
 }

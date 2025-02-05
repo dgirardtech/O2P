@@ -6,7 +6,7 @@ const { getMoaApprovers, updateMoaApprovers, insertApprovalHistory,
     getTaskId, getTaskComposedUrl } = require('./createProcess');
 const { generateO2PDocument } = require('./HandlerPDF');
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
-const {  sendAllMail, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
+const {  sendAllMail, teamsTaskNotification, teamsTaskRejectNotification,sendAllNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
 const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
 
@@ -1003,7 +1003,14 @@ async function sendTeamsNotification(iRequest) {
             if (aMailList.length > 0) {
                 let sendMail = getEnvParam("SEND_MAIL", false);
                 if (sendMail === "true") {   
-                return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+
+                 
+                    let oSendAllNotification = await sendAllNotification(
+                        iRequest, consts.notificationId.TASK_REJECTED, requestId, aMailList,taskUrl) 
+                  
+
+             //   return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+
                 }
             }
         }
@@ -1019,10 +1026,16 @@ async function sendTeamsNotification(iRequest) {
             let sendMail = getEnvParam("SEND_MAIL", false);
             if (sendMail === "true") {   
 
+           
+             let oSendAllNotification = await sendAllNotification(
+                iRequest, consts.notificationId.TASK_READY, requestId, aMailList,taskUrl) 
+             
+/*
             retTeamsTaskNotification = await teamsTaskNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
             if (retTeamsTaskNotification.errors) {
                 return retTeamsTaskNotification;
             }
+                */
         }
         }
 
