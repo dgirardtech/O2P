@@ -111,6 +111,12 @@ exports.documentType = Object.freeze({
 exports.mailPatterns = Object.freeze({
 
     REQUEST_ID: "<<REQUEST_ID>>",
+    DOC_ID: "<<DOC_ID>>",
+    TOT_AMOUNT: "<<TOT_AMOUNT>>",
+    ADDRESS : "<<ADDRESS>>",
+    PV : "<<PV>>",
+    REASON: "<<REASON>>",
+    CRO : "<<CRO>>",
     REQUESTER: "<<REQUESTER>>",
     REF_USER: "<<REF_USER>>",
     REF_MOTIVATION: "<<REF_MOTIVATION>>",

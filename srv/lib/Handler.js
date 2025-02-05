@@ -7,7 +7,7 @@ const { getEnvParam, getTextBundle } = require('./Utils');
 const { getMoaApprovers } = require('./createProcess');
 const { generateO2PAccounting } = require('./HandlerPDF');
 const { getDocumentProp, getDocumentDetail } = require('./ManageDocument')
-const {  sendAllMail } = require('./MailHandler');
+const { sendAllMail } = require('./MailHandler');
 
 
 async function updateRequest(iData, iRequest) {
@@ -234,72 +234,7 @@ async function deleteNote(iRequest) {
     }
 }
 
-async function getNameMotivationAction(iRequest, iRequestId, iUserAction, iVersion) {
 
-    let oldVersion = 0;
-
-    let oResult = { name: "", motivation: "", createby: "" }
-
-    let oRequest = await SELECT.one.from(Request).
-        where({ REQUEST_ID: iRequestId });
-
-    try {
-
-        if (iVersion) {
-            oldVersion = iVersion
-        } else {
-            if (oRequest.VERSION === 1) {
-                oldVersion = oRequest.VERSION;
-            } else {
-                oldVersion = oRequest.VERSION - 1;
-            }
-
-        }
-
-
-        let oApproval = await SELECT.one.from(ApprovalHistory).
-            where({
-                REQUEST_ID: oRequest.REQUEST_ID,
-                VERSION: oldVersion,
-                To_Action_ACTION: iUserAction
-            });
-
-        if (oApproval) {
-
-            if (Boolean(oApproval.REAL_FULLNAME)) {
-                oResult.name = oApproval.REAL_FULLNAME
-            } else {
-                oResult.name = oApproval.REAL_MAIL
-            }
-
-            oResult.createby = oApproval.REAL_MAIL
-
-        }
-
-
-        let oNotes = await SELECT.one.from(Notes).
-            where({
-                to_Request_REQUEST_ID: oRequest.REQUEST_ID,
-                VERSION: oldVersion,
-                TYPE: iUserAction.substring(0, 1)
-            });
-
-        if (oNotes) {
-            oResult.motivation = oNotes.NOTE
-        }
-
-
-        return oResult
-
-
-    } catch (error) {
-        let errMEssage = "ERROR getNameMotivationAction: " + oRequest.REQUEST_ID + ". " + error.message;
-        iRequest.error(450, errMEssage, oRequest, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-
-}
 
 
 
@@ -1014,7 +949,7 @@ async function manageDocPopupData(iRequest, fromMain) {
 
 
             let aVendorBank = await EccServiceO2P.run(
-                SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn','Bvtyp'])
+                SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn', 'Bvtyp'])
                     .where({ Lifnr: iRequest.data.VENDOR }));
 
 
@@ -1711,32 +1646,143 @@ async function isTest(iRequest) {
 
 }
 
+
+async function fillRequest(iRequest) {
+
+    // let result = false
+
+    // countingRecRole: iRequest.RECIPIENT_ROLE,
+    // countingRecAdd: iRequest.RECIPIENT_ADD
+
+    let recipientRole = ''
+    let recipientAdd = ''
+       let requesterCode = ''
+
+    if (Boolean(iRequest._queryOptions) && Boolean(iRequest._queryOptions.$filter)) {
+
+        let aSplit = iRequest._queryOptions.$filter.split(' and ')
+
+        for (let i = 0; i < aSplit.length; i++) {
+
+            
+
+            if (aSplit[i].substring(0, 14) === 'REQUESTER_CODE') {
+                if (aSplit[i].substring(18) !== "''") {
+                    requesterCode = aSplit[i].substring(18)
+                }
+            }
+
+            if (aSplit[i].substring(0, 14) === 'RECIPIENT_ROLE') {
+
+                if (aSplit[i].substring(18) !== "''") {
+                    recipientRole = aSplit[i].substring(18)
+                }  
+
+            }
+
+            if (aSplit[i].substring(0, 13) === 'RECIPIENT_ADD') {
+                recipientAdd = aSplit[i].substring(17) 
+            }
+        }
+    }
+
+    if (recipientRole === '') {
+        iRequest.error(450, 'RECIPIENT_ROLE initial', null, 450);
+        LOG.error('RECIPIENT_ROLE initial');
+        return iRequest;
+    }  
+
+    if (requesterCode === '') {
+        iRequest.error(450, 'REQUESTER_CODE initial', null, 450);
+        LOG.error('REQUESTER_CODE initial');
+        return iRequest;
+    }  
+    
+
+
+    iRequest.RECIPIENT_ROLE = recipientRole
+    iRequest.RECIPIENT_ADD = recipientAdd
+
+
+    return iRequest
+ 
+
+}
+
+
 async function enrichCountingSend(iRequest, iCounting) {
 
     const oBundle = getTextBundle(iRequest);
 
     let aCounting = iCounting
 
-    let save = true
+    let send = true
 
     let test = await isTest(iRequest)
     if (Boolean(test)) {
-        save = false
+        send = false
     }
 
+    iRequest = await fillRequest(iRequest)
+    if (iRequest.errors){
+        return iRequest
+}
 
-    for (let x = 0; x < aCounting.length; x++) {
+
+for (let x = 0; x < aCounting.length; x++) {
+
+    if (Boolean(send)) {
+
+        let oResponseSendAllMail = await sendAllMail(iRequest,
+            aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, 'CountingSend', false)
+
+        if (oResponseSendAllMail.error) {
+
+            aCounting[x].RESULT_TYPE = consts.ERROR
+            aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_SENDED",
+                [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER, oResponseSendAllMail.error])
+
+        } else {
 
 
-      //  let oResponseSendAllMail = await sendAllMail(iRequest, consts.mailId.COUNTING)
+            let resUpdate = await UPDATE(Document).set({ CONTABILE_SEND_DATE: new Date() }).where({
+                to_Request_REQUEST_ID: aCounting[x].REQUEST_ID,
+                DOC_ID: aCounting[x].DOC_ID,
 
+            });
+
+
+            aCounting[x].RESULT_TYPE = consts.SUCCESS
+            aCounting[x].RESULT_TEXT = oBundle.getText("CRO_SENDED",
+                [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER])
+
+        }
+
+
+    } else {
+
+        aCounting[x].RESULT_TYPE = consts.SUCCESS
+        aCounting[x].RESULT_TEXT = oBundle.getText("CRO_SENDED",
+            [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER])
 
     }
 
+}
 
 
+if (aCounting.length === 0) {
 
-    return aCounting
+    aCounting.push({
+        REQUEST_ID: '',
+        DOC_ID: '',
+        RESULT_TYPE: consts.ERROR,
+        RESULT_TEXT: oBundle.getText("CRO_NOT_REQUEST")
+    })
+
+}
+
+
+return aCounting
 }
 
 async function enrichCountingCreate(iRequest, iCounting) {
@@ -1823,7 +1869,6 @@ module.exports = {
     getAssignInfo,
     isCreationStep,
     manageMainData,
-    getNameMotivationAction,
     getClearingStatus,
     getClearingFilter,
     enrichCountingCreate,

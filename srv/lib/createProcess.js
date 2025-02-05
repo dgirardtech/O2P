@@ -365,7 +365,10 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                     { attribute: "ADD_STEP_60_CONTROLLER", value: oMOAParam.addStep60Controller },
                     { attribute: "ADD_STEP_60_CASSA", value: oMOAParam.addStep60Cassa },
                     { attribute: "ADD_STEP_60_FINANZA", value: oMOAParam.addStep60Finanza },
-                    { attribute: "ADD_STEP_70", value: oMOAParam.addStep70 }
+                    { attribute: "ADD_STEP_70", value: oMOAParam.addStep70 },
+
+                    { attribute: "IDAREA", value: oMOAParam.idArea }
+                    
                 ]
             }
 
@@ -570,12 +573,15 @@ async function getMOAParams(iRequestID) {
         addStep60Finanza: 'FALSE',
         addStep70: 'FALSE',
         addStep80: 'FALSE',
+        idArea : ''
     }
 
 
     var oRequest = await SELECT.one.from(Request).where({ REQUEST_ID: iRequestID });
 
     if (oRequest) {
+
+        oResult.idArea = oRequest.AREA_CODE
 
         var oRequester = await SELECT.one.from(Requester).
             where({ CODE: oRequest.REQUESTER_CODE });

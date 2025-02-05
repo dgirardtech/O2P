@@ -144,7 +144,9 @@ service O2PModelService @(requires: [
                 request.PRIORITY,
                 virtual null              as RESULT_TEXT : String,
                 virtual null              as RESULT_TYPE : String(1),
-                virtual null              as TEST : Boolean
+                virtual null              as TEST : Boolean,
+                virtual null              as RECIPIENT_ROLE : String,
+                virtual null              as RECIPIENT_ADD : String
         }
         where
                 request.PAYMENT_MODE.CODE = 'BONIFICO'
@@ -385,9 +387,10 @@ service O2PModelService @(requires: [
     action   createProcess(REQUESTER : String)                          returns Message;
 
     action   testMail(REQUEST_ID : KupitO2PModel.REQUEST_ID,
+                      DOC_ID : KupitO2PModel.DOC_ID,
                       STEPID : KupitO2PModel.STEP_ID,
-                      ACTION : KupitO2PModel.Actionenum,
-                      MAILID : String)                                  returns Message;
+                      ACTION : KupitO2PModel.Actionenum, 
+                      EVENT: String)                                  returns Message;
 
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,

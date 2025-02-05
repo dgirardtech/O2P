@@ -229,7 +229,7 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
 
         let filename = "O2P_" + iRequest.data.REQUEST_ID + ".pdf"
         let oResponseSaveAttach = await saveAttach(returnCreatePdf,
-            iRequest.data.REQUEST_ID, iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.DOC, filename)
+            iRequest.data.REQUEST_ID, iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.DOC, filename,'')
     }
 
     return { binary: returnCreatePdf, type: consts.attachmentFormat.PDF }
@@ -586,12 +586,12 @@ async function generateO2PAccounting(iRequest, iDocumentDetail, iSaveAttach) {
             let filename = "ContabileBPM " + iDocumentDetail.requestId + iDocumentDetail.docId + ".pdf"
 
             let oResponseSaveAttach = await saveAttach(returnCreatePdf, iDocumentDetail.requestId,
-                iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.COUNTING, filename)
+                iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.COUNTING, filename, iDocumentDetail.docId)
             if (oResponseSaveAttach.errors) {
                 return oResponseSaveAttach;
             }
 
-            let resUpdate = await UPDATE(Document).set({ CONTABILE_NICKNAME: '1' }).where({
+            let resUpdate = await UPDATE(Document).set({ CONTABILE_NICKNAME: '1' , CRO: iDocumentDetail.xblnr}).where({
                 to_Request_REQUEST_ID: iDocumentDetail.requestId,
                 DOC_ID: iDocumentDetail.docId
 
@@ -613,7 +613,7 @@ async function generateO2PAccounting(iRequest, iDocumentDetail, iSaveAttach) {
 
 }
 
-async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAttachType, iFileName) {
+async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAttachType, iFileName,iDocId) {
 
     let fullName;
     let attach = {};
@@ -648,12 +648,27 @@ async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAtt
 
 
         let maxId = 0
+        let oAttachmentDb
 
-        let oAttachmentDb = await SELECT.one.from(Attachments)
+        if (Boolean(iDocId)) {
+            
+            oAttachmentDb = await SELECT.one.from(Attachments)
+            .where({
+                REQUEST_ID: iRequestId,
+                ATTACHMENTTYPE_ATTACHMENTTYPE: iAttachType,
+                DOC_ID : iDocId
+            });
+
+        } else {
+
+            oAttachmentDb = await SELECT.one.from(Attachments)
             .where({
                 REQUEST_ID: iRequestId,
                 ATTACHMENTTYPE_ATTACHMENTTYPE: iAttachType
             });
+
+        }
+      
 
         if (oAttachmentDb) {
 
@@ -671,6 +686,7 @@ async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAtt
 
         attach.to_Request_REQUEST_ID = iRequestId;
         attach.ID = maxId;
+        attach.DOC_ID = iDocId;
         attach.CONTENT = iPdfContent;
         attach.MEDIATYPE = attachFormat;
         attach.FILENAME = filename

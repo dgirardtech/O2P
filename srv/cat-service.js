@@ -3,12 +3,13 @@ const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,
-    updateRequest, getNameMotivationAction, getMonitorRequest, manageDocPopupData, getDocStatus,
+    updateRequest,  getMonitorRequest, manageDocPopupData, getDocStatus,
     getEccServices, getAssignInfo, isCreationStep, manageMainData, enrichCountingCreate,enrichCountingSend } = require('./lib/Handler');
 const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
 const { testMail } = require('./lib/MailHandler');
 const { fromDocumentToTree, fromRequestIdToTree,
     fromTreeToDocument, formatDocument, createFIDocument } = require('./lib/ManageDocument');
+    const { getEnvParam, getTextBundle,getNameMotivationAction } = require('./lib/Utils');
 
 const { generateO2PF23Aut } = require('./lib/HandlerPDF');
 const { constants } = require('@sap/xssec');

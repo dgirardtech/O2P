@@ -65,7 +65,7 @@ async function fromTreeToDocument(iRequest) {
 
 
                     if (oTibanSet) {
-                        partnBnkType = oTibanSet.Bvtyp
+                        partnBnkType = aVendorBank[i].Bvtyp
                         break
                     }
                 }
@@ -188,6 +188,7 @@ async function transcodeDocumentToTree(iRequestId, aDocument) {
                 DOCUMENT_NUMBER: aDocument[i].DOCUMENT_NUMBER,
                 CLEARING_NUMBER: aDocument[i].CLEARING_NUMBER,
                 REASON: aDocument[i].REASON,
+                CRO: aDocument[i].CRO,
                 TOT_AMOUNT: 0,
 
 

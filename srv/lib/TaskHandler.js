@@ -1,22 +1,21 @@
 const LOG = cds.log('KupitO2PSrv');
 const _ = require('underscore');
 const consts = require("./Constants");
-const {  getTextBundle } = require('./Utils');
-const { getMoaApprovers, updateMoaApprovers, insertApprovalHistory, 
+const { getTextBundle } = require('./Utils');
+const { getMoaApprovers, updateMoaApprovers, insertApprovalHistory,
     getTaskId, getTaskComposedUrl } = require('./createProcess');
-const { generateO2PDocument } = require('./HandlerPDF'); 
+const { generateO2PDocument } = require('./HandlerPDF');
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
-const {  mailMissingApprovers, mailProcessDeleted, mailProcessCompleted, 
-    mailTaskRejected, sendAllMail, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
+const {  sendAllMail, teamsTaskNotification, teamsTaskRejectNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
 const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
 
 async function saveUserAction(iRequest) {
- 
+
     let response;
 
-    try { 
-      
+    try {
+
         switch (iRequest.data.ACTION) {
             case consts.bpaUserAction.START:
                 response = await userActionStart(iRequest.data.REQUEST_ID, iRequest.data.STEPID, iRequest);
@@ -38,13 +37,14 @@ async function saveUserAction(iRequest) {
         }
 
 
-        let oResponseSendAllMail = await sendAllMail(iRequest,  '' )
+    
+        let oResponseSendAllMail = await sendAllMail(iRequest,iRequest.data.REQUEST_ID ,'',iRequest.event, false)
 
         let o2pDocument = await generateO2PDocument(iRequest, true)
 
 
         return response;
- 
+
 
     } catch (error) {
         let errMEssage = "ERROR UserAction " + iRequest.data.REQUEST_ID + " :" + error.message;
@@ -832,17 +832,9 @@ async function checkNextApprover(iRequestId, iApprovalFlow, iRequest) {
     iRequest.error(450, errMEssage, null, 450);
     LOG.error(errMEssage);
 
-    let request = await SELECT.one.from(Request)
-        .where({
-            REQUEST_ID: iRequestId
-        });
-
-    //Invio mail al SAP Support
-    let returnmissingApprovers = await mailMissingApprovers(request, iRequest);
-    if (returnmissingApprovers.errors) {
-        return returnmissingApprovers;
-    }
-
+   
+    let oResponseSendAllMail = await sendAllMail(iRequest,iRequestId ,'', 'MissingApprover', false)
+ 
     return iRequest;
 }
 
@@ -936,10 +928,10 @@ async function checkAllApprovers(iRequestId, iApprovalFlow, iRequest) {
         });
 
     //Invio mail al SAP Support
-    let returnmissingApprovers = await mailMissingApprovers(request, iRequest);
-    if (returnmissingApprovers.errors) {
-        return returnmissingApprovers;
-    }
+ 
+       let oResponseSendAllMail = await sendAllMail(iRequest,iRequestId ,'', 'MissingApprover', false)
+
+ 
     return iRequest;
 }
 
@@ -992,7 +984,7 @@ async function sendTeamsNotification(iRequest) {
         if (Boolean(mailList)) {
             aMailList = mailList.split(",");
         }
-       
+
 
         taskId = await updateTaskId(requestId, stepID, iRequest);
         if (taskId.errors) {

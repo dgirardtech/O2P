@@ -97,12 +97,13 @@ entity Document : managed {
       CLEARING_NUMBER      : DOCNUM;
       ACCOUNT_ADVANCE      : Boolean default false;
       CONTABILE_NICKNAME   : String(10) default '0';
-      CONTABILE_SEND_DATE  : Date;
+      CONTABILE_SEND_DATE  : Timestamp;
       NOTE                 : String(250);
       ATTRIBUZIONE         : String(18);
       RIFERIMENTO          : String(20);
       REFKEY2              : String(12);
       VALUT                : Date;
+      CRO                  : String(16);
       IS_FROM_EXCEL        : Boolean default false;
       virtual VENDOR_DESC  : String;  
 }
@@ -356,7 +357,8 @@ entity Docparam : managed {
 //ZFI_O2P_OU_REQ
 entity Orgunitreq : managed {
   key REQUESTER : Association to one Requester;
-  key ORGUNIT   : Decimal(8, 0);
+  //key ORGUNIT   : Decimal(8, 0);
+  key ORGUNIT   : String;
       NOTE      : String(50)
 
 }
@@ -451,9 +453,7 @@ type VENDOR           : String(10);
 type COMPANY          : String(4);
 type DOCNUM           : String(10);
 type SPECIAL_GL_IND   : String(1);
-type YEAR             : Decimal(4, 0);
-//type DOC_ID           : Decimal(3, 0);
-//type DOC_ID_POS       : Decimal(3, 0);
+type YEAR             : Decimal(4, 0); 
 type DOC_ID           : String(3);
 type DOC_ID_POS       : String(3);
 type DOCTYPE          : String(2);
