@@ -662,6 +662,9 @@ async function getMOAParams(iRequestID) {
                 oResult.addedFromException = 'TRUE'
 
 
+                let sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
+                if (sendFakeMail === "false") {
+                    
                 let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
                     oResult.managerExceptStep40 + "'");
 
@@ -675,6 +678,8 @@ async function getMOAParams(iRequestID) {
 
                     }
                 }
+
+            }
 
 
 
