@@ -687,7 +687,8 @@ async function sendAllMail(iRequest, iRequestId, iDocId, iPath) {
 
     let oResult = { error : ''}
 
-   
+    let sendMail = getEnvParam("SEND_MAIL", false);
+    if (sendMail === "true") {   
 
     let oGetParamForMail = await getParamForMail(iRequest, iRequestId, iDocId, iPath)
 
@@ -734,6 +735,8 @@ async function sendAllMail(iRequest, iRequestId, iDocId, iPath) {
         }
  
     }
+
+}
 
     return oResult
 }

@@ -1,7 +1,7 @@
 const LOG = cds.log('KupitO2PSrv');
 const _ = require('underscore');
 const consts = require("./Constants");
-const { getTextBundle } = require('./Utils');
+const { getTextBundle,getEnvParam } = require('./Utils');
 const { getMoaApprovers, updateMoaApprovers, insertApprovalHistory,
     getTaskId, getTaskComposedUrl } = require('./createProcess');
 const { generateO2PDocument } = require('./HandlerPDF');
@@ -1001,7 +1001,10 @@ async function sendTeamsNotification(iRequest) {
         //Notifica di richiesta rifiutata
         if (stepID === 10 && aRequestData.VERSION > 1) {
             if (aMailList.length > 0) {
+                let sendMail = getEnvParam("SEND_MAIL", false);
+                if (sendMail === "true") {   
                 return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
+                }
             }
         }
 
@@ -1012,10 +1015,15 @@ async function sendTeamsNotification(iRequest) {
 
 
         if (aMailList.length > 0) {
+
+            let sendMail = getEnvParam("SEND_MAIL", false);
+            if (sendMail === "true") {   
+
             retTeamsTaskNotification = await teamsTaskNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
             if (retTeamsTaskNotification.errors) {
                 return retTeamsTaskNotification;
             }
+        }
         }
 
 
