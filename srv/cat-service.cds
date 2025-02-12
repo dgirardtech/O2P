@@ -261,7 +261,9 @@ service O2PModelService @(requires: [
                 attachments.ATTACHMENTTYPE.ATTACHMENTTYPE ,
                 virtual null       as PC  : Boolean,
                 virtual null       as NC  : Boolean,
-                virtual null       as OC  : Boolean,
+                virtual null       as AC  : Boolean,
+                virtual null       as CLEARED  : String,
+                
 
         }
         order by
@@ -341,7 +343,7 @@ service O2PModelService @(requires: [
                 virtual null       as PAYMODE_DESC                  : String,
                 virtual null       as PC                            : Boolean,
                 virtual null       as NC                            : Boolean,
-                virtual null       as OC                            : Boolean,
+                virtual null       as AC                            : Boolean,
 
         }
         where

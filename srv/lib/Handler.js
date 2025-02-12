@@ -677,53 +677,51 @@ async function getMonitorRequest(iRequest, next) {
 
 
 
-    if (aFilter.length > 0) {
-
-        for (let i = 0; i < aResponse.length; i++) {
-            aRequestId.push(aResponse[i].REQID)
-        }
-
-        aDoclog = await SELECT.from(Doclog).
-            where({
-                to_Request_REQUEST_ID: aRequestId,
-                STATUS: 'C'
-            })
-
-        aDocument = await SELECT.from(Document).
-            where({
-                to_Request_REQUEST_ID: aRequestId,
-                DOCUMENT_NUMBER: { '!=': null }
-            }).orderBy('DOC_ID asc', 'ID asc')
-
-        if (aDocument.length > 0) {
-
-            for (let i = 0; i < aDocument.length; i++) {
-
-                aDocNumber.push(aDocument[i].DOCUMENT_NUMBER)
-                aCompany.push(aDocument[i].DOCUMENT_COMP_CODE)
-                aYear.push(aDocument[i].DOCUMENT_FISCAL_YEAR)
-
-            }
-
-            aDocNumber = _.uniq(aDocNumber)
-            aCompany = _.uniq(aCompany)
-            aYear = _.uniq(aYear)
-
-
-            let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-
-            const { AccDocPosVendClearSet } = EccServiceO2P.entities;
-
-
-            aAccDocPosVendClearSet = await EccServiceO2P.run(
-                SELECT.from(AccDocPosVendClearSet).columns(['Bukrs', 'Belnr', 'Gjahr', 'Augbl']).where({
-                    Belnr: aDocNumber,
-                    Bukrs: aCompany,
-                    Gjahr: aYear
-
-                }));
-        }
+    for (let i = 0; i < aResponse.length; i++) {
+        aRequestId.push(aResponse[i].REQID)
     }
+
+    aDoclog = await SELECT.from(Doclog).
+        where({
+            to_Request_REQUEST_ID: aRequestId,
+            STATUS: 'C'
+        })
+
+    aDocument = await SELECT.from(Document).
+        where({
+            to_Request_REQUEST_ID: aRequestId,
+            DOCUMENT_NUMBER: { '!=': null }
+        }).orderBy('DOC_ID asc', 'ID asc')
+
+    if (aDocument.length > 0) {
+
+        for (let i = 0; i < aDocument.length; i++) {
+
+            aDocNumber.push(aDocument[i].DOCUMENT_NUMBER)
+            aCompany.push(aDocument[i].DOCUMENT_COMP_CODE)
+            aYear.push(aDocument[i].DOCUMENT_FISCAL_YEAR)
+
+        }
+
+        aDocNumber = _.uniq(aDocNumber)
+        aCompany = _.uniq(aCompany)
+        aYear = _.uniq(aYear)
+
+
+        let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+
+        const { AccDocPosVendClearSet } = EccServiceO2P.entities;
+
+
+        aAccDocPosVendClearSet = await EccServiceO2P.run(
+            SELECT.from(AccDocPosVendClearSet).columns(['Bukrs', 'Belnr', 'Gjahr', 'Augbl']).where({
+                Belnr: aDocNumber,
+                Bukrs: aCompany,
+                Gjahr: aYear
+
+            }));
+    }
+
 
 
 
@@ -731,29 +729,32 @@ async function getMonitorRequest(iRequest, next) {
 
         let oResponse = aResponse[i]
 
+
+        let oResponseCheck = aResponseCheck.find(oResponseCheck => oResponseCheck.REQID === oResponse.REQID)
+
+        if (!oResponseCheck) {
+
+            let oClearingStatus = await getClearingStatus(oResponse.REQID, aAccDocPosVendClearSet, aDocument, aDoclog)
+
+            oResponse.NC = oClearingStatus.NC
+            oResponse.PC = oClearingStatus.PC
+            oResponse.AC = oClearingStatus.AC
+            oResponse.field = oClearingStatus.field
+            oResponse.CLEARED = oClearingStatus.fieldDesc
+
+        } else {
+
+            oResponse.NC = oResponseCheck.NC
+            oResponse.PC = oResponseCheck.PC
+            oResponse.AC = oResponseCheck.AC
+            oResponse.field = oResponseCheck.field
+            oResponse.CLEARED = oResponseCheck.CLEARED
+
+        }
+
+        aResponseCheck.push(oResponse)
+
         if (aFilter.length > 0) {
-
-            let oResponseCheck = aResponseCheck.find(oResponseCheck => oResponseCheck.REQID === oResponse.REQID)
-
-            if (!oResponseCheck) {
-
-                let oClearingStatus = await getClearingStatus(oResponse.REQID, aAccDocPosVendClearSet)
-
-                oResponse.NC = oClearingStatus.NC
-                oResponse.PC = oClearingStatus.PC
-                oResponse.OC = oClearingStatus.OC
-                oResponse.field = oClearingStatus.field
-
-            } else {
-
-                oResponse.NC = oResponseCheck.NC
-                oResponse.PC = oResponseCheck.PC
-                oResponse.OC = oResponseCheck.OC
-                oResponse.field = oResponseCheck.field
-
-            }
-
-            aResponseCheck.push(oResponse)
 
             let oFilter = aFilter.find(oFilter => oFilter.field === oResponse.field)
 
@@ -1504,7 +1505,7 @@ async function getClearingFilter(iRequest) {
 
             if (aSplit[i].substring(0, 2) === 'PC' ||
                 aSplit[i].substring(0, 2) === 'NC' ||
-                aSplit[i].substring(0, 2) === 'OC') {
+                aSplit[i].substring(0, 2) === 'AC') {
 
                 if (aSplit[i].substring(6) === "true") {
                     aResponse.push({ field: aSplit[i].substring(0, 2), value: aSplit[i].substring(6) })
@@ -1518,118 +1519,63 @@ async function getClearingFilter(iRequest) {
 
 }
 
-async function getClearingStatus(iRequestId, iAccDocPosVendClearSet) {
+async function getClearingStatus(iRequestId, iAccDocPosVendClearSet, iDocument, iDoclog) {
 
     let oResult = {
         NC: false,
         PC: false,
-        OC: false,
-        field: ""
+        AC: false,
+        field: '',
+        fieldDesc: '',
+        error: ''
     }
 
 
     let docNum = 0
     let docClearCount = 0
 
-    /*
-        let oRequest = await SELECT.one.from(Request).
-            where({
-                REQUEST_ID: iRequestId
-            });
 
-         
-let aAccountreq = await SELECT.from(Accountreq).
-    where({
-        REQUESTER_CODE: oRequest.REQUESTER_CODE
-    });
-*/
+    try {
 
+        let aDocument = iDocument.filter(oDocument =>
+            oDocument.to_Request_REQUEST_ID === iRequestId);
 
+        let aDoclog = iDoclog.filter(oDoclog =>
+            oDoclog.to_Request_REQUEST_ID === iRequestId);
 
+        for (let x = 0; x < aDocument.length; x++) {
 
-   
- 
-        let aDocument = await SELECT.from(Document).
-            where({
-                to_Request_REQUEST_ID: iRequestId,
-                DOCUMENT_NUMBER: { '!=': null }
-            }).orderBy('DOC_ID asc', 'ID asc')
-    
-    
-        let aDoclog = await SELECT.from(Doclog).
-            where({
-                to_Request_REQUEST_ID: iRequestId,
-                STATUS: 'C'
-            })
-    
+            docNum = docNum + 1
 
-/*
+            let oAccDocPosVendClearSet
 
-let aDocument = users.filter(user => user.age > 50 && user.occupation === 'programmer');
+            if (aDocument[x].ACCOUNT_ADVANCE === true) {
 
-    let aDocument = iDocument.filter(oDocument =>
-        oDocument.REQUEST_ID === iRequestId);
-
-  
-        let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
-    
-        const { AccDocPosVendClearSet } = EccServiceO2P.entities;
-    
-    */
-
-    for (let x = 0; x < aDocument.length; x++) {
-
-        docNum = docNum + 1
-
-        let oAccDocPosVendClearSet
-
-        if (aDocument[x].ACCOUNT_ADVANCE === true) {
-
-            oAccDocPosVendClearSet = iAccDocPosVendClearSet.find(
-                oAccDocPosVendClearSet => oAccDocPosVendClearSet.Belnr === aDocument[x].DOCUMENT_NUMBER &&
-                    oAccDocPosVendClearSet.Bukrs === aDocument[x].DOCUMENT_COMP_CODE &&
-                    oAccDocPosVendClearSet.Gjahr === aDocument[x].DOCUMENT_FISCAL_YEAR &&
-                    oAccDocPosVendClearSet.Bschl === '31'
-            )
-
-            /*
-            oAccDocPosVendClearSet = await EccServiceO2P.run(
-                SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
-                    Belnr: aDocument[x].DOCUMENT_NUMBER,
-                    Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
-                    Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR,
-                    Bschl: '31'
-                }));
-                */
+                oAccDocPosVendClearSet = iAccDocPosVendClearSet.find(
+                    oAccDocPosVendClearSet =>
+                        oAccDocPosVendClearSet.Belnr === aDocument[x].DOCUMENT_NUMBER &&
+                        oAccDocPosVendClearSet.Bukrs === aDocument[x].DOCUMENT_COMP_CODE &&
+                        oAccDocPosVendClearSet.Gjahr === aDocument[x].DOCUMENT_FISCAL_YEAR &&
+                        oAccDocPosVendClearSet.Bschl === '31'
+                )
 
 
-        } else {
+            } else {
 
 
-            oAccDocPosVendClearSet = iAccDocPosVendClearSet.find(
-                oAccDocPosVendClearSet => oAccDocPosVendClearSet.Belnr === aDocument[x].DOCUMENT_NUMBER &&
-                    oAccDocPosVendClearSet.Bukrs === aDocument[x].DOCUMENT_COMP_CODE &&
-                    oAccDocPosVendClearSet.Gjahr === aDocument[x].DOCUMENT_FISCAL_YEAR
-            )
+                oAccDocPosVendClearSet = iAccDocPosVendClearSet.find(
+                    oAccDocPosVendClearSet =>
+                        oAccDocPosVendClearSet.Belnr === aDocument[x].DOCUMENT_NUMBER &&
+                        oAccDocPosVendClearSet.Bukrs === aDocument[x].DOCUMENT_COMP_CODE &&
+                        oAccDocPosVendClearSet.Gjahr === aDocument[x].DOCUMENT_FISCAL_YEAR
+                )
 
-            /*
-            oAccDocPosVendClearSet = await EccServiceO2P.run(
-                SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
-                    Belnr: aDocument[x].DOCUMENT_NUMBER,
-                    Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
-                    Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR
 
-                }));
-                */
+            }
 
 
 
-        }
-
-        try {
-
-            //  let oAccountreq = aAccountreq.find(oAccountreq => oAccountreq.ACCOUNT === aDocument[x].ACCOUNT)
-            let oDoclog = aDoclog.find(oDoclog => oDoclog.DOC_NUMBER === aDocument[x].DOCUMENT_NUMBER  )
+            let oDoclog = aDoclog.find(oDoclog => oDoclog.DOC_NUMBER === aDocument[x].DOCUMENT_NUMBER)
 
             if (oAccDocPosVendClearSet) {
 
@@ -1646,31 +1592,30 @@ let aDocument = users.filter(user => user.age > 50 && user.occupation === 'progr
 
             }
 
-
-        } catch (error) {
-            let errMEssage = error.message
-            // iRequest.error(450, errMEssage, null, 450);
-            // LOG.error(errMEssage);
-            // return iRequest;
         }
 
-        // }
-    }
 
-
-    if (docClearCount === 0 && docNum > 0) {
-        oResult.NC = true
-        oResult.field = 'NC'
-    } else {
-        if (docClearCount > 0 && docClearCount < docNum) {
-            oResult.PC = true
-            oResult.field = 'PC'
+        if (docClearCount === 0 && docNum > 0) {
+            oResult.NC = true
+            oResult.field = 'NC'
+            oResult.fieldDesc = 'No'
         } else {
-            if (docClearCount > 0 && docClearCount === docNum) {
-                oResult.OC = true
-                oResult.field = 'OC'
+            if (docClearCount > 0 && docClearCount < docNum) {
+                oResult.PC = true
+                oResult.field = 'PC'
+                oResult.fieldDesc = 'Partially'
+
+            } else {
+                if (docClearCount > 0 && docClearCount === docNum) {
+                    oResult.AC = true
+                    oResult.field = 'AC'
+                    oResult.fieldDesc = 'Yes'
+                }
             }
         }
+
+    } catch (error) {
+        oResult.error = error.message
     }
 
     /*

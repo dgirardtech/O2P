@@ -130,7 +130,16 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
     let aDocHeader = oTree.HEADER
     for (let i = 0; i < aDocHeader.length; i++) {
 
-        // aGtDocument.push(aDocHeader[i])
+
+        let vendorIbanText = ''
+        if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.BONIFICO) {
+            vendorIbanText = aDocHeader[i].VENDOR + ' - ' + aDocHeader[i].VENDOR_DESC + '\r\n' +
+                            '( ' + aDocHeader[i].IBAN + ' )'
+        } else {
+            vendorIbanText = aDocHeader[i].VENDOR + ' - ' + aDocHeader[i].VENDOR_DESC
+        }
+        
+
 
         let aDocPos = aDocHeader[i].POSITION
 
@@ -145,11 +154,24 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
                 costcenterIntorder = aDocPos[x].COST_CENTER
             }
 
+
+            let accountText = ''
+            let oAccountreq = await SELECT.one.from(Accountreq).
+            where({
+                REQUESTER_CODE: oRequest.REQUESTER_CODE,
+                ACCOUNT: aDocPos[x].ACCOUNT
+            });
+            if (oAccountreq) {
+                accountText = oAccountreq.ACCOUNT + ' ( ' + oAccountreq.ACCOUNT_TEXT + ' )'
+            }
+          
+ 
+
             aGtDocument.push({
                 DOC_ID_TEXT: aDocHeader[i].DOC_ID,
                 COSTCENTER_INTORDER: costcenterIntorder,
-                VENDOR_IBAN_TEXT: aDocHeader[i].VENDOR_DESC,
-                ACCOUNT_TEXT: aDocPos[x].ACCOUNT,
+                VENDOR_IBAN_TEXT: vendorIbanText,
+                ACCOUNT_TEXT: accountText,
                 REASON: aDocHeader[i].REASON,
                 AMOUNT: aDocPos[x].AMOUNT
             })
