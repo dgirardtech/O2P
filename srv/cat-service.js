@@ -8,11 +8,13 @@ const { createAttachment, readAttachment, deleteAttachment, createNote, readNote
 const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
 const { testMail } = require('./lib/MailHandler');
 const { fromDocumentToTree, fromRequestIdToTree,
-    fromTreeToDocument, formatDocument, createFIDocument } = require('./lib/ManageDocument');
+    fromTreeToDocument, formatDocument, createFIDocument } = require('./lib/DocumentHandler');
     const { getEnvParam, getTextBundle,getNameMotivationAction } = require('./lib/Utils');
 
 const { generateO2PF23Aut } = require('./lib/HandlerPDF');
-const { constants } = require('@sap/xssec');
+const { consts } = require('./lib/Constants');
+
+const fs = require('fs')
 
 
 module.exports = cds.service.impl(async function () {
@@ -129,8 +131,31 @@ module.exports = cds.service.impl(async function () {
     this.before('DELETE', 'Notes', deleteNote);
 
 
+      
+
+        this.on('downloadDocTemplate', async (req) => {
+
+            let docTemplate = fs.readFileSync('srv/file/csv/Documents template.csv')
+     
+
+            let oResult =
+
+            { 
+    
+                CONTENT: docTemplate.toString(),
+                MEDIATYPE: 'text/csv',
+                CONTENTSTRING: docTemplate.toString('base64')
+    
+            }
+    
+            return oResult
+
+        });
+
+
     this.on('printF23Aut', async (req) => {
-        // return await generateO2PF23Aut(req);
+
+
         let o2pF23Aut = await generateO2PF23Aut(req, false)
 
         let oResult =
@@ -221,7 +246,7 @@ module.exports = cds.service.impl(async function () {
     //---------Function Reject info----
     this.on('getRejectInfo', async (req) => {
 
-        let oResultNameMotivation = await getNameMotivationAction(req, req.data.REQUEST_ID, "REJECTED", "");
+        let oResultNameMotivation = await getNameMotivationAction(req.data.REQUEST_ID, "REJECTED", "");
 
         return {
             REJECTOR_NAME: oResultNameMotivation.name,

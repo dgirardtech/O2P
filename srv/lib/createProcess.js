@@ -1,12 +1,14 @@
 const LOG = cds.log('KupitO2PSrv'); 
 const _ = require('underscore');
 const consts = require("./Constants");
-const { getEnvParam, getTextBundle } = require('./Utils');
+const { getEnvParam, getTextBundle, getTaskComposedUrl } = require('./Utils');
 const SequenceHelper = require("./SequenceHelper");
 const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF); 
 const { retrieveJwt } = require('@sap-cloud-sdk/connectivity');
 const SapCfAxios = require('sap-cf-axios').default;
 const axiosMyInboxService = SapCfAxios("sap_inbox_task_api", { logger: console }); 
+ 
+
 
 
 async function getRequestData(iRequestId, iRequest) {
@@ -1161,39 +1163,6 @@ async function getMonitorTaskLink(iRequestId, iRequest) {
 }
 
 
-async function getTaskComposedUrl(iTaskId, iRequest) {
-
-    let result = {};
-    result.absoluteUrl = "";
-    result.relativeUrl = "";
-
-    try {
-
-        let host = iRequest.headers.origin;
-        let urlWzSite = getEnvParam("URL_WZ_SITE", false);
-        //Debug da BAS
-        if (host === undefined) {
-            host = 'https://cf-kupit-dev-yy6gs83h.launchpad.cfapps.eu10.hana.ondemand.com';
-        }
-
-        let urlTask1 = getEnvParam("URL_TASK_WF1", false);
-        let urlTask2 = getEnvParam("URL_TASK_WF2", false);
-        let taskUrl = urlTask1 + urlTask2;
-
-        taskUrl = taskUrl.replaceAll("<TASKID>", iTaskId);
-
-        result.relativeUrl = taskUrl;
-        result.absoluteUrl = host + urlWzSite + taskUrl;
-
-    } catch (error) {
-        let errMEssage = "ERROR getTaskComposedUrl:" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return result;
-    }
-    return result;
-}
-
 async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest) {
 
 
@@ -1252,55 +1221,6 @@ async function updateMoaApprovers(iRequestId, iUserCompiler, iRequest) {
 }
 
 
-async function getTaskId(iRequestId, iStepId, iWfInstaceID, iRequest) {
-    LOG.info("getTaskId" + iRequestId);
-
-    let lReturn = new Object();
-
-    let responseTaskInstance;
-    let respTaskContext;
-    let respTaskAttributes;
-
-    try {
-
-        //  const userJwt = retrieveJwt(iRequest);
-
-        responseTaskInstance = await UserTaskInstancesApi.getV1TaskInstances({
-            workflowInstanceId: iWfInstaceID,
-            status: "READY",
-        }).execute({
-            destinationName: consts.API_WF_DESTINATION
-            //  destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt
-        });
-
-        if (responseTaskInstance.length <= 0) {
-            let errMEssage = "getTaskId.getV1TaskInstances: active tasks not found for Request:" + iRequestId;
-            iRequest.error(450, errMEssage, null, 450);
-            LOG.error(errMEssage);
-            return iRequest;
-        }
-
-        respTaskContext = await UserTaskInstancesApi.getV1TaskInstancesContextByTaskInstanceId(responseTaskInstance[0].id).execute({
-            destinationName: consts.API_WF_DESTINATION
-        });
-
-        let contextRequest = respTaskContext.REQUESTID;
-        let contextStep = respTaskContext.STEP;
-
-        if (contextRequest !== iRequestId || contextStep !== iStepId) {
-            let errMEssage = "getTaskId.getV1TaskInstances: active tasks not found for Request:" + iRequestId + " and Step:" + iStepId;
-            iRequest.error(450, errMEssage, null, 450);
-            LOG.error(errMEssage);
-            return iRequest;
-        }
-    } catch (error) {
-        let errMEssage = "getTaskId:" + error.message + " REQUESTID: " + iRequestId;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return responseTaskInstance[0].id;
-}
 
 
 async function getActualStep(iRequestId) {
@@ -1347,9 +1267,7 @@ module.exports = {
     createRequest,
     startBPAProcess,
     userTaskCounter,
-    getMonitorTaskLink,
-    getTaskComposedUrl,
-    updateMoaApprovers,
-    getTaskId,
+    getMonitorTaskLink, 
+    updateMoaApprovers, 
     getMOAParams
 }

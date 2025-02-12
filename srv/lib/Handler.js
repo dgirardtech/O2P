@@ -6,8 +6,9 @@ const consts = require("./Constants");
 const { getEnvParam, getTextBundle } = require('./Utils');
 const { getMoaApprovers } = require('./createProcess');
 const { generateO2PAccounting } = require('./HandlerPDF');
-const { getDocumentProp, getDocumentDetail } = require('./ManageDocument')
+const { getDocumentProp, getDocumentDetail } = require('./DocumentHandler')
 const { sendAllMail } = require('./MailHandler');
+const { and } = require('mathjs');
 
 
 async function updateRequest(iData, iRequest) {
@@ -655,6 +656,18 @@ async function getMonitorRequest(iRequest, next) {
         return aResponse
     }
 
+    let aResponseOut = []
+    let aResponseCheck = []
+    let aAccDocPosVendClearSet = []
+    let aRequestId = []
+    let aDocNumber = []
+    let aCompany = []
+    let aYear = []
+    let aDoclog = []
+    let aDocument = []
+
+
+
     let aSplit = iRequest.entity.split('.');
     let entity = aSplit[1]
 
@@ -663,53 +676,121 @@ async function getMonitorRequest(iRequest, next) {
     let aFilter = await getClearingFilter(iRequest);
 
 
+
+    if (aFilter.length > 0) {
+
+        for (let i = 0; i < aResponse.length; i++) {
+            aRequestId.push(aResponse[i].REQID)
+        }
+
+        aDoclog = await SELECT.from(Doclog).
+            where({
+                to_Request_REQUEST_ID: aRequestId,
+                STATUS: 'C'
+            })
+
+        aDocument = await SELECT.from(Document).
+            where({
+                to_Request_REQUEST_ID: aRequestId,
+                DOCUMENT_NUMBER: { '!=': null }
+            }).orderBy('DOC_ID asc', 'ID asc')
+
+        if (aDocument.length > 0) {
+
+            for (let i = 0; i < aDocument.length; i++) {
+
+                aDocNumber.push(aDocument[i].DOCUMENT_NUMBER)
+                aCompany.push(aDocument[i].DOCUMENT_COMP_CODE)
+                aYear.push(aDocument[i].DOCUMENT_FISCAL_YEAR)
+
+            }
+
+            aDocNumber = _.uniq(aDocNumber)
+            aCompany = _.uniq(aCompany)
+            aYear = _.uniq(aYear)
+
+
+            let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+
+            const { AccDocPosVendClearSet } = EccServiceO2P.entities;
+
+
+            aAccDocPosVendClearSet = await EccServiceO2P.run(
+                SELECT.from(AccDocPosVendClearSet).columns(['Bukrs', 'Belnr', 'Gjahr', 'Augbl']).where({
+                    Belnr: aDocNumber,
+                    Bukrs: aCompany,
+                    Gjahr: aYear
+
+                }));
+        }
+    }
+
+
+
     for (let i = 0; i < aResponse.length; i++) {
 
+        let oResponse = aResponse[i]
 
         if (aFilter.length > 0) {
 
-            // let requestId = aResponse[i].REQUEST_ID
+            let oResponseCheck = aResponseCheck.find(oResponseCheck => oResponseCheck.REQID === oResponse.REQID)
 
-            let requestId = aResponse[i].REQID
+            if (!oResponseCheck) {
 
-            let oClearingStatus = await getClearingStatus(requestId);
+                let oClearingStatus = await getClearingStatus(oResponse.REQID, aAccDocPosVendClearSet)
 
-            let oFilter = aFilter.find(oFilter => oFilter.field === oClearingStatus.field
-                // &&  oFilter.value === "true"
-            )
-            if (!oFilter) {
-                aResponse = aResponse.filter(oResponse => oResponse.REQID !== requestId)
-                continue
+                oResponse.NC = oClearingStatus.NC
+                oResponse.PC = oClearingStatus.PC
+                oResponse.OC = oClearingStatus.OC
+                oResponse.field = oClearingStatus.field
+
+            } else {
+
+                oResponse.NC = oResponseCheck.NC
+                oResponse.PC = oResponseCheck.PC
+                oResponse.OC = oResponseCheck.OC
+                oResponse.field = oResponseCheck.field
+
             }
 
-            aResponse[i].NC = oClearingStatus.NC
-            aResponse[i].PC = oClearingStatus.PC
-            aResponse[i].OC = oClearingStatus.OC
+            aResponseCheck.push(oResponse)
+
+            let oFilter = aFilter.find(oFilter => oFilter.field === oResponse.field)
+
+            if (!oFilter) {
+                continue
+            }
 
         }
 
 
         if (entity === 'MonitorRequest') {
 
-            let started = moment(aResponse[i].ASSIGNED_AT);
+
+            let started = moment(oResponse.ASSIGNED_AT)
             let dayDiff = now.diff(started, 'days')
 
-            aResponse[i].DAYS_SPENT = dayDiff;
+            oResponse.DAYS_SPENT = dayDiff
 
-            if (aResponse[i].STATUS_code === consts.requestStatus.Refused ||
-                aResponse[i].STATUS_code === consts.requestStatus.Deleted ||
-                aResponse[i].STATUS_code === consts.requestStatus.Completed) {
-                aResponse[i].DAYS_SPENT = 0;
-                aResponse[i].STEP_TO_END = 0;
-                aResponse[i].SHOW_ASSIGNED_AT = false;
+            if (oResponse.STATUS_code === consts.requestStatus.Refused ||
+                oResponse.STATUS_code === consts.requestStatus.Deleted ||
+                oResponse.STATUS_code === consts.requestStatus.Completed) {
+
+                oResponse.DAYS_SPENT = 0
+                oResponse.STEP_TO_END = 0
+                oResponse.SHOW_ASSIGNED_AT = false
+
             }
 
         }
 
+
+        aResponseOut.push(oResponse)
+
     }
 
 
-    return aResponse
+    return aResponseOut
 
 }
 
@@ -1437,7 +1518,7 @@ async function getClearingFilter(iRequest) {
 
 }
 
-async function getClearingStatus(iRequestId) {
+async function getClearingStatus(iRequestId, iAccDocPosVendClearSet) {
 
     let oResult = {
         NC: false,
@@ -1450,99 +1531,130 @@ async function getClearingStatus(iRequestId) {
     let docNum = 0
     let docClearCount = 0
 
+    /*
+        let oRequest = await SELECT.one.from(Request).
+            where({
+                REQUEST_ID: iRequestId
+            });
 
-    let oRequest = await SELECT.one.from(Request).
-        where({
-            REQUEST_ID: iRequestId
-        });
-
-    let aDocument = await SELECT.from(Document).
-        where({
-            to_Request_REQUEST_ID: oRequest.REQUEST_ID
-        }).orderBy('DOC_ID asc', 'ID asc')
-
-
-    let aDoclog = await SELECT.from(Doclog).
-        where({
-            to_Request_REQUEST_ID: oRequest.REQUEST_ID,
-            // STATUS: 'C'
-        })
-
-
-    let aAccountreq = await SELECT.from(Accountreq).
-        where({
-            REQUESTER_CODE: oRequest.REQUESTER_CODE
-        });
+         
+let aAccountreq = await SELECT.from(Accountreq).
+    where({
+        REQUESTER_CODE: oRequest.REQUESTER_CODE
+    });
+*/
 
 
 
-    let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
 
-    const { AccDocPosVendClearSet } = EccServiceO2P.entities;
+   
+ 
+        let aDocument = await SELECT.from(Document).
+            where({
+                to_Request_REQUEST_ID: iRequestId,
+                DOCUMENT_NUMBER: { '!=': null }
+            }).orderBy('DOC_ID asc', 'ID asc')
+    
+    
+        let aDoclog = await SELECT.from(Doclog).
+            where({
+                to_Request_REQUEST_ID: iRequestId,
+                STATUS: 'C'
+            })
+    
 
+/*
 
+let aDocument = users.filter(user => user.age > 50 && user.occupation === 'programmer');
+
+    let aDocument = iDocument.filter(oDocument =>
+        oDocument.REQUEST_ID === iRequestId);
+
+  
+        let EccServiceO2P = await cds.connect.to('ZFI_O2P_COMMON_SRV');
+    
+        const { AccDocPosVendClearSet } = EccServiceO2P.entities;
+    
+    */
 
     for (let x = 0; x < aDocument.length; x++) {
-        if (Boolean(aDocument[x].DOCUMENT_NUMBER)) {
 
-            docNum = docNum + 1
+        docNum = docNum + 1
 
-            // let oAccountreq = aAccountreq.find(oAccountreq => oAccountreq.ACCOUNT === aDocument[x].ACCOUNT)
+        let oAccDocPosVendClearSet
 
-            let oDoclog = aDoclog.find(oDoclog => oDoclog.DOC_NUMBER === aDocument[x].DOCUMENT_NUMBER)
+        if (aDocument[x].ACCOUNT_ADVANCE === true) {
+
+            oAccDocPosVendClearSet = iAccDocPosVendClearSet.find(
+                oAccDocPosVendClearSet => oAccDocPosVendClearSet.Belnr === aDocument[x].DOCUMENT_NUMBER &&
+                    oAccDocPosVendClearSet.Bukrs === aDocument[x].DOCUMENT_COMP_CODE &&
+                    oAccDocPosVendClearSet.Gjahr === aDocument[x].DOCUMENT_FISCAL_YEAR &&
+                    oAccDocPosVendClearSet.Bschl === '31'
+            )
+
+            /*
+            oAccDocPosVendClearSet = await EccServiceO2P.run(
+                SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
+                    Belnr: aDocument[x].DOCUMENT_NUMBER,
+                    Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
+                    Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR,
+                    Bschl: '31'
+                }));
+                */
 
 
-            let oAccDocPosVendClearSet
+        } else {
 
-            if (aDocument[x].ACCOUNT_ADVANCE === true) {
 
-                oAccDocPosVendClearSet = await EccServiceO2P.run(
-                    SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
-                        Belnr: aDocument[x].DOCUMENT_NUMBER,
-                        Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
-                        Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR,
-                        Bschl: '31'
-                    }));
+            oAccDocPosVendClearSet = iAccDocPosVendClearSet.find(
+                oAccDocPosVendClearSet => oAccDocPosVendClearSet.Belnr === aDocument[x].DOCUMENT_NUMBER &&
+                    oAccDocPosVendClearSet.Bukrs === aDocument[x].DOCUMENT_COMP_CODE &&
+                    oAccDocPosVendClearSet.Gjahr === aDocument[x].DOCUMENT_FISCAL_YEAR
+            )
 
+            /*
+            oAccDocPosVendClearSet = await EccServiceO2P.run(
+                SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
+                    Belnr: aDocument[x].DOCUMENT_NUMBER,
+                    Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
+                    Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR
+
+                }));
+                */
+
+
+
+        }
+
+        try {
+
+            //  let oAccountreq = aAccountreq.find(oAccountreq => oAccountreq.ACCOUNT === aDocument[x].ACCOUNT)
+            let oDoclog = aDoclog.find(oDoclog => oDoclog.DOC_NUMBER === aDocument[x].DOCUMENT_NUMBER  )
+
+            if (oAccDocPosVendClearSet) {
+
+
+                if (oDoclog.DOC_TYPE === 'KA' || oDoclog.DOC_TYPE === 'KB') {
+                    docClearCount = docClearCount + 1
+                }
 
             } else {
 
-                oAccDocPosVendClearSet = await EccServiceO2P.run(
-                    SELECT.one.from(AccDocPosVendClearSet).columns(['Augbl']).where({
-                        Belnr: aDocument[x].DOCUMENT_NUMBER,
-                        Bukrs: aDocument[x].DOCUMENT_COMP_CODE,
-                        Gjahr: aDocument[x].DOCUMENT_FISCAL_YEAR
-
-                    }));
-
-            }
-
-            try {
-
-                if (oAccDocPosVendClearSet) {
-
-
-                    if (oDoclog.DOC_TYPE === 'KA' || oDoclog.DOC_TYPE === 'KB') {
-                        docClearCount = docClearCount + 1
-                    }
-
-                } else {
-
-                    if (oDoclog.DOC_TYPE === 'KZ' || oDoclog.DOC_TYPE === 'KY') {
-                        docClearCount = docClearCount + 1
-                    }
-
+                if (oDoclog.DOC_TYPE === 'KZ' || oDoclog.DOC_TYPE === 'KY') {
+                    docClearCount = docClearCount + 1
                 }
 
-
-            } catch (error) {
-                let errMEssage = error.message
-                // iRequest.error(450, errMEssage, null, 450);
-                // LOG.error(errMEssage);
-                // return iRequest;
             }
 
+
+        } catch (error) {
+            let errMEssage = error.message
+            // iRequest.error(450, errMEssage, null, 450);
+            // LOG.error(errMEssage);
+            // return iRequest;
         }
+
+        // }
     }
 
 
@@ -1561,10 +1673,12 @@ async function getClearingStatus(iRequestId) {
         }
     }
 
+    /*
     if (!Boolean(oResult.field)) {
         oResult.NC = true
         oResult.field = 'NC'
     }
+        */
 
     return oResult
 
@@ -1656,7 +1770,7 @@ async function fillRequest(iRequest) {
 
     let recipientRole = ''
     let recipientAdd = ''
-       let requesterCode = ''
+    let requesterCode = ''
 
     if (Boolean(iRequest._queryOptions) && Boolean(iRequest._queryOptions.$filter)) {
 
@@ -1664,7 +1778,7 @@ async function fillRequest(iRequest) {
 
         for (let i = 0; i < aSplit.length; i++) {
 
-            
+
 
             if (aSplit[i].substring(0, 14) === 'REQUESTER_CODE') {
                 if (aSplit[i].substring(18) !== "''") {
@@ -1676,12 +1790,12 @@ async function fillRequest(iRequest) {
 
                 if (aSplit[i].substring(18) !== "''") {
                     recipientRole = aSplit[i].substring(18)
-                }  
+                }
 
             }
 
             if (aSplit[i].substring(0, 13) === 'RECIPIENT_ADD') {
-                recipientAdd = aSplit[i].substring(17) 
+                recipientAdd = aSplit[i].substring(17)
             }
         }
     }
@@ -1690,14 +1804,14 @@ async function fillRequest(iRequest) {
         iRequest.error(450, 'RECIPIENT_ROLE initial', null, 450);
         LOG.error('RECIPIENT_ROLE initial');
         return iRequest;
-    }  
+    }
 
     if (requesterCode === '') {
         iRequest.error(450, 'REQUESTER_CODE initial', null, 450);
         LOG.error('REQUESTER_CODE initial');
         return iRequest;
-    }  
-    
+    }
+
 
 
     iRequest.RECIPIENT_ROLE = recipientRole
@@ -1705,7 +1819,7 @@ async function fillRequest(iRequest) {
 
 
     return iRequest
- 
+
 
 }
 
@@ -1724,33 +1838,42 @@ async function enrichCountingSend(iRequest, iCounting) {
     }
 
     iRequest = await fillRequest(iRequest)
-    if (iRequest.errors){
+    if (iRequest.errors) {
         return iRequest
-}
+    }
 
 
-for (let x = 0; x < aCounting.length; x++) {
+    for (let x = 0; x < aCounting.length; x++) {
 
-    if (Boolean(send)) {
+        if (Boolean(send)) {
 
-        let oResponseSendAllMail = await sendAllMail(iRequest,
-            aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, 'CountingSend', false)
+            let oResponseSendAllMail = await sendAllMail(iRequest,
+                aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, 'CountingSend', false)
 
-        if (oResponseSendAllMail.error) {
+            if (oResponseSendAllMail.error) {
 
-            aCounting[x].RESULT_TYPE = consts.ERROR
-            aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_SENDED",
-                [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER, oResponseSendAllMail.error])
+                aCounting[x].RESULT_TYPE = consts.ERROR
+                aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_SENDED",
+                    [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER, oResponseSendAllMail.error])
+
+            } else {
+
+
+                let resUpdate = await UPDATE(Document).set({ CONTABILE_SEND_DATE: new Date() }).where({
+                    to_Request_REQUEST_ID: aCounting[x].REQUEST_ID,
+                    DOC_ID: aCounting[x].DOC_ID,
+
+                });
+
+
+                aCounting[x].RESULT_TYPE = consts.SUCCESS
+                aCounting[x].RESULT_TEXT = oBundle.getText("CRO_SENDED",
+                    [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER])
+
+            }
+
 
         } else {
-
-
-            let resUpdate = await UPDATE(Document).set({ CONTABILE_SEND_DATE: new Date() }).where({
-                to_Request_REQUEST_ID: aCounting[x].REQUEST_ID,
-                DOC_ID: aCounting[x].DOC_ID,
-
-            });
-
 
             aCounting[x].RESULT_TYPE = consts.SUCCESS
             aCounting[x].RESULT_TEXT = oBundle.getText("CRO_SENDED",
@@ -1758,31 +1881,22 @@ for (let x = 0; x < aCounting.length; x++) {
 
         }
 
+    }
 
-    } else {
 
-        aCounting[x].RESULT_TYPE = consts.SUCCESS
-        aCounting[x].RESULT_TEXT = oBundle.getText("CRO_SENDED",
-            [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER])
+    if (aCounting.length === 0) {
+
+        aCounting.push({
+            REQUEST_ID: '',
+            DOC_ID: '',
+            RESULT_TYPE: consts.ERROR,
+            RESULT_TEXT: oBundle.getText("CRO_NOT_REQUEST")
+        })
 
     }
 
-}
 
-
-if (aCounting.length === 0) {
-
-    aCounting.push({
-        REQUEST_ID: '',
-        DOC_ID: '',
-        RESULT_TYPE: consts.ERROR,
-        RESULT_TEXT: oBundle.getText("CRO_NOT_REQUEST")
-    })
-
-}
-
-
-return aCounting
+    return aCounting
 }
 
 async function enrichCountingCreate(iRequest, iCounting) {

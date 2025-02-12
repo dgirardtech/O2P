@@ -1,7 +1,7 @@
 const moment = require('moment');
 const TextBundle = require('@sap/textbundle').TextBundle;
 
-async function getNameMotivationAction(iRequest, iRequestId, iUserAction, iVersion) {
+async function getNameMotivationAction(iRequestId, iUserAction, iVersion) {
 
     let oldVersion = 0;
 
@@ -91,8 +91,64 @@ function getTextBundle(req) {
 }
 
 
+function checkMail(iMail) {
+
+    if (typeof iMail === "string" && iMail.length === 0) {
+        return false;
+    } else if (iMail === null) {
+        return false;
+    } else if (iMail === undefined) {
+        return false;
+    } else if (iMail === 'null') {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
+
+async function getTaskComposedUrl(iTaskId, iRequest) {
+
+    let oResult = { absoluteUrl : '', relativeUrl : '' , error : ''}
+ 
+
+    try {
+
+        let host = iRequest.headers.origin
+      
+        //Debug da BAS
+        if (host === undefined) {
+            host = 'https://cf-kupit-dev-yy6gs83h.launchpad.cfapps.eu10.hana.ondemand.com'
+        }
+
+        let urlWzSite = getEnvParam("URL_WZ_SITE", false)
+        let urlTask1 = getEnvParam("URL_TASK_WF1", false)
+        let urlTask2 = getEnvParam("URL_TASK_WF2", false)
+
+        let taskUrl = urlTask1 + urlTask2
+
+        taskUrl = taskUrl.replaceAll("<TASKID>", iTaskId)
+
+        oResult.relativeUrl = taskUrl
+        oResult.absoluteUrl = host + urlWzSite + taskUrl
+
+        return oResult
+
+    } catch (error) {
+
+        let errMEssage = "ERROR getTaskComposedUrl:" + error.message
+        oResult.error = errMEssage
+        LOG.error(errMEssage)
+        
+    }
+  
+}
+
 module.exports = {
     getEnvParam,
     getTextBundle,
-    getNameMotivationAction
+    getNameMotivationAction,
+    checkMail,
+    getTaskComposedUrl,
 }

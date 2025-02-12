@@ -3,7 +3,7 @@ const _ = require('underscore');
 const convert = require('xml-js'); // https://www.npmjs.com/package/xml-js
 const moment = require('moment');
 const { getTextBundle } = require('./Utils');
-const { transcodeDocumentToTree } = require('./ManageDocument')
+const { transcodeDocumentToTree } = require('./DocumentHandler')
 const fs = require('fs')
 const consts = require("./Constants");
 const client = require('@sap-cloud-sdk/http-client');
@@ -563,7 +563,7 @@ async function generateO2PAccounting(iRequest, iDocumentDetail, iSaveAttach) {
     }
 
 
-    let gvLogoQuaser = fs.readFileSync('srv/pdf/images/ZLOGO_Q8_BW_3.bmp').toString('base64')
+    let gvLogoQuaser = fs.readFileSync('srv/file/pdf/images/ZLOGO_Q8_BW_3.bmp').toString('base64')
 
     let oCreatePDF = {
         data: {

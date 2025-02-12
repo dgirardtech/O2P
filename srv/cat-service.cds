@@ -208,6 +208,10 @@ service O2PModelService @(requires: [
             on  orgunitreq.REQUESTER.CODE = request.REQUESTER.CODE
             and orgunitreq.ORGUNIT        = request.AREA_CODE
 
+        left outer join Attachments as attachments
+            on  attachments.to_Request.REQUEST_ID     = request.REQUEST_ID
+            and attachments.ATTACHMENTTYPE.ATTACHMENTTYPE  = 'DOC'
+
         left outer join (
             select
                 to_Request.REQUEST_ID as REQUEST_ID,
@@ -254,6 +258,7 @@ service O2PModelService @(requires: [
                 approvalNotAssigned.STEP_TO_END,
                 approvalHistory.DAYS_SPENT,
                 approvalHistory.SHOW_ASSIGNED_AT,
+                attachments.ATTACHMENTTYPE.ATTACHMENTTYPE ,
                 virtual null       as PC  : Boolean,
                 virtual null       as NC  : Boolean,
                 virtual null       as OC  : Boolean,
@@ -386,6 +391,11 @@ service O2PModelService @(requires: [
 
     function getAssignInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns AssignInfo;
     function printF23Aut(REQUEST_ID : KupitO2PModel.REQUEST_ID)         returns fileReturn;
+
+ function downloadDocTemplate( )         returns fileReturn;
+    
+
+
     action   createProcess(REQUESTER : String)                          returns Message;
 
     action   testMail(REQUEST_ID : KupitO2PModel.REQUEST_ID,

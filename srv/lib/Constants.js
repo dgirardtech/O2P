@@ -133,7 +133,8 @@ exports.mailPatterns = Object.freeze({
 
 //Attachment Format
 exports.attachmentFormat = Object.freeze({
-    PDF: "application/pdf" 
+    PDF: "application/pdf" ,
+    CSV : "text/csv"
 });
 
 

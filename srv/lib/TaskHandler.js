@@ -1,14 +1,14 @@
 const LOG = cds.log('KupitO2PSrv');
 const _ = require('underscore');
 const consts = require("./Constants");
-const { getTextBundle,getEnvParam } = require('./Utils');
-const { getMoaApprovers, updateMoaApprovers, insertApprovalHistory,
-    getTaskId, getTaskComposedUrl } = require('./createProcess');
+const { getTextBundle, checkMail, getTaskComposedUrl} = require('./Utils');
+const { updateMoaApprovers, insertApprovalHistory} = require('./createProcess');
 const { generateO2PDocument } = require('./HandlerPDF');
-const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
-const {  sendAllMail, teamsTaskNotification, teamsTaskRejectNotification,sendAllNotification } = require('./MailHandler');
+const {  UserTaskInstancesApi } = require(consts.PATH_API_WF);
+const { sendAllMail,  sendAllNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
 const { UPSERT } = require('@sap/cds/lib/ql/cds-ql');
+ 
 
 async function saveUserAction(iRequest) {
 
@@ -37,9 +37,10 @@ async function saveUserAction(iRequest) {
         }
 
 
-    
-        let oResponseSendAllMail = await sendAllMail(iRequest,iRequest.data.REQUEST_ID ,'',iRequest.event, false)
+// no await for performance
+        let oResponseSendAllMail = await sendAllMail(iRequest, iRequest.data.REQUEST_ID, '', iRequest.event, false)
 
+        // no await for performance
         let o2pDocument = await generateO2PDocument(iRequest, true)
 
 
@@ -82,13 +83,6 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
             retUpdateRequestStatus = consts.requestStatus.Refused
         }
 
-        /*
-                let retsendProcessMail = await sendProcessMail(iRequestId, retUpdateRequestStatus, iUserAction, iRequest);
-                if (retsendProcessMail.errors) {
-                    return retsendProcessMail;
-                }
-                    */
-
     }
 
 
@@ -99,129 +93,6 @@ async function handleUserAction(iRequestId, iStepID, iUserAction, iRequest) {
     message.TEXT = oBundle.getText("ACTION_COMPLETED", [iRequestId]);
     return message;
 
-}
-
-
-
-async function emailRejectedProcessTask(iRequestId, iRequest) {
-
-    let recipient = [];
-    let rejectorFullName = "";
-    let fullNameCompiler = "";
-    let request;
-    let actualUser;
-    let note = "";
-
-    try {
-
-        actualUser = iRequest.user.id;
-
-        request = await getRequestData(iRequestId, iRequest)
-        if (request.errors) {
-            return request;
-        }
-
-        let approval = await SELECT.from(ApprovalHistory).
-            where({
-                REQUEST_ID: iRequestId,
-                To_StepStatus_STEP_STATUS: consts.stepStatus.COMPLETED
-            });
-
-        approval.forEach(element => {
-            if (element.REAL_MAIL !== null) {
-                recipient.push(element.REAL_MAIL);
-            }
-        });
-
-        ////////////////////////////////////////////////////////////////////////////
-
-        let stepCheck
-
-        /*
-
-        if (request.PROCESSTYPE_code === consts.processType.Annuale) {
-            if (iRequest.data.STEPID > 40) {
-                stepCheck = 40
-            } else {
-                stepCheck = 10
-            }
-        }
-
-        if (request.PROCESSTYPE_code === consts.processType.Cessazione) {
-
-            if (iRequest.data.STEPID > 50) {
-                stepCheck = 50
-            } else {
-
-                if (iRequest.data.STEPID > 20) {
-
-                    stepCheck = 20
-
-                } else {
-                    stepCheck = 10
-                }
-
-            }
-        }
-
-        */
-
-        stepCheck = 10
-
-
-        let approvalH = await SELECT.one.from(ApprovalHistory).
-            where({
-                REQUEST_ID: iRequestId,
-                VERSION: request.VERSION,
-                STEP: stepCheck
-            });
-
-
-        //////////////////////////////////////////////////////////////////////////
-
-        /*   let approvalH = await SELECT.one.from(ApprovalHistory).
-               where({
-                   REQUEST_ID: iRequestId,
-                   STEP: 10,
-                   To_StepStatus_STEP_STATUS: consts.stepStatus.COMPLETED
-               }); */
-
-        //////////////////////////////////////////////////////////////////////
-
-        if (approvalH.REAL_FULLNAME !== null) {
-            fullNameCompiler = approvalH.REAL_FULLNAME;
-        }
-
-        recipient = _.reject(recipient, actualUser);
-        if (recipient.length <= 0) {
-            return iRequest;
-        }
-
-        // createdBy: actualUser
-        let noteElement = await SELECT.one.from(Notes).
-            where({
-                REQUEST_ID: iRequestId,
-                VERSION: request.VERSION,
-                TYPE: 'R'
-
-            });
-        if (noteElement) {
-            rejectorFullName = noteElement.CREATOR_FULLNAME
-            note = noteElement.NOTE;
-        }
-
-        let retMailProcedeleted = await mailTaskRejected(iRequestId, request, recipient, rejectorFullName, fullNameCompiler, note, iRequest)
-        if (retMailProcedeleted.errors) {
-            return retMailProcedeleted;
-        }
-
-    } catch (error) {
-        let errMEssage = "ERROR emailTerminatedProcess " + iRequestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return iRequest;
 }
 
 
@@ -263,13 +134,9 @@ async function updateRequestStatus(iRequestId, iStepID, iUserAction, iRequest) {
             return processStatus;
         }
 
-        /* if (requestData.PROCESSTYPE_code === consts.processType.Annuale ||
-             requestData.PROCESSTYPE_code === consts.processType.Cessazione
-         ) { */
+   
         updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date }).where({ REQUEST_ID: iRequestId });
-        /*  } else {
-              updateRequest = await UPDATE(Request).set({ STATUS_code: processStatus, ENDDATE: date, REQUEST_OWNER: '' }).where({ REQUEST_ID: iRequestId });
-          } */
+ 
     } catch (error) {
         let errMEssage = "ERROR updateRequestStatus " + iRequestId + " :" + error.message;
         iRequest.error(450, errMEssage, null, 450);
@@ -320,7 +187,7 @@ async function getStatusProcessTerminated(iRequestId, iRequest) {
             processStatus = consts.requestStatus.Refused;
         }
 
-        //  processStatus = consts.requestStatus.Refused;
+   
 
     } catch (error) {
         let errMEssage = "ERROR getStatusProcessTerminated " + iRequestId + " :" + error.message;
@@ -385,11 +252,10 @@ async function userAction(iRequestId, iStepID, iUserAction, iRequest) {
         return returnApproversControl;
     }
 
-
-
+ 
     //Update approval history
-    let actualUser = iRequest.user.id; //<----da ripristinare 
-    //let actualUser = 'vasbarde@q8.it';
+    let actualUser = iRequest.user.id;  
+ 
 
     let returnData = await getRequestData(iRequestId, iRequest);
     let actualVersion = returnData.VERSION;
@@ -491,14 +357,7 @@ async function getStepParams(iRequest) {
             return iRequest;
         }
 
-        // //Update approver step by MOA
-        // let stepStarter = _.findWhere(resApprovalFlow, { STEP: 10 });
-        // let userCompiler = stepStarter.MAIL;
-        // let returnUpdateStepByMOA = await updateStepByMOA(iRequest, userCompiler, stepElements);
-        // if (returnUpdateStepByMOA.errors) {
-        //     return returnUpdateStepByMOA;
-        // }
-        // stepElements = returnUpdateStepByMOA;
+  
 
         //Approvers by Step
         for (let a = 0; a < stepElements.length; a++) {
@@ -722,63 +581,7 @@ async function getStepDescritpion(iRequest) {
     return responseStepDescription;
 }
 
-async function updateStepByMOA(iRequest, iUserCompiler, iStepElements) {
-
-    let approversEntries = new Array();
-
-    let returnGetMoaApprovers = await getMoaApprovers(iRequest, iUserCompiler);
-    if (returnGetMoaApprovers.errors) {
-        return returnGetMoaApprovers;
-    }
-
-    let moaElements = _.where(returnGetMoaApprovers, { INDEX: iRequest.data.STEP });
-    if (moaElements.length <= 0) {
-        //Qualcosa non ha funzionato.Non aggiorno il flusso salvato, il processo continua
-        let errMEssage = "Update by MOA STEP " + iRequest.data.STEP + " not found for REQUEST_ID " + iRequest.data.REQUEST_ID;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iStepElements;
-    }
-
-    try {
-
-        let respDelete = await DELETE.from(ApprovalFlow).
-            where({
-                to_Request_REQUEST_ID: iRequest.data.REQUEST_ID,
-                STEP: iRequest.data.STEP
-            });
-
-        let lSequence = 0;
-        for (let i = 0; i < moaElements.length; i++) {
-            let moaApprover = moaElements[i];
-
-            let approver = new Object();
-            approver.to_Request_REQUEST_ID = iRequest.data.REQUEST_ID;
-            approver.STEP = moaApprover.INDEX;
-            approver.SEQUENCE = lSequence = lSequence + 10
-            approver.WDID = moaApprover.WDID; //PERNR
-            approver.SAPUSER = moaApprover.SAPUSER;
-            approver.MAIL = moaApprover.MAIL; //USERID
-            approver.FNAME = moaApprover.FNAME;
-            approver.LNAME = moaApprover.LNAME;
-            approver.FULLNAME = "" + moaApprover.FNAME + " " + moaApprover.LNAME;
-            approver.IDROLE = moaApprover.IDROLE;
-            approver.DESCROLE = moaApprover.DESCROLE;
-            approver.ISMANAGER = moaApprover.ISMANAGER;
-            approversEntries.push(approver);
-        }
-
-        let insertResult = await INSERT.into(ApprovalFlow).entries(approversEntries);
-
-    } catch (error) {
-        let message = "updateStepByMOA : " + error.message;
-        iRequest.error(450, message, null, 450);
-        LOG.error(error.message);
-        return iRequest;
-    }
-
-    return approversEntries;
-}
+ 
 
 
 async function approversControl(iRequestId, iStepID, iRequest) {
@@ -824,7 +627,7 @@ async function checkNextApprover(iRequestId, iApprovalFlow, iRequest) {
     const oBundle = getTextBundle(iRequest);
 
     let nextApprover = iApprovalFlow[0];
-    if (checkMailApprover(nextApprover.MAIL)) {
+    if (checkMail(nextApprover.MAIL)) {
         return iRequest;
     }
 
@@ -832,26 +635,12 @@ async function checkNextApprover(iRequestId, iApprovalFlow, iRequest) {
     iRequest.error(450, errMEssage, null, 450);
     LOG.error(errMEssage);
 
-   
-    let oResponseSendAllMail = await sendAllMail(iRequest,iRequestId ,'', 'MissingApprover', false)
- 
+// no await for performance
+    let oResponseSendAllMail = await sendAllMail(iRequest, iRequestId, '', 'MissingApprover', false)
+
     return iRequest;
 }
 
-function checkMailApprover(iMail) {
-
-    if (typeof iMail === "string" && iMail.length === 0) {
-        return false;
-    } else if (iMail === null) {
-        return false;
-    } else if (iMail === undefined) {
-        return false;
-    } else if (iMail === 'null') {
-        return false;
-    } else {
-        return true;
-    }
-}
 
 async function updateRequestVersion(iRequest) {
 
@@ -866,7 +655,8 @@ async function updateRequestVersion(iRequest) {
 
     let respInsertHistory = await insertApprovalHistory(iRequest, requestId, moaApprovers.approvalFlow, newVersion);
 
-    let o2pDocument = await generateO2PDocument(iRequest, true)
+            // no await for performance
+    let o2pDocument =  await generateO2PDocument(iRequest, true)
 
     return respInsertHistory;
 
@@ -912,7 +702,7 @@ async function checkAllApprovers(iRequestId, iApprovalFlow, iRequest) {
     let sendMail = false;
 
     for (let i = 0; i < iApprovalFlow.length; i++) {
-        if (!checkMailApprover(iApprovalFlow[i].MAIL)) {
+        if (!checkMail(iApprovalFlow[i].MAIL)) {
             sendMail = true;
             break;
         }
@@ -928,10 +718,10 @@ async function checkAllApprovers(iRequestId, iApprovalFlow, iRequest) {
         });
 
     //Invio mail al SAP Support
- 
-       let oResponseSendAllMail = await sendAllMail(iRequest,iRequestId ,'', 'MissingApprover', false)
+// no await for performance
+    let oResponseSendAllMail = await sendAllMail(iRequest, iRequestId, '', 'MissingApprover', false)
 
- 
+
     return iRequest;
 }
 
@@ -963,123 +753,235 @@ async function getNextApprovers(iRequestId, iStepID, iRequest) {
     return response;
 }
 
-async function sendTeamsNotification(iRequest) {
 
-    LOG.info("Begin sendTeamsNotification");
 
-    let requestId;
-    let stepID;
-    let aRequestData;
-    let taskId;
-    let mailList;
-    let aMailList = []
-    let taskUrl;
-    let retTeamsTaskNotification;
+async function sendTeamsNotificationAfterUpdateTaskId(iUpdateTaskId) {
 
-    try {
+let oResult = { error : '' }
 
-        requestId = iRequest.data.REQUEST_ID;
-        stepID = iRequest.data.STEP;
-        mailList = iRequest.data.MAIL_LIST;
-        if (Boolean(mailList)) {
-            aMailList = mailList.split(",");
+
+try {
+
+    let oRequest = await SELECT.one.from(Request).
+    where({
+        REQUEST_ID: iUpdateTaskId.requestId
+    });
+
+ 
+
+    if (iUpdateTaskId.stepId === 10 && oRequest.VERSION > 1) {
+        if (iUpdateTaskId.aMailList.length > 0) {
+      
+
+                let oSendAllNotification = await sendAllNotification(
+                     consts.notificationId.TASK_REJECTED, 
+                     iUpdateTaskId.requestId,  
+                     iUpdateTaskId.aMailList,  
+                     iUpdateTaskId.taskUrl.absoluteUrl)
+                     if (oSendAllNotification.error) {
+                        oResult.error = oSendAllNotification.error
+                        return oResult
+                     }
+ 
         }
-
-
-        taskId = await updateTaskId(requestId, stepID, iRequest);
-        if (taskId.errors) {
-            return taskId;
-        }
-
-        taskUrl = await getTaskComposedUrl(taskId, iRequest);
-
-        aRequestData = await getRequestData(requestId, iRequest);
-        if (aRequestData.errors) {
-            return aRequestData;
-        }
-
-        //Notifica di richiesta rifiutata
-        if (stepID === 10 && aRequestData.VERSION > 1) {
-            if (aMailList.length > 0) {
-                let sendMail = getEnvParam("SEND_MAIL", false);
-                if (sendMail === "true") {   
-
-                 
-                    let oSendAllNotification = await sendAllNotification(
-                        iRequest, consts.notificationId.TASK_REJECTED, requestId, aMailList,taskUrl) 
-                  
-
-             //   return await teamsTaskRejectNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
-
-                }
-            }
-        }
-
-        //Sul primo step non mandiamo la notifica
-        if (stepID === 10) {
-            return iRequest;
-        }
-
-
-        if (aMailList.length > 0) {
-
-            let sendMail = getEnvParam("SEND_MAIL", false);
-            if (sendMail === "true") {   
-
-           
-             let oSendAllNotification = await sendAllNotification(
-                iRequest, consts.notificationId.TASK_READY, requestId, aMailList,taskUrl) 
-             
-/*
-            retTeamsTaskNotification = await teamsTaskNotification(aRequestData, taskUrl.absoluteUrl, aMailList, iRequest);
-            if (retTeamsTaskNotification.errors) {
-                return retTeamsTaskNotification;
-            }
-                */
-        }
-        }
-
-
-    } catch (error) {
-        let errMEssage = "sendTeamsNotification:" + error.message + " REQUESTID: " + requestId;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
     }
-    return iRequest;
+
+    //Sul primo step non mandiamo la notifica
+    if (iUpdateTaskId.stepId === 10) {
+        return oResult
+    }
+
+
+    if ( iUpdateTaskId.aMailList.length > 0) {
+
+
+            let oSendAllNotification = await sendAllNotification(
+                consts.notificationId.TASK_READY, 
+                iUpdateTaskId.requestId, 
+                iUpdateTaskId.aMailList, 
+                iUpdateTaskId.taskUrl.absoluteUrl)
+
+                if (oSendAllNotification.error) {
+                    oResult.error = oSendAllNotification.error
+                    return oResult
+                 }
+ 
+    }
+
+    return oResult
+
+} catch (error) {
+
+    let errorText = "ERROR sendTeamsNotificationAfterUpdateTaskId ID: " + consts.notificationId.TASK_READY + 
+    " Step " + iUpdateTaskId.stepId + 
+    " Request " + iUpdateTaskId.requestId + " :" + error.message;
+
+    LOG.error(errorText);
+    oResult.error = errorText
+    return oResult
+
 }
 
-async function updateTaskId(iRequestId, iStepID, iRequest) {
+  
+
+}
+
+
+async function updateTaskId(iRequest) {
+
     LOG.info("Begin updateTaskId");
 
-    let aRequestData;
-    let taskId;
+    let aMailList = []
+
+    let oResult = { requestId :iRequest.data.REQUEST_ID,
+        stepId    : iRequest.data.STEP,
+        mailList  : iRequest.data.MAIL_LIST,
+        aMailList : [],
+        taskId : '',
+        taskUrl : '',
+        error: ''  }
 
     try {
 
-        aRequestData = await getRequestData(iRequestId, iRequest);
-        if (aRequestData.errors) {
-            return aRequestData;
+   
+        if (Boolean(iRequest.data.MAIL_LIST)) {
+            aMailList  = iRequest.data.MAIL_LIST.split(",");
         }
 
-        taskId = await getTaskId(iRequestId, iStepID, aRequestData.BPA_PROCESS_ID, iRequest)
-        if (taskId.errors) {
-            return taskId;
-        }
+      
 
-        let resultUPdate = await UPDATE(ApprovalHistory).set({ BPA_TASKID_ID: taskId }).where({
-            to_Request_REQUEST_ID: iRequestId,
-            STEP: iStepID,
-            VERSION: aRequestData.VERSION
+        let oRequest = await SELECT.one.from(Request).
+        where({
+            REQUEST_ID: iRequest.data.REQUEST_ID
         });
 
+
+        let taskId = await setTaskId(oRequest, iRequest.data.STEP);
+        if (taskId.error) {
+            oResult.error = taskId.error
+            return oResult;
+        }
+
+        let taskUrl = await getTaskComposedUrl(taskId.id, iRequest);
+        if (taskUrl.error) {
+            oResult.error = taskUrl.error
+            return oResult;
+        }
+
+        oResult.taskUrl = taskUrl
+        oResult.taskId  = taskId.id
+        oResult.aMailList = aMailList
+
+        return oResult
+
+
     } catch (error) {
-        let errMEssage = "updateTaskId:" + error.message + " REQUESTID: " + iRequestId;
-        iRequest.error(450, errMEssage, null, 450);
+
+        let errMEssage = "updateTaskId:" + error.message + " REQUESTID: " + iRequest.data.REQUEST_ID;
+        oResult.error = errMEssage
         LOG.error(errMEssage);
-        return iRequest;
+        return oResult
+
     }
-    return taskId;
+ 
+}
+
+async function setTaskId(iO2PRequest, iStepID) {
+    LOG.info("Begin setTaskId");
+
+    let oResult = {  id : '', 
+                     error  : ''  }
+
+ 
+    try {
+
+
+        let taskId = await getTaskId(iO2PRequest, iStepID)
+        if (taskId.error) {
+         
+            oResult.error = taskId.error
+            return oResult
+
+        }
+ 
+        let resultUPdate = await UPDATE(ApprovalHistory).set({ BPA_TASKID_ID: taskId.id }).where({
+            to_Request_REQUEST_ID: iO2PRequest.REQUEST_ID,
+            STEP: iStepID,
+            VERSION: iO2PRequest.VERSION
+        });
+
+        oResult.id = taskId.id
+        return oResult;
+
+    } catch (error) {
+
+        let errMEssage = "setTaskId:" + error.message + " REQUESTID: " + iRequestId;
+        oResult.error = errMEssage
+        LOG.error(errMEssage);
+        return oResult
+
+    }
+ 
+}
+
+
+async function getTaskId(iO2PRequest, iStepId) {
+
+    LOG.info("getTaskId" + iO2PRequest.REQUEST_ID);
+
+    let oResult = {  id : '', 
+                     error  : ''  }
+
+
+    try {
+
+        //  const userJwt = retrieveJwt(iRequest);
+
+       let responseTaskInstance = await UserTaskInstancesApi.getV1TaskInstances({
+            workflowInstanceId: iO2PRequest.BPA_PROCESS_ID,
+            status: "READY",
+        }).execute({
+            destinationName: consts.API_WF_DESTINATION
+            //  destinationName: consts.API_WF_DESTINATION_XSUAA, jwt: userJwt
+        });
+
+        if (responseTaskInstance.length <= 0) {
+
+            let errMEssage = "getTaskId.getV1TaskInstances: active tasks not found for Request:" + iO2PRequest.REQUEST_ID;
+            oResult.error = errMEssage
+            LOG.error(errMEssage);
+            return oResult
+ 
+        }
+
+        let respTaskContext = await UserTaskInstancesApi.getV1TaskInstancesContextByTaskInstanceId(responseTaskInstance[0].id).execute({
+            destinationName: consts.API_WF_DESTINATION
+        });
+
+        let contextRequest = respTaskContext.REQUESTID;
+        let contextStep = respTaskContext.STEP;
+
+        if (contextRequest !== iO2PRequest.REQUEST_ID || contextStep !== iStepId) {
+
+            let errMEssage = "getTaskId.getV1TaskInstances: active tasks not found for Request:" + iO2PRequest.REQUEST_ID + " and Step:" + iStepId;
+            oResult.error = errMEssage
+            LOG.error(errMEssage);
+            return oResult
+
+        }
+
+        oResult.id = responseTaskInstance[0].id
+        return oResult
+
+    } catch (error) {
+
+        let errMEssage = "getTaskId:" + error.message + " REQUESTID: " + iRequestId;
+        oResult.error = errMEssage
+        LOG.error(errMEssage);
+        return oResult
+
+    }
+
 }
 
 async function assignApprover(iRequest) {
@@ -1130,7 +1032,7 @@ async function assignApprover(iRequest) {
         }
 
         if (note !== undefined && note != '') {
-            let responseNote = await saveNove(iRequest, requestID, note, cdsTx);
+            let responseNote = await saveNote(iRequest, requestID, note, cdsTx);
             if (responseNote.errors) {
                 //  await cdsTx.rollback();
                 return assign;
@@ -1161,7 +1063,7 @@ async function assignApprover(iRequest) {
 
 }
 
-async function saveNove(iRequest, iRequestId, iNote, iCdsTx) {
+async function saveNote(iRequest, iRequestId, iNote, iCdsTx) {
 
     try {
 
@@ -1291,238 +1193,7 @@ async function assignTaskto(iRequest, iRequestId, iWfInstaceID, iEmail) {
 
 }
 
-async function emailStartedProcess(iRequestId, iRequest) {
 
-    let recipient = [];
-    let reqData;
-    let oBundle;
-    let startedFullName = "";
-    try {
-
-        oBundle = getTextBundle(iRequest);
-        //recupero request data
-        reqData = await getRequestData(iRequestId, iRequest)
-        if (reqData.errors) {
-            return reqData;
-        }
-
-        //recupero l'approvatore della versione
-        let approval = await SELECT.one.from(ApprovalHistory).
-            where({
-                REQUEST_ID: iRequestId,
-                VERSION: reqData.VERSION,
-                To_StepStatus_STEP_STATUS: consts.stepStatus.COMPLETED
-            });
-
-        if (approval !== null) {
-            startedFullName = approval.REAL_FULLNAME;
-        }
-
-        let returnGetApprovers = await getNextApprovers(iRequestId, 0, iRequest);
-        if (returnGetApprovers.errors) {
-            return returnGetApprovers;
-        }
-
-        returnGetApprovers.approvalFlow.forEach(element => {
-            if (element.MAIL !== null) {
-                recipient.push(element.MAIL);
-            }
-        });
-
-        recipient = _.uniq(recipient);
-
-        /*
-        let retMailstart = await mailStartedCompleted(iRequestId, reqData, recipient, startedFullName, iRequest)
-        if (retMailstart.errors) {
-            return retMailstart;
-        }
-            */
-
-    } catch (error) {
-        let errMEssage = "ERROR emailStartProcess " + iRequestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return iRequest;
-}
-
-
-async function emailCompletedProcess(iRequestId, iRequest) {
-
-    let recipient = [];
-    let ccrecipient = [];
-    let aAttach = [];
-    let reqData;
-    let oBundle;
-
-    try {
-
-        oBundle = getTextBundle(iRequest);
-
-        reqData = await getRequestData(iRequestId, iRequest)
-        if (reqData.errors) {
-            return reqData;
-        }
-
-        let approval = await SELECT.from(ApprovalHistory).
-            where({
-                REQUEST_ID: iRequestId,
-                VERSION: reqData.VERSION
-            });
-
-        /*
-              approval.forEach(element => {
-                  if (element.REAL_MAIL !== null) {
-                      recipient.push(element.REAL_MAIL);
-                  }
-              });
-      
-            
-              let returnGetApprovers = await getNextApprovers(iRequestId, 0, iRequest);
-              if (returnGetApprovers.errors) {
-                  return returnGetApprovers;
-              }
-              returnGetApprovers.approvalFlow.forEach(element => {
-                  if (element.MAIL !== null) {
-                      recipient.push(element.MAIL);
-                  }
-              });
-      
-              */
-
-        if (reqData.EMAILADDRESS !== null) {
-            recipient.push(reqData.EMAILADDRESS);
-        }
-
-        if (reqData.EMAILADDRESSCC !== null) {
-            ccrecipient = reqData.EMAILADDRESSCC.split(/\s*[\s,;]\s*/);
-        }
-
-
-
-        let columns = ["CONTENT", "MEDIATYPE", "ATTACHMENTTYPE_ATTACHMENTTYPE", "FILENAME"]
-        let attachementsRs = await SELECT.columns(columns).from(Attachments).
-            where({
-                REQUEST_ID: iRequestId
-            });
-        for (let index = 0; index < attachementsRs.length; index++) {
-            const attachement = attachementsRs[index];
-            let addAttach = false;
-            // switch (attachement.ATTACHMENTTYPE_ATTACHMENTTYPE) {
-            //  case consts.attachmentTypes.O2PCOMP:
-            addAttach = true;
-            //     break;
-            // }
-
-            if (addAttach) {
-                let oAttach = {};
-                //conversione Readable to binary
-                let binaryData = await convertToBinaryType(attachement.CONTENT);
-                let sXmlBase64 = Buffer.from(binaryData, 'binary').toString('base64');
-                oAttach.name = attachement.FILENAME;
-                oAttach.contentType = attachement.MEDIATYPE;
-                oAttach.contentBytes = sXmlBase64;
-                aAttach.push(oAttach);
-            }
-        }
-
-        let retMailProcedeleted = await mailProcessCompleted(iRequestId, reqData, recipient, aAttach, iRequest, ccrecipient)
-        if (retMailProcedeleted.errors) {
-            return retMailProcedeleted;
-        }
-
-    } catch (error) {
-        let errMEssage = "ERROR emailTerminatedProcess " + iRequestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return iRequest;
-}
-
-function convertToBinaryType(iData) {
-    return new Promise((resolve, reject) => {
-        const stream = new PassThrough();
-        const chunks = [];
-
-        stream.on('data', function (chunk) {
-            chunks.push(chunk)
-        })
-        stream.on('end', () => {
-            resolve(Buffer.concat(chunks))
-        })
-        stream.on('error', (error) => {
-            reject(error)
-        })
-        iData.pipe(stream)
-    });
-}
-
-async function emailTerminatedProcess(iRequestId, iRequest) {
-
-    let recipient = [];
-    let rejector_full_name = "";
-    let requestData;
-    let actualUser;
-    let note = "";
-
-    try {
-        actualUser = iRequest.user.id;//<----DA RIPRISTINARE
-        //actualUser = "stsalvat@q8.it";//<----SOLO PER TEST DA BAS
-        requestData = await getRequestData(iRequestId, iRequest)
-        if (requestData.errors) {
-            return requestData;
-        }
-
-        /*
-        let approval = await SELECT.from(ApprovalHistory).
-            where({
-                REQUEST_ID: iRequestId,
-                STEP_STATUS: consts.stepStatus.COMPLETED
-            });
-
-        approval.forEach(element => {
-            if (element.REAL_MAIL !== null) {
-                recipient.push(element.REAL_MAIL);
-            }
-        }); 
-
-        recipient = _.reject(recipient, actualUser);
-
-        */
-
-        //recipient.push(iRequest.)
-
-
-        if (recipient.length <= 0) {
-            return iRequest;
-        }
-
-        let noteElement = await SELECT.from(Notes).
-            where({
-                REQUEST_ID: iRequestId,
-                VERSION: requestData.VERSION,
-                createdBy: actualUser
-            });
-        if (noteElement.length > 0) {
-            rejector_full_name = noteElement[0].CREATOR_FULLNAME
-            note = noteElement[0].NOTE;
-        }
-
-        let retMailProcedeleted = await mailProcessDeleted(iRequestId, recipient, rejector_full_name, note, iRequest, requestData)
-        if (retMailProcedeleted.errors) {
-            return retMailProcedeleted;
-        }
-
-    } catch (error) {
-        let errMEssage = "ERROR emailTerminatedProcess " + iRequestId + " :" + error.message;
-        iRequest.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return iRequest;
-}
 
 
 module.exports = {
@@ -1533,12 +1204,9 @@ module.exports = {
     saveUserAction,
     approversControl,
     updateRequestVersion,
-    sendTeamsNotification,
+    updateTaskId,
     insertApprovalHistory,
-    assignApprover,
-    emailStartedProcess,
-    emailCompletedProcess,
-    emailTerminatedProcess,
-    emailRejectedProcessTask,
-    convertToBinaryType
+    assignApprover, 
+    sendTeamsNotificationAfterUpdateTaskId, 
+
 }

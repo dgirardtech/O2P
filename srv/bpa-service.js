@@ -1,11 +1,13 @@
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
-const { getStepParams, getStepList,updateRequestVersion,sendTeamsNotification } = require('./lib/TaskHandler');
+const { getStepParams, getStepList, updateRequestVersion, updateTaskId,
+    sendTeamsNotificationAfterUpdateTaskId
+} = require('./lib/TaskHandler');
 
 module.exports = cds.service.impl(async function () {
     global.that = this;
 
-    const { StepParams, StepList,UpdateRequestVersion, UpdateTaskId } = this.entities;
+    const { StepParams, StepList, UpdateRequestVersion, UpdateTaskId } = this.entities;
 
     global.StepParams = StepParams;
     global.StepList = StepList;
@@ -26,9 +28,21 @@ module.exports = cds.service.impl(async function () {
 
 
     this.on('UpdateTaskId', async (request) => {
-        return await sendTeamsNotification(request); 
+
+        let oUpdateTaskId = await updateTaskId(request)
+
+        if (oUpdateTaskId.error) {
+            request.error(450, oUpdateTaskId.error, null, 450)
+            return request
+        }
+
+        // no await for performance
+        let oResponse = await sendTeamsNotificationAfterUpdateTaskId(oUpdateTaskId)
+
+        return request
+
     });
 
-    
+
 
 });

@@ -5,6 +5,17 @@
   "tasks": [
     {
       "type": "shell",
+      "label": "debug",
+      "command": "source ./test/debug.sh",
+      "isBackground": true,
+      "problemMatcher": "$gulp-tsc",
+      "group": "build",
+      "dependsOn": [
+        "catkin build all"
+      ]
+    },
+    {
+      "type": "shell",
       "label": "cds watch",
       "command": "cds",
       "args": [
@@ -87,5 +98,15 @@
         "cwd": "${workspaceFolder}/gen/srv//gen/srv/"
       }
     }
+  ],
+  
+  "inputs": [
+    {
+      "id": "launchDebug",
+      "type": "command",
+      "command": "workbench.action.debug.start",
+      "args": ["Attach to a Cloud Foundry Instance on Port 9229"]
+    }
   ]
+
 }
