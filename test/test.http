@@ -460,3 +460,14 @@ Authorization: Bearer eyJhbGciOiJSUzI1NiIsImprdSI6Imh0dHBzOi8vY2Yta3VwaXQtZGV2LX
     "STEPID": 50,
     "ACTION": "A" 
 }
+
+
+### ----------------------------------------------------------------------
+POST {{server}}/odata/v4/kupito2pmodel-srv/scheduleRun
+Content-Type: application/json;IEEE754Compatible=true
+Authorization: Basic ale:ale
+
+{"Status":"Scheduled","CustomersAllowed":0,"CustomersNotAllowed":0,"ExecutedIncrease":0,"company":"IT05","Creationdate":"20240624","Creationtime":"12:10","periodoRipetizione":0}
+
+
+### ----------------------------------------------------------------------

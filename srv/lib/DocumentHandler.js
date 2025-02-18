@@ -52,20 +52,20 @@ async function fromTreeToDocument(iRequest) {
                     SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn', 'Bvtyp'])
                         .where({ Lifnr: aHeader[i].VENDOR }));
  
-                for (let i = 0; i < aVendorBank.length; i++) {
+                for (let z = 0; z < aVendorBank.length; z++) {
 
                     let oTibanSet = await EccServiceO2P.run(
                         SELECT.one.from(TibanSet).columns(['Banks', 'Bankl', 'Bankn', 'Iban'])
                             .where({
-                                Banks: aVendorBank[i].Banks,
-                                Bankl: aVendorBank[i].Bankl,
-                                Bankn: aVendorBank[i].Bankn,
+                                Banks: aVendorBank[z].Banks,
+                                Bankl: aVendorBank[z].Bankl,
+                                Bankn: aVendorBank[z].Bankn,
                                 Iban: aHeader[i].IBAN
                             }));
 
 
                     if (oTibanSet) {
-                        partnBnkType = aVendorBank[i].Bvtyp
+                        partnBnkType = aVendorBank[z].Bvtyp
                         break
                     }
                 }

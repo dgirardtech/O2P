@@ -1,5 +1,6 @@
 const moment = require('moment');
 const TextBundle = require('@sap/textbundle').TextBundle;
+const LOG = cds.log('KupitO2PSrv');
 
 async function getNameMotivationAction(iRequestId, iUserAction, iVersion) {
 

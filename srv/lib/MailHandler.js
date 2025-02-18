@@ -3,7 +3,7 @@ const _ = require('underscore');
 const consts = require("./Constants");
 const { transcodeDocumentToTree, getDocumentProp } = require('./DocumentHandler')
 const { getEnvParam, getTextBundle, getNameMotivationAction } = require('./Utils');
-const { generateO2PF23Aut } = require('./HandlerPDF');
+const { generateO2PF23Aut } = require('./PDFHandler');
 const { PassThrough } = require("stream");
 const axios = require('axios')
 
@@ -112,7 +112,7 @@ async function sendTeamsNotification(iRequestId, iIdNotification, iNotificationB
 
 
 
-async function sendMailNew(iRequest, iParamForMail, iMailBody) {
+async function sendMail(iRequest, iParamForMail, iMailBody) {
 
     let oResult = { error: '' }
 
@@ -180,9 +180,7 @@ async function testMail(iRequest) {
 
 }
 
-
-
-
+ 
 
 async function getRecipient(iRequest, iParamForMail) {
 
@@ -286,9 +284,6 @@ async function getRecipient(iRequest, iParamForMail) {
             });
 
 
-            oRecipient.to.push('davide.girard@avvale.com');
-            oRecipient.cc.push('davide.girard@avvale.com');
-
             if (Boolean(iParamForMail.countingRecAdd)) {
                 let aRecAdd = iParamForMail.countingRecAdd.split(';');
 
@@ -298,9 +293,7 @@ async function getRecipient(iRequest, iParamForMail) {
             }
 
             if (Boolean(iParamForMail.countingRecRole)) {
-
-
-
+ 
                 let aApprovalFlow = await SELECT.from(ApprovalFlow).columns(['STEP', 'IDROLE'])
                     .where({
                         REQUEST_ID: iParamForMail.requestId
@@ -317,7 +310,7 @@ async function getRecipient(iRequest, iParamForMail) {
                 for (let i = 0; i < aRecRole.length; i++) {
 
 
-                    let oApprovalFlow = aApprovalFlow.find(oApprovalFlow => oApprovalFlow.IDROLE === Number(aRecRole[i]))
+                    let oApprovalFlow = aApprovalFlow.find(oApprovalFlow => oApprovalFlow.IDROLE === aRecRole[i])
 
                     if (oApprovalFlow) {
 
@@ -565,7 +558,7 @@ async function getAttachment(iRequest, iParamForMail) {
 
             let oAttachment = await SELECT.one.from(Attachments).where({
                 REQUEST_ID: iParamForMail.requestId,
-                //DOC_ID: iParamForMail.docId,
+                DOC_ID: iParamForMail.docId,
                 ATTACHMENTTYPE_ATTACHMENTTYPE: consts.attachmentTypes.COUNTING
             });
 
@@ -735,7 +728,7 @@ async function sendAllMail(iRequest, iRequestId, iDocId, iPath) {
                     "aAttachment": oAttach.attach
                 }
 
-                let oSendMail = await sendMailNew(iRequest, oGetParamForMail, oMail)
+                let oSendMail = await sendMail(iRequest, oGetParamForMail, oMail)
                 if (oSendMail.error) {
                     oResult.error = oSendMail.error
                     return oResult
@@ -763,5 +756,5 @@ module.exports = {
     testMail,
     sendAllMail,
     sendAllNotification,
-    sendMailNew
+    sendMail
 }

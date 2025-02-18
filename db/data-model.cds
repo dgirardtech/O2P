@@ -85,7 +85,7 @@ entity Document : managed {
       PARTN_BNK_TYPE       : PARTN_BNK_TYPE;
       REF_ID               : String(16);
       SPECIAL_GL_IND       : SPECIAL_GL_IND;
-      ACCOUNT              : ACCOUNT; 
+      ACCOUNT              : ACCOUNT;
       REASON               : REASON;
       AMOUNT               : AMOUNT;
       TEXT                 : String(50);
@@ -105,7 +105,7 @@ entity Document : managed {
       VALUT                : Date;
       CRO                  : String(16);
       IS_FROM_EXCEL        : Boolean default false;
-      virtual VENDOR_DESC  : String;  
+      virtual VENDOR_DESC  : String;
 }
 
 //ZFI_O2P_APPRFLOW
@@ -357,25 +357,13 @@ entity Docparam : managed {
 //ZFI_O2P_OU_REQ
 entity Orgunitreq : managed {
   key REQUESTER : Association to one Requester;
-  //key ORGUNIT   : Decimal(8, 0);
+      //key ORGUNIT   : Decimal(8, 0);
   key ORGUNIT   : String;
       NOTE      : String(50)
 
 }
 
-
-//ZFI_O2P_PROC_LOG
-entity Proclog : managed {
-  key to_Request      : Association to Request;
-  key ID              : Decimal(5, 0);
-      ACTIVITY        : String(10);
-      ACTIVITY_RESULT : Boolean default false;
-      MESSAGE         : String(250);
-      USERID          : String(12);
-      ACTIVITY_DATE   : Date;
-      ACTIVITY_TIME   : Time
-
-}
+ 
 
 //ZFI_O2P_TRIB_SPL
 entity Tribreq : managed {
@@ -400,9 +388,46 @@ entity Currency : managed {
 
 // domain F24_ENTRATEL_TYPE
 entity F24Entratel : managed {
-  key CODE        :  String(10);
+  key CODE        : String(10);
       DESCRIPTION : localized String(40);
 }
+
+////////////////////////////////////////////////////////////
+//JOB
+
+entity JobRunHeader : managed {
+  key ID               : UUID @Core.Computed;
+      ENTITY           : String;
+      JOB_NAME         : String;
+      RUN_ID           : Integer;
+      SCHEDULED_AT     : String;
+      STATUS_JOB       : String;
+      STATUS           : String;
+      STATUS_TEXT      : String;
+      JOB_ID           : Integer;
+      JOB_SCHEDULED_ID : String;
+      to_JobRunItem    : Composition of many JobRunItem
+                           on to_JobRunItem.to_JobRunHeader = $self
+}
+
+
+entity JobRunItem : managed {
+  key to_JobRunHeader : Association to JobRunHeader;
+  key ID              : Integer;
+      ENTITY          : String;
+      JOB_NAME        : String;
+      RESULT_TYPE     : String(1);
+      RESULT_TEXT     : String;
+}
+
+
+entity JobRunVariant : managed {
+  key ENTITY  : String;
+  key VARIANT : String;
+      FILTER  : String;
+
+}
+
 
 ////////////////////////////////////////////////////////////
 
@@ -453,7 +478,7 @@ type VENDOR           : String(10);
 type COMPANY          : String(4);
 type DOCNUM           : String(10);
 type SPECIAL_GL_IND   : String(1);
-type YEAR             : Decimal(4, 0); 
+type YEAR             : Decimal(4, 0);
 type DOC_ID           : String(3);
 type DOC_ID_POS       : String(3);
 type DOCTYPE          : String(2);

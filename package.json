@@ -14,12 +14,12 @@
     "@sap-cloud-sdk/openapi-generator": "^3.11.0",
     "@sap/cds": "^7.6.1",
     "@sap/cds-hana": "^2",
-    "@sap/cds-odata-v2-adapter-proxy": "^1.9.7",
-    "@sap/hana-client": "^2.20.23",
+    "@sap/hana-client": "^2.23.27",
     "@sap/textbundle": "^5.1",
     "@sap/xsenv": "^4.0.0",
     "@sap/xssec": "^3.6.1",
-    "express": "^4",
+    "cron-parser": "^4.9.0",
+    "express": "^4.21.1",
     "helmet": "^7.1.0",
     "in": "^0.19.0",
     "mathjs": "^12.1.0",
@@ -34,7 +34,7 @@
     "@cap-js/sqlite": "^1",
     "@sap-cloud-sdk/generator": "^3.13.0",
     "@sap-cloud-sdk/openapi-generator": "^3.12.1",
-    "@sap/cds-dk": "^7",
+    "@sap/cds-dk": "^8.7.2",
     "@sap/dev-cap-tools": "^1.31.0",
     "@sap/eslint-plugin-cds": "^3",
     "@sap/hdi-deploy": "^5.3.2",
@@ -177,7 +177,7 @@
           "destination": "ECC",
           "path": "/sap/opu/odata/sap/ZFI_AFE_COMMON_SRV"
         }
-      } 
+      }
     }
   }
 }
