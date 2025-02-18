@@ -9,9 +9,14 @@ const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
 const { testMail } = require('./lib/MailHandler');
 const { fromDocumentToTree, fromRequestIdToTree,
     fromTreeToDocument, formatDocument, createFIDocument } = require('./lib/DocumentHandler');
-    const { getEnvParam, getTextBundle,getNameMotivationAction } = require('./lib/Utils');
+    const { getNameMotivationAction } = require('./lib/Utils');
 
-const { generateO2PF23Aut } = require('./lib/HandlerPDF');
+const { generateO2PF23Aut } = require('./lib/PDFHandler');
+
+const { scheduleRun, createScheduledRun, saveVariant} = require('./lib/JobHandler');
+
+
+
 const { consts } = require('./lib/Constants');
 
 const fs = require('fs')
@@ -32,12 +37,13 @@ module.exports = cds.service.impl(async function () {
     const { Requester, Paymode, AttachmentType, Attachments, Notes,
         ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView,
         Request, Document, Currencies, Accountreq, Bank, Bankexc, Bankreq, Bankdefault, Clearacc,
-        Doclog, Docparam, Orgunitreq, Parameters, Proclog, Tribreq, Currency, Param, F24Entratel } = this.entities;
+        Doclog, Docparam, Orgunitreq, Parameters,  Tribreq, Currency, Param, F24Entratel } = this.entities;
     const { WorkDay } = this.entities;
     const { UserTaskCounter } = this.entities;
     const { CostCenterTextSet, AfeLocationSet } = this.entities;
     const { VendorSet,VendorSHSet, AccDocHeaderSet, AccDocPositionSet, GlAccountCompanySet } = this.entities;
 
+    const { JobRunHeader, JobRunItem,JobRunVariant } = this.entities;
 
 
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
@@ -68,7 +74,6 @@ module.exports = cds.service.impl(async function () {
     global.Docparam = Docparam;
     global.Orgunitreq = Orgunitreq;
     global.Parameters = Parameters;
-    global.Proclog = Proclog;
     global.Tribreq = Tribreq;
     global.Currency = Currency;
     global.F24Entratel = F24Entratel;
@@ -84,8 +89,11 @@ module.exports = cds.service.impl(async function () {
     global.AccDocPositionSet = AccDocPositionSet
     global.GlAccountCompanySet = GlAccountCompanySet
 
-
-
+    global.JobRunHeader  = JobRunHeader;
+    global.JobRunItem    = JobRunItem;
+    global.JobRunVariant = JobRunVariant;
+     
+    
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -230,6 +238,19 @@ module.exports = cds.service.impl(async function () {
 
         return aResult
 
+    });
+
+
+    this.on('saveVariant', async (request) => {
+        return await saveVariant(request);
+    });
+
+    this.on('scheduleRun', async (request) => {
+        return await scheduleRun(request);
+    });
+
+    this.on('createScheduledRun', async (request) => {
+        return await createScheduledRun(request);
     });
 
 

@@ -87,12 +87,14 @@ service O2PModelService @(requires: [
     entity Docparam            as projection on KupitO2PModel.Docparam;
     entity Document            as projection on KupitO2PModel.Document;
     entity Orgunitreq          as projection on KupitO2PModel.Orgunitreq;
-    entity Proclog             as projection on KupitO2PModel.Proclog;
     entity Tribreq             as projection on KupitO2PModel.Tribreq;
     entity Trib                as projection on KupitO2PModel.Trib;
     entity Currency            as projection on KupitO2PModel.Currency;
     entity Param               as projection on KupitO2PModel.Param;
     entity F24Entratel         as projection on KupitO2PModel.F24Entratel;
+    entity JobRunHeader        as projection on KupitO2PModel.JobRunHeader;
+    entity JobRunItem          as projection on KupitO2PModel.JobRunItem;
+    entity JobRunVariant       as projection on KupitO2PModel.JobRunVariant;
 
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +110,7 @@ service O2PModelService @(requires: [
     entity VendorSet           as projection on ZFI_O2P_COMMON_SRV.VendorSet;
 
     @cds.persistence.skip
-    entity VendorSHSet           as projection on ZFI_O2P_COMMON_SRV.VendorSHSet;
+    entity VendorSHSet         as projection on ZFI_O2P_COMMON_SRV.VendorSHSet;
 
     @cds.persistence.skip
     entity AccDocHeaderSet     as projection on ZFI_O2P_COMMON_SRV.AccDocHeaderSet;
@@ -144,11 +146,11 @@ service O2PModelService @(requires: [
                 request.PAYMENT_MODE.CODE as PAYMENT_MODE_CODE,
                 request.STATUS.code       as STATUS_CODE,
                 request.PRIORITY,
-                virtual null              as RESULT_TEXT : String,
-                virtual null              as RESULT_TYPE : String(1),
-                virtual null              as TEST : Boolean,
+                virtual null              as RESULT_TEXT    : String,
+                virtual null              as RESULT_TYPE    : String(1),
+                virtual null              as TEST           : Boolean,
                 virtual null              as RECIPIENT_ROLE : String,
-                virtual null              as RECIPIENT_ADD : String
+                virtual null              as RECIPIENT_ADD  : String
         }
         where
                 request.PAYMENT_MODE.CODE = 'BONIFICO'
@@ -182,7 +184,7 @@ service O2PModelService @(requires: [
                 request.PRIORITY,
                 virtual null              as RESULT_TEXT : String,
                 virtual null              as RESULT_TYPE : String(1),
-                virtual null              as TEST : Boolean
+                virtual null              as TEST        : Boolean
         }
         where
                 request.PAYMENT_MODE.CODE = 'BONIFICO'
@@ -209,8 +211,8 @@ service O2PModelService @(requires: [
             and orgunitreq.ORGUNIT        = request.AREA_CODE
 
         left outer join Attachments as attachments
-            on  attachments.to_Request.REQUEST_ID     = request.REQUEST_ID
-            and attachments.ATTACHMENTTYPE.ATTACHMENTTYPE  = 'DOC'
+            on  attachments.to_Request.REQUEST_ID         = request.REQUEST_ID
+            and attachments.ATTACHMENTTYPE.ATTACHMENTTYPE = 'DOC'
 
         left outer join (
             select
@@ -229,7 +231,7 @@ service O2PModelService @(requires: [
 
         left outer join (
             select
-                count( * ) as STEP_TO_END : KupitO2PModel.STEP_TO_END,
+                count( * ) as STEP_TO_END     : KupitO2PModel.STEP_TO_END,
                 to_Request.REQUEST_ID,
                 VERSION
             from ApprovalHistory as history
@@ -258,12 +260,12 @@ service O2PModelService @(requires: [
                 approvalNotAssigned.STEP_TO_END,
                 approvalHistory.DAYS_SPENT,
                 approvalHistory.SHOW_ASSIGNED_AT,
-                attachments.ATTACHMENTTYPE.ATTACHMENTTYPE ,
-                virtual null       as PC  : Boolean,
-                virtual null       as NC  : Boolean,
-                virtual null       as AC  : Boolean,
-                virtual null       as CLEARED  : String,
-                
+                attachments.ATTACHMENTTYPE.ATTACHMENTTYPE,
+                virtual null       as PC      : Boolean,
+                virtual null       as NC      : Boolean,
+                virtual null       as AC      : Boolean,
+                virtual null       as CLEARED : String,
+
 
         }
         order by
@@ -388,23 +390,41 @@ service O2PModelService @(requires: [
         };
 
 
-    //  function CountingCreate(REQUEST_ID : KupitO2PModel.REQUEST_ID)  returns array of checkDataReturn;
+    action   saveVariant(ENTITY : String,
+                         FILTER_VARIANT : String,
+                         NAME_VARIANT : String,
+                         ACTIVE_VARIANT : array of String)              returns checkDataReturn;
 
+
+    action   scheduleRun(INPUT : scheduleRunInput)                      returns checkDataReturn;
+
+
+    action   createScheduledRun(INPUT : scheduleRunInput,
+                                HEADER_ID : String,
+                                CRON : String)                          returns checkDataReturn;
+
+    type scheduleRunInput         : {
+
+        CREATION_DATE     : String;
+        CREATION_TIME     : String;
+        CREATION_WEEK     : String;
+        REPETITION_PERIOD : Integer;
+        ENTITY            : String;
+        FILTER            : String;
+        VARIANT           : String;
+        PREFIX_JOB_NAME   : String;
+    }
 
     function getAssignInfo(REQUEST_ID : KupitO2PModel.REQUEST_ID)       returns AssignInfo;
     function printF23Aut(REQUEST_ID : KupitO2PModel.REQUEST_ID)         returns fileReturn;
-
- function downloadDocTemplate( )         returns fileReturn;
-    
-
-
+    function downloadDocTemplate()                                      returns fileReturn;
     action   createProcess(REQUESTER : String)                          returns Message;
 
     action   testMail(REQUEST_ID : KupitO2PModel.REQUEST_ID,
                       DOC_ID : KupitO2PModel.DOC_ID,
                       STEPID : KupitO2PModel.STEP_ID,
-                      ACTION : KupitO2PModel.Actionenum, 
-                      EVENT: String)                                  returns Message;
+                      ACTION : KupitO2PModel.Actionenum,
+                      EVENT : String)                                   returns Message;
 
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
@@ -553,8 +573,8 @@ service O2PModelService @(requires: [
 
 
     type IBAN                     : {
-        CODE : KupitO2PModel.IBAN;
-        PARTN_BNK_TYPE: KupitO2PModel.PARTN_BNK_TYPE
+        CODE           : KupitO2PModel.IBAN;
+        PARTN_BNK_TYPE : KupitO2PModel.PARTN_BNK_TYPE
     }
 
     type ACCOUNT                  : {
