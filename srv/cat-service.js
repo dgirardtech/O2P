@@ -144,17 +144,10 @@ module.exports = cds.service.impl(async function () {
         this.on('downloadDocTemplate', async (req) => {
 
             let docTemplate = fs.readFileSync('srv/file/csv/Documents template.csv')
-     
-
-            let oResult =
-
-            { 
-    
-                CONTENT: docTemplate.toString(),
+                 let oResult = 
+            {   CONTENT: docTemplate.toString(),
                 MEDIATYPE: 'text/csv',
-                CONTENTSTRING: docTemplate.toString('base64')
-    
-            }
+                CONTENTSTRING: docTemplate.toString('base64')   }
     
             return oResult
 
@@ -163,18 +156,13 @@ module.exports = cds.service.impl(async function () {
 
     this.on('printF23Aut', async (req) => {
 
-
         let o2pF23Aut = await generateO2PF23Aut(req, false)
 
         let oResult =
 
-        {
-
-            CONTENT: o2pF23Aut.binary.toString(),
+        {   CONTENT: o2pF23Aut.binary.toString(),
             MEDIATYPE: o2pF23Aut.type,
-            CONTENTSTRING: o2pF23Aut.toString('base64')
-
-        }
+            CONTENTSTRING: o2pF23Aut.toString('base64')  }
 
         return oResult
 
@@ -250,7 +238,20 @@ module.exports = cds.service.impl(async function () {
     });
 
     this.on('createScheduledRun', async (request) => {
-        return await createScheduledRun(request);
+
+       // const oJobHeader = request.data.jobSchedulerInfo;
+
+        let nMilliSecondsInterval = 3000;
+        cds.spawn({ after: nMilliSecondsInterval }, async (tx) => {
+
+        await createScheduledRun(request,oJobHeader);
+
+    });
+
+    request.res.status(202);
+
+    return ('Accepted async job, but long-running operation still running');
+
     });
 
 

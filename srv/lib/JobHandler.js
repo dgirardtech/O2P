@@ -194,7 +194,7 @@ async function scheduleRun(iRequest) {
 
 
 
-async function createScheduledRun(iRequest) {
+async function createScheduledRun(iRequest,iJobHeader) {
 
 let oJobRunHeader = {}
 
@@ -219,6 +219,14 @@ let oJobRunHeader = {}
 
 
         oJobRunHeader = await SELECT.one.from(JobRunHeader).where({ ID: headerId })
+
+        /*
+       oJobRunHeader = await SELECT.one.from(JobRunHeader)
+       .where({ JOB_ID: iJobHeader.jobId,
+        JOB_SCHEDULED_ID: iJobHeader.jobScheduleId,
+        Status: 'Scheduled' })
+        */
+
 
 
         let authorization = iRequest.headers.authorization;

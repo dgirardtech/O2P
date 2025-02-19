@@ -966,7 +966,8 @@ async function fillTableFIDocument(iRequest, iDocProp) {
         TransDate: '00000000',
         DocType: oDocProp.docType,
         RefDocNo: aDocument[0].REF_ID,
-        Vatdate: moment(new Date).format('YYYYMMDD'),
+        Vatdate: '00000000',
+        InvoiceRecDate: '00000000' 
     }
 
     // }

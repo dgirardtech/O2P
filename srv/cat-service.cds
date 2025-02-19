@@ -401,7 +401,7 @@ service O2PModelService @(requires: [
 
     action   createScheduledRun(INPUT : scheduleRunInput,
                                 HEADER_ID : String,
-                                CRON : String)                          returns checkDataReturn;
+                                CRON : String)                          returns String;
 
     type scheduleRunInput         : {
 
