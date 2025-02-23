@@ -150,7 +150,8 @@ service O2PModelService @(requires: [
                 virtual null              as RESULT_TYPE    : String(1),
                 virtual null              as TEST           : Boolean,
                 virtual null              as RECIPIENT_ROLE : String,
-                virtual null              as RECIPIENT_ADD  : String
+                virtual null              as RECIPIENT_ADD  : String,
+                virtual null              as NDAYS          : Integer
         }
         where
                 request.PAYMENT_MODE.CODE = 'BONIFICO'
@@ -177,14 +178,15 @@ service O2PModelService @(requires: [
             key document.DOC_ID,
                 document.DOCUMENT_NUMBER,
                 document.CONTABILE_NICKNAME,
-                request.ENDDATE,
+                request.ENDDATE, 
                 request.REQUESTER.CODE    as REQUESTER_CODE,
                 request.PAYMENT_MODE.CODE as PAYMENT_MODE_CODE,
                 request.STATUS.code       as STATUS_CODE,
                 request.PRIORITY,
                 virtual null              as RESULT_TEXT : String,
                 virtual null              as RESULT_TYPE : String(1),
-                virtual null              as TEST        : Boolean
+                virtual null              as TEST        : Boolean,
+                virtual null              as NDAYS       : Integer
         }
         where
                 request.PAYMENT_MODE.CODE = 'BONIFICO'
@@ -399,12 +401,19 @@ service O2PModelService @(requires: [
     action   scheduleRun(INPUT : scheduleRunInput)                      returns checkDataReturn;
 
 
-    action   createScheduledRun(INPUT : scheduleRunInput,
-                                HEADER_ID : String,
-                                CRON : String)                          returns String;
+    action   createScheduledRun(INPUT : scheduleRunInput, 
+                                jobSchedulerInfo : JobHeader )                          returns String;
+
+    type JobHeader : {
+        jobId         : String;
+        jobScheduleId : String;
+        jobRunId      : String;
+        jobHostId     : String;
+    };
 
     type scheduleRunInput         : {
-
+        CRON : String;
+        CRON2: String;
         CREATION_DATE     : String;
         CREATION_TIME     : String;
         CREATION_WEEK     : String;

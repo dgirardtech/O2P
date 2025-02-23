@@ -38,10 +38,12 @@ async function saveUserAction(iRequest) {
 
 
 // no await for performance
-        let oResponseSendAllMail = await sendAllMail(iRequest, iRequest.data.REQUEST_ID, '', iRequest.event, false)
+      //  let oResponseSendAllMail = await sendAllMail(iRequest, iRequest.data.REQUEST_ID, '', iRequest.event, false)
+      // sendAllMail(iRequest, iRequest.data.REQUEST_ID, '', iRequest.event, false)
 
         // no await for performance
-        let o2pDocument = await generateO2PDocument(iRequest, true)
+       // let o2pDocument = await generateO2PDocument(iRequest, true)
+      //  generateO2PDocument(iRequest, true)
 
 
         return response;
@@ -699,16 +701,16 @@ async function updateVersion(iRequest) {
 
 async function checkAllApprovers(iRequestId, iApprovalFlow, iRequest) {
 
-    let sendMail = false;
+    let doSendMail = false;
 
     for (let i = 0; i < iApprovalFlow.length; i++) {
         if (!checkMail(iApprovalFlow[i].MAIL)) {
-            sendMail = true;
+            doSendMail = true;
             break;
         }
     }
 
-    if (!sendMail) {
+    if (!doSendMail) {
         return iRequest;
     }
 

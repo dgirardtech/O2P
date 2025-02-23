@@ -36,8 +36,10 @@ module.exports = cds.service.impl(async function () {
             return request
         }
 
-        // no await for performance
-        let oResponse = await sendTeamsNotificationAfterUpdateTaskId(oUpdateTaskId)
+        // background for performance
+        cds.spawn({ after: 1000 }, async (tx) => {
+            let oResponse = await sendTeamsNotificationAfterUpdateTaskId(oUpdateTaskId)
+        })
 
         return request
 

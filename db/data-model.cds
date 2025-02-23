@@ -363,7 +363,6 @@ entity Orgunitreq : managed {
 
 }
 
- 
 
 //ZFI_O2P_TRIB_SPL
 entity Tribreq : managed {
@@ -398,6 +397,8 @@ entity F24Entratel : managed {
 entity JobRunHeader : managed {
   key ID               : UUID @Core.Computed;
       ENTITY           : String;
+      VARIANT          : String;
+      FILTER           : String;
       JOB_NAME         : String;
       RUN_ID           : Integer;
       SCHEDULED_AT     : String;
@@ -406,6 +407,7 @@ entity JobRunHeader : managed {
       STATUS_TEXT      : String;
       JOB_ID           : Integer;
       JOB_SCHEDULED_ID : String;
+      JOB_RUN_ID       : String;
       to_JobRunItem    : Composition of many JobRunItem
                            on to_JobRunItem.to_JobRunHeader = $self
 }
@@ -415,6 +417,8 @@ entity JobRunItem : managed {
   key to_JobRunHeader : Association to JobRunHeader;
   key ID              : Integer;
       ENTITY          : String;
+      VARIANT         : String;
+      RUN_ID          : Integer;
       JOB_NAME        : String;
       RESULT_TYPE     : String(1);
       RESULT_TEXT     : String;

@@ -116,12 +116,6 @@ async function getTaskComposedUrl(iTaskId, iRequest) {
 
     try {
 
-        let host = iRequest.headers.origin
-      
-        //Debug da BAS
-        if (host === undefined) {
-            host = 'https://cf-kupit-dev-yy6gs83h.launchpad.cfapps.eu10.hana.ondemand.com'
-        }
 
         let urlWzSite = getEnvParam("URL_WZ_SITE", false)
         let urlTask1 = getEnvParam("URL_TASK_WF1", false)
@@ -132,7 +126,7 @@ async function getTaskComposedUrl(iTaskId, iRequest) {
         taskUrl = taskUrl.replaceAll("<TASKID>", iTaskId)
 
         oResult.relativeUrl = taskUrl
-        oResult.absoluteUrl = host + urlWzSite + taskUrl
+       oResult.absoluteUrl = urlWzSite + taskUrl
 
         return oResult
 

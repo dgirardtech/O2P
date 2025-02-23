@@ -27,7 +27,7 @@ async function scheduleRun(iRequest) {
 
         let oInput = iRequest.data.INPUT
 
-   
+
 
         var schDay = oInput.CREATION_DATE
         var schTime = oInput.CREATION_TIME.split(':')
@@ -70,6 +70,12 @@ async function scheduleRun(iRequest) {
         }
 
 
+        if (oInput.CRON2) {
+            cron  =  oInput.CRON
+            cron2 =  oInput.CRON2
+        }
+        
+ 
 
         var sD = iRequest.timestamp.getDate().toString().length === 2 ? iRequest.timestamp.getDate() : '0' + iRequest.timestamp.getDate();
         var sH = iRequest.timestamp.getHours().toString().length === 2 ? iRequest.timestamp.getHours() : '0' + iRequest.timestamp.getHours();
@@ -85,22 +91,40 @@ async function scheduleRun(iRequest) {
 
         let runId = 1
         let oJobRunHeader = await SELECT.one.from(JobRunHeader).columns(["max(RUN_ID) as maxId"])
-            .where({ ENTITY: oInput.ENTITY, STATUS: 'C' })
+            .where({ ENTITY: oInput.ENTITY, VARIANT: oInput.VARIANT, STATUS: 'C' })
         if (Boolean(oJobRunHeader.maxId)) {
             runId = oJobRunHeader.maxId + 1
         }
 
 
+
+
         // let runId = Number(moment(new Date).format('YYYYMMDDhhmmss'))
 
-        let nameJob = oInput.PREFIX_JOB_NAME + ' ' + oInput.ENTITY + ' ' + runId
-        let nameJobDesc = oInput.PREFIX_JOB_NAME + ' ' + oInput.ENTITY
+        let nameJob     = oInput.PREFIX_JOB_NAME + ' ' + oInput.ENTITY + ' ' + oInput.VARIANT + ' ' + runId
+        let nameJobDesc = oInput.PREFIX_JOB_NAME + ' ' + oInput.ENTITY + ' ' + oInput.VARIANT
 
         var schedule = cronParser.parseExpression(cron2);
 
 
+
+        let filter = ''
+                 
+        let oJobRunVariant = await SELECT.one.from(JobRunVariant)
+        .where({ ENTITY: oInput.ENTITY,VARIANT: oInput.VARIANT })
+
+        if (oJobRunVariant) {
+            filter = oJobRunVariant.FILTER 
+        } else {
+            filter = oInput.FILTER
+        }
+
+
         oJobRunHeaderNew = {
             "ENTITY": oInput.ENTITY,
+            "VARIANT": oInput.VARIANT,
+            //"FILTER": oInput.FILTER,
+            "FILTER": filter,
             "JOB_NAME": nameJob,
             "RUN_ID": runId,
             "SCHEDULED_AT": schedule.next().toString(),
@@ -111,7 +135,7 @@ async function scheduleRun(iRequest) {
 
         let oInsert = await INSERT(oJobRunHeaderNew).into(JobRunHeader)
 
-        let oBody = { INPUT: oInput, CRON: cron2, HEADER_ID: oJobRunHeaderNew.ID }
+        let oBody = { INPUT: oInput }
 
 
         var data = {
@@ -126,15 +150,15 @@ async function scheduleRun(iRequest) {
             },
             "schedules": [
                 {
-                   // "cron": cron,
-                   "cron" : "* * * * * */05 0",
+                    "cron": cron,
+                    //"cron": "* * * * * */05 0",
                     "description": nameJobDesc,
                     "data": {
-                        "destinationName": "kupit-o2p",
+                        "destinationName": "kupit-o2p", 
                         "uriPath": "/createScheduledRun",
                         "method": "POST",
                         "body": JSON.stringify(oBody)
-                        //"body": oBody
+                    
                     },
                     "active": true,
                     "startTime": {
@@ -158,7 +182,7 @@ async function scheduleRun(iRequest) {
                 oJobRunHeaderNew.JOB_ID = result.data._id.toString()
                 oJobRunHeaderNew.JOB_SCHEDULED_ID = result.data.schedules[0].scheduleId
                 oJobRunHeaderNew.STATUS = 'C'
-                oJobRunHeaderNew.STATUS_TEXT = 'Created Successfully with ID ' + oJobRunHeaderNew.ID
+                oJobRunHeaderNew.STATUS_TEXT = 'Created Successfully'
 
             })
 
@@ -172,73 +196,75 @@ async function scheduleRun(iRequest) {
         });
 
 
-        let oUpsert = await UPSERT(oJobRunHeaderNew).into(JobRunHeader)
-        oResult.MTYPE = oJobRunHeaderNew.STATUS
-        oResult.TEXT = oJobRunHeaderNew.STATUS_TEXT
-        return oResult
-
-
     } catch (e) {
 
         oJobRunHeaderNew.STATUS = 'E'
         oJobRunHeaderNew.STATUS_TEXT = e.message
 
-        let oUpsert = await UPSERT(oJobRunHeaderNew).into(JobRunHeader)
-        oResult.MTYPE = oJobRunHeaderNew.STATUS
-        oResult.TEXT = oJobRunHeaderNew.STATUS_TEXT
-        return oResult
 
     }
+
+    let oUpsert = await UPSERT(oJobRunHeaderNew).into(JobRunHeader)
+    oResult.MTYPE = oJobRunHeaderNew.STATUS
+    oResult.TEXT = oJobRunHeaderNew.STATUS_TEXT
+    return oResult
 
 }
 
 
 
-async function createScheduledRun(iRequest,iJobHeader) {
+async function createScheduledRun(iRequest, ijobSchedulerInfo) {
 
-let oJobRunHeader = {}
+    let oJobRunHeader = {}
 
     try {
 
 
 
         let oInput = iRequest.data.INPUT
-        let headerId = iRequest.data.HEADER_ID
-        let cron = iRequest.data.CRON
+      //  let headerId = iRequest.data.HEADER_ID
+        //let cron2 = iRequest.data.CRON2
 
 
 
         let runId = 1
-        oJobRunHeader = await SELECT.one.from(JobRunHeader).columns(["max(RUN_ID) as maxId"]).where({ ENTITY: oInput.ENTITY })
+        oJobRunHeader = await SELECT.one.from(JobRunHeader).columns(["max(RUN_ID) as maxId"])
+        .where({ ENTITY: oInput.ENTITY , VARIANT: oInput.VARIANT})
         if (oJobRunHeader) {
-            runId = oJobRunHeader.maxId + 1
+            runId = oJobRunHeader.maxId + 1 
         }
 
-
-        // let runId = Number(moment(new Date).format('YYYYMMDDhhmmss'))
-
-
-        oJobRunHeader = await SELECT.one.from(JobRunHeader).where({ ID: headerId })
-
-        /*
-       oJobRunHeader = await SELECT.one.from(JobRunHeader)
-       .where({ JOB_ID: iJobHeader.jobId,
-        JOB_SCHEDULED_ID: iJobHeader.jobScheduleId,
-        Status: 'Scheduled' })
-        */
+ 
+        oJobRunHeader = await SELECT.one.from(JobRunHeader)
+            .where({
+                JOB_ID: Number(ijobSchedulerInfo.jobId),
+                JOB_SCHEDULED_ID: String(ijobSchedulerInfo.jobScheduleId), 
+                STATUS_JOB: 'Scheduled'
+            })
 
 
+            let filter = ''
+                 
+            let oJobRunVariant = await SELECT.one.from(JobRunVariant)
+            .where({ ENTITY: oInput.ENTITY,VARIANT: oInput.VARIANT })
 
-        let authorization = iRequest.headers.authorization;
+            if (oJobRunVariant) {
+                filter = oJobRunVariant.FILTER 
+            } else {
+                filter = oInput.FILTER
+            }
+
+      
 
         let url = 'http://' + iRequest.headers.host + '/odata/v2/kupito2pmodel-srv/' + oInput.ENTITY +
-            '?$filter=' + oInput.FILTER
+            '?$filter=' + filter
 
 
+ 
         var aResponse = await axios.get(url, {
             headers: {
                 "content-type": "application/json",
-                "Authorization": authorization
+                "Authorization": iRequest.headers.authorization
             }
         }).then(response => response.data.d.results)
 
@@ -249,9 +275,12 @@ let oJobRunHeader = {}
             let id = i + 1
 
             aJobRunItem.push({
-                to_JobRunHeader_ID: headerId,
-                ID: id,
-                ENTITY: oInput.ENTITY,
+                to_JobRunHeader_ID: oJobRunHeader.ID,
+                ID      : id,
+                ENTITY  : oInput.ENTITY,
+                VARIANT : oJobRunHeader.VARIANT,
+                FILTER  : filter,
+                RUN_ID  : oJobRunHeader.RUN_ID,
                 JOB_NAME: oJobRunHeader.JOB_NAME,
                 RESULT_TEXT: aResponse[i].RESULT_TEXT,
                 RESULT_TYPE: aResponse[i].RESULT_TYPE,
@@ -259,64 +288,37 @@ let oJobRunHeader = {}
             })
 
         }
-
+         
 
         let oUpsert = await UPSERT(aJobRunItem).into(JobRunItem)
 
 
         let oJobRunHeaderUpd = oJobRunHeader
         oJobRunHeaderUpd.STATUS_JOB = 'Completed'
+        oJobRunHeaderUpd.JOB_RUN_ID = ijobSchedulerInfo.jobRunId
+        oJobRunHeaderUpd.FILTER = filter
         oUpsert = await UPSERT(oJobRunHeaderUpd).into(JobRunHeader)
 
-/*
-    
-                let oCallJobScheduling = await callJobScheduling(
-                    'PUT',
-                    `/jobs/${oJobRunHeader.JOB_ID}/schedules/${oJobRunHeader.JOB_SCHEDULED_ID}/runs/${String(oJobRunHeader.RUN_ID)}`,
-                    {
-                        "success": true,
-                        "message": "Successful finished long running operation. New run: " + runId
-                    }
-                );
-      
- */
 
-                /*
- 
-                let dest = await _getDestination();
-                url = `/jobs/${oJobRunHeader.JOB_ID}/schedules/${oJobRunHeader.JOB_SCHEDULED_ID}/runs/${String(oJobRunHeader.RUN_ID)}`
-                let oJob = await new Promise((resolve, reject) => {
-                    client.executeHttpRequest(dest, {
-                        method: 'PUT',
-                        url: url,
-                        data: {
-                            "success": true,
-                            "message": "Successful finished long running operation. New run: " + runId
-                        },
-                    }
-                    ).then(async (result) => {
-                        resolve(result)
-                 
-        
-                    })
-        
-                        .catch((e) => {
-                            reject(e)
-                   
-        
-                        });
-        
-                });
+        let oCallJobScheduling = await callJobScheduling(
+            'PUT',
+            `/jobs/${ijobSchedulerInfo.jobId}/schedules/${ijobSchedulerInfo.jobScheduleId}/runs/${ijobSchedulerInfo.jobRunId}`,
+            {
+                "success": true,
+                "message": "Successful finished long running operation. New run: " + runId
+            }
+        );
 
-                */
 
-        let jobName = oInput.PREFIX_JOB_NAME + ' ' + oInput.ENTITY + ' ' + runId
+        let jobName = oInput.PREFIX_JOB_NAME + ' ' + oInput.ENTITY + ' ' + oInput.VARIANT  + ' ' + runId
 
-        var schedule = cronParser.parseExpression(cron);
+        var schedule = cronParser.parseExpression(oInput.CRON2);
 
         var oJobRunHeaderNew = {
             "ENTITY": oInput.ENTITY,
             "JOB_NAME": jobName,
+            "VARIANT": oInput.VARIANT,
+            "FILTER": filter,
             "RUN_ID": runId,
             "SCHEDULED_AT": schedule.next().toString(),
             "STATUS_JOB": 'Scheduled',
@@ -333,6 +335,8 @@ let oJobRunHeader = {}
         let oJobRunHeaderUpd = oJobRunHeader
 
         oJobRunHeaderUpd.STATUS_JOB = 'Completed'
+        oJobRunHeaderUpd.JOB_RUN_ID = ijobSchedulerInfo.jobRunId
+        oJobRunHeaderUpd.FILTER = filter
         oJobRunHeaderUpd.STATUS = 'E'
         oJobRunHeaderUpd.STATUS_TEXT = err.message
 
@@ -347,7 +351,7 @@ async function saveVariant(iRequest) {
 
     let oResult = {
         MTYPE: '',
-        TEXT : ''
+        TEXT: ''
     }
 
     try {
@@ -363,13 +367,17 @@ async function saveVariant(iRequest) {
 
         }
 
-        let oJobRunVariant = {
-            ENTITY : iRequest.data.ENTITY,
-            VARIANT: iRequest.data.NAME_VARIANT,
-            FILTER : iRequest.data.FILTER_VARIANT
-        }
+        if (Boolean(iRequest.data.NAME_VARIANT)) {
 
-        let oUpsert = await UPSERT(oJobRunVariant).into(JobRunVariant)
+            let oJobRunVariant = {
+                ENTITY: iRequest.data.ENTITY,
+                VARIANT: iRequest.data.NAME_VARIANT,
+                FILTER: iRequest.data.FILTER_VARIANT
+            }
+
+            let oUpsert = await UPSERT(oJobRunVariant).into(JobRunVariant)
+
+        }
 
         oResult.MTYPE = 'S'
         oResult.TEXT = 'Saved Successfully'

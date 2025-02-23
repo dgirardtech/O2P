@@ -3,17 +3,18 @@ const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams } = require('./lib/createProcess');
 const { createAttachment, readAttachment, deleteAttachment, createNote, readNote, deleteNote,
-    updateRequest,  getMonitorRequest, manageDocPopupData, getDocStatus,
-    getEccServices, getAssignInfo, isCreationStep, manageMainData, enrichCountingCreate,enrichCountingSend } = require('./lib/Handler');
+    updateRequest, getMonitorRequest, manageDocPopupData, getDocStatus,
+    getEccServices, getAssignInfo, isCreationStep, manageMainData, enrichCountingCreate, enrichCountingSend } = require('./lib/Handler');
 const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
-const { testMail } = require('./lib/MailHandler');
+const { testMail, sendAllMail } = require('./lib/MailHandler');
 const { fromDocumentToTree, fromRequestIdToTree,
     fromTreeToDocument, formatDocument, createFIDocument } = require('./lib/DocumentHandler');
-    const { getNameMotivationAction } = require('./lib/Utils');
+const { getNameMotivationAction } = require('./lib/Utils');
 
-const { generateO2PF23Aut } = require('./lib/PDFHandler');
+const { generateO2PF23Aut, generateO2PDocument } = require('./lib/PDFHandler');
 
-const { scheduleRun, createScheduledRun, saveVariant} = require('./lib/JobHandler');
+const { scheduleRun, createScheduledRun, saveVariant } = require('./lib/JobHandler');
+
 
 
 
@@ -37,13 +38,13 @@ module.exports = cds.service.impl(async function () {
     const { Requester, Paymode, AttachmentType, Attachments, Notes,
         ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView,
         Request, Document, Currencies, Accountreq, Bank, Bankexc, Bankreq, Bankdefault, Clearacc,
-        Doclog, Docparam, Orgunitreq, Parameters,  Tribreq, Currency, Param, F24Entratel } = this.entities;
+        Doclog, Docparam, Orgunitreq, Parameters, Tribreq, Currency, Param, F24Entratel } = this.entities;
     const { WorkDay } = this.entities;
     const { UserTaskCounter } = this.entities;
     const { CostCenterTextSet, AfeLocationSet } = this.entities;
-    const { VendorSet,VendorSHSet, AccDocHeaderSet, AccDocPositionSet, GlAccountCompanySet } = this.entities;
+    const { VendorSet, VendorSHSet, AccDocHeaderSet, AccDocPositionSet, GlAccountCompanySet } = this.entities;
 
-    const { JobRunHeader, JobRunItem,JobRunVariant } = this.entities;
+    const { JobRunHeader, JobRunItem, JobRunVariant } = this.entities;
 
 
     global.ZFI_AFE_COMMON_SRV = await cds.connect.to('ZFI_AFE_COMMON_SRV');
@@ -89,11 +90,11 @@ module.exports = cds.service.impl(async function () {
     global.AccDocPositionSet = AccDocPositionSet
     global.GlAccountCompanySet = GlAccountCompanySet
 
-    global.JobRunHeader  = JobRunHeader;
-    global.JobRunItem    = JobRunItem;
+    global.JobRunHeader = JobRunHeader;
+    global.JobRunItem = JobRunItem;
     global.JobRunVariant = JobRunVariant;
-     
-    
+
+
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -114,7 +115,29 @@ module.exports = cds.service.impl(async function () {
     });
 
     //-------------ACTION AZIONI Approva\Rifiuta\Termina PROCESSO-------------------
-    this.on('saveUserAction', saveUserAction);
+    //this.on('saveUserAction', saveUserAction);
+
+
+    this.on('saveUserAction', async (request) => {
+
+        let osaveUserAction = await saveUserAction(request)
+
+        if (osaveUserAction.error) {
+            request.error(450, osaveUserAction.error, null, 450)
+            return request
+        }
+
+        // background for performance
+        cds.spawn({ after: 1000 }, async (tx) => {
+
+            let oResponseSendAllMail = await sendAllMail(request, request.data.REQUEST_ID, '', request.event, false)
+            let o2pDocument = await generateO2PDocument(request, true)
+
+        })
+
+        return request
+
+    });
 
     //this.after('READ', 'Request', getRequest);
     this.after('UPDATE', 'Request', updateRequest);
@@ -139,19 +162,21 @@ module.exports = cds.service.impl(async function () {
     this.before('DELETE', 'Notes', deleteNote);
 
 
-      
 
-        this.on('downloadDocTemplate', async (req) => {
 
-            let docTemplate = fs.readFileSync('srv/file/csv/Documents template.csv')
-                 let oResult = 
-            {   CONTENT: docTemplate.toString(),
-                MEDIATYPE: 'text/csv',
-                CONTENTSTRING: docTemplate.toString('base64')   }
-    
-            return oResult
+    this.on('downloadDocTemplate', async (req) => {
 
-        });
+        let docTemplate = fs.readFileSync('srv/file/csv/Documents template.csv')
+        let oResult =
+        {
+            CONTENT: docTemplate.toString(),
+            MEDIATYPE: 'text/csv',
+            CONTENTSTRING: docTemplate.toString('base64')
+        }
+
+        return oResult
+
+    });
 
 
     this.on('printF23Aut', async (req) => {
@@ -160,9 +185,11 @@ module.exports = cds.service.impl(async function () {
 
         let oResult =
 
-        {   CONTENT: o2pF23Aut.binary.toString(),
+        {
+            CONTENT: o2pF23Aut.binary.toString(),
             MEDIATYPE: o2pF23Aut.type,
-            CONTENTSTRING: o2pF23Aut.toString('base64')  }
+            CONTENTSTRING: o2pF23Aut.toString('base64')
+        }
 
         return oResult
 
@@ -195,13 +222,13 @@ module.exports = cds.service.impl(async function () {
         return await getMonitorRequest(request, next);
     });
 
-  
+
 
     this.on('READ', 'CountingCreate', async (request, next) => {
 
         let aCounting = await next()
- 
-    
+
+
         if (aCounting.length > 0 && !Boolean(aCounting[0].REQUEST_ID)) {
             return aCounting
         }
@@ -213,11 +240,11 @@ module.exports = cds.service.impl(async function () {
     });
 
 
-    
+
     this.on('READ', 'CountingSend', async (request, next) => {
 
         let aCounting = await next()
- 
+
         if (aCounting.length > 0 && !Boolean(aCounting[0].REQUEST_ID)) {
             return aCounting
         }
@@ -239,18 +266,18 @@ module.exports = cds.service.impl(async function () {
 
     this.on('createScheduledRun', async (request) => {
 
-       // const oJobHeader = request.data.jobSchedulerInfo;
+        const ojobSchedulerInfo = request.data.jobSchedulerInfo;
 
         let nMilliSecondsInterval = 3000;
         cds.spawn({ after: nMilliSecondsInterval }, async (tx) => {
 
-        await createScheduledRun(request,oJobHeader);
+            await createScheduledRun(request, ojobSchedulerInfo);
 
-    });
+        });
 
-    request.res.status(202);
+        request.res.status(202);
 
-    return ('Accepted async job, but long-running operation still running');
+        return ('Accepted async job, but long-running operation still running');
 
     });
 

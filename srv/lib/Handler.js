@@ -1705,6 +1705,26 @@ async function isTest(iRequest) {
 
 }
 
+async function getNDays(iRequest) {
+
+    let result = ""
+
+    if (Boolean(iRequest._queryOptions) && Boolean(iRequest._queryOptions.$filter)) {
+
+        let aSplit = iRequest._queryOptions.$filter.split(' and ')
+
+        for (let i = 0; i < aSplit.length; i++) {
+
+            if (aSplit[i].substring(0, 5) === 'NDAYS') {
+                result = String(aSplit[i].substring(9))
+            }
+        }
+    }
+
+    return result
+
+}
+
 
 async function fillRequest(iRequest) {
 
@@ -1773,6 +1793,7 @@ async function enrichCountingSend(iRequest, iCounting) {
 
     const oBundle = getTextBundle(iRequest);
 
+    let aResult = []
     let aCounting = iCounting
 
     let send = true
@@ -1782,6 +1803,12 @@ async function enrichCountingSend(iRequest, iCounting) {
         send = false
     }
 
+
+    let nDays = await getNDays(iRequest)
+
+    let now = moment(new Date());
+
+
     iRequest = await fillRequest(iRequest)
     if (iRequest.errors) {
         return iRequest
@@ -1789,6 +1816,14 @@ async function enrichCountingSend(iRequest, iCounting) {
 
 
     for (let x = 0; x < aCounting.length; x++) {
+
+        let started = moment(aCounting[x].ENDDATE)
+        let dayDiff = now.diff(started, 'days')
+
+        if ((Boolean(nDays)) &&
+            Number(dayDiff) > Number(nDays)) {
+            continue
+        }
 
         if (Boolean(send)) {
 
@@ -1826,12 +1861,14 @@ async function enrichCountingSend(iRequest, iCounting) {
 
         }
 
+        aResult.push(aCounting[x])
+
     }
 
 
-    if (aCounting.length === 0) {
+    if (aResult.length === 0) {
 
-        aCounting.push({
+        aResult.push({
             REQUEST_ID: '',
             DOC_ID: '',
             RESULT_TYPE: consts.ERROR,
@@ -1841,13 +1878,15 @@ async function enrichCountingSend(iRequest, iCounting) {
     }
 
 
-    return aCounting
+    return aResult
+
 }
 
 async function enrichCountingCreate(iRequest, iCounting) {
 
     const oBundle = getTextBundle(iRequest);
 
+    let aResult = []
     let aCounting = iCounting
 
     let save = true
@@ -1857,8 +1896,22 @@ async function enrichCountingCreate(iRequest, iCounting) {
         save = false
     }
 
+    let nDays = await getNDays(iRequest)
+
+    let now = moment(new Date());
+
 
     for (let x = 0; x < aCounting.length; x++) {
+
+        let started = moment(aCounting[x].ENDDATE)
+        let dayDiff = now.diff(started, 'days')
+
+
+        if ((Boolean(nDays)) &&
+            Number(dayDiff) > Number(nDays)) {
+            continue
+        }
+
 
         let oDocumentDetail = await getDocumentDetail(aCounting[x].REQUEST_ID, aCounting[x].DOC_ID)
 
@@ -1893,12 +1946,14 @@ async function enrichCountingCreate(iRequest, iCounting) {
                 [oDocumentDetail.requestId, oDocumentDetail.documentNumber])
 
         }
+
+        aResult.push(aCounting[x])
     }
 
 
-    if (aCounting.length === 0) {
+    if (aResult.length === 0) {
 
-        aCounting.push({
+        aResult.push({
             REQUEST_ID: '',
             DOC_ID: '',
             RESULT_TYPE: consts.ERROR,
@@ -1907,7 +1962,7 @@ async function enrichCountingCreate(iRequest, iCounting) {
 
     }
 
-    return aCounting
+    return aResult
 
 }
 
