@@ -36,8 +36,8 @@ entity Request : managed {
       PAYMENT_CONFIRM                : Boolean default false;
 
       //---> open text
-      //COMPOUND_ID
-      //PDF_ID
+      //COMPOUND_ID                  : String(20);
+      //PDF_ID                       : Integer;
       //
 
 
@@ -150,14 +150,22 @@ entity Attachments : managed {
       CONTENT            : LargeBinary @Core.MediaType: MEDIATYPE;
       MEDIATYPE          : String      @Core.IsMediaType;
       FILENAME           : String;
+      FILENAMEUP         : String = upper(FILENAME);
       SIZE               : Integer;
       URL                : String;
+      OPENTEXTNODEID     : String;
       ATTACHMENTTYPE     : Association to one AttachmentType;
       CREATOR_FULLNAME   : String(100);
       DOC_ID             : DOC_ID;
       virtual ISEDITABLE : Boolean;
       virtual ATTACHDESC : String(40);
 
+}
+
+entity OtNodeIds : managed {
+  key REQUEST_ID                 : REQUEST_ID;
+      OPENTEXTNODEID             : String;
+      OPENTEXTFILEFOLDER         : String;
 }
 
 //ZFI_O2P_NOTE
@@ -210,10 +218,10 @@ entity Status : CodeList {
 //ZFI_O2P_D_ATTACH_TYPE ( dominio )
 @cds.odata.valuelist
 entity AttachmentType {
-  key ATTACHMENTTYPE : String(20);
-      //key STEP           : STEP;
+  key ATTACHMENTTYPE : String(20); 
       ORDER          : Integer;
       DESCRIPTION    : localized String(40);
+      ISEDITABLE     : Boolean;
 }
 
 

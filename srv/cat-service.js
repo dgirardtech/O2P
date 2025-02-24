@@ -15,8 +15,7 @@ const { generateO2PF23Aut, generateO2PDocument } = require('./lib/PDFHandler');
 
 const { scheduleRun, createScheduledRun, saveVariant } = require('./lib/JobHandler');
 
-
-
+const { testSaveOT } = require('./lib/OTHandler'); 
 
 const { consts } = require('./lib/Constants');
 
@@ -35,7 +34,7 @@ module.exports = cds.service.impl(async function () {
 
     /////////////////////////////////////////////////////////////////////////////////////
 
-    const { Requester, Paymode, AttachmentType, Attachments, Notes,
+    const { Requester, Paymode, AttachmentType, Attachments,OtNodeIds, Notes,
         ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView,
         Request, Document, Currencies, Accountreq, Bank, Bankexc, Bankreq, Bankdefault, Clearacc,
         Doclog, Docparam, Orgunitreq, Parameters, Tribreq, Currency, Param, F24Entratel } = this.entities;
@@ -79,6 +78,7 @@ module.exports = cds.service.impl(async function () {
     global.Currency = Currency;
     global.F24Entratel = F24Entratel;
     global.Param = Param;
+    global.OtNodeIds = OtNodeIds;
 
     global.CostCenterTextSet = CostCenterTextSet;
     global.AfeLocationSet = AfeLocationSet;
@@ -114,10 +114,7 @@ module.exports = cds.service.impl(async function () {
         return await checkTaskCreated(req)
     });
 
-    //-------------ACTION AZIONI Approva\Rifiuta\Termina PROCESSO-------------------
-    //this.on('saveUserAction', saveUserAction);
-
-
+    //-------------ACTION AZIONI Approva\Rifiuta\Termina PROCESSO------------------- 
     this.on('saveUserAction', async (request) => {
 
         let osaveUserAction = await saveUserAction(request)
@@ -267,9 +264,8 @@ module.exports = cds.service.impl(async function () {
     this.on('createScheduledRun', async (request) => {
 
         const ojobSchedulerInfo = request.data.jobSchedulerInfo;
-
-        let nMilliSecondsInterval = 3000;
-        cds.spawn({ after: nMilliSecondsInterval }, async (tx) => {
+ 
+        cds.spawn({ after: 3000 }, async (tx) => {
 
             await createScheduledRun(request, ojobSchedulerInfo);
 
@@ -281,6 +277,12 @@ module.exports = cds.service.impl(async function () {
 
     });
 
+
+    this.on('testSaveOT', async (request) => {
+
+        return await testSaveOT(request);
+
+});
 
 
     this.after('READ', 'Document', formatDocument);

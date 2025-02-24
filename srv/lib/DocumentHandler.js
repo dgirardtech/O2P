@@ -51,7 +51,7 @@ async function fromTreeToDocument(iRequest) {
                 let aVendorBank = await EccServiceO2P.run(
                     SELECT.from(VendorBankSet).columns(['Lifnr', 'Banks', 'Bankl', 'Bankn', 'Bvtyp'])
                         .where({ Lifnr: aHeader[i].VENDOR }));
- 
+
                 for (let z = 0; z < aVendorBank.length; z++) {
 
                     let oTibanSet = await EccServiceO2P.run(
@@ -887,6 +887,11 @@ async function getDocumentProp(iRequestID, iDocID, iStep) {
 
     }
 
+    if (!oResult.docProcType ) {
+        oResult.docProcType = ""
+    }
+
+
     return oResult
 
 }
@@ -963,11 +968,11 @@ async function fillTableFIDocument(iRequest, iDocProp) {
         CompCode: oRequester.BUKRS,
         DocDate: moment(oRequest.START_APPROVAL_FLOW).format('YYYYMMDD'),
         PstngDate: moment(new Date).format('YYYYMMDD'),
-        TransDate: '00000000',
+        TransDate: consts.initialDate,
         DocType: oDocProp.docType,
         RefDocNo: aDocument[0].REF_ID,
-        Vatdate: '00000000',
-        InvoiceRecDate: '00000000' 
+        Vatdate: consts.initialDate,
+        InvoiceRecDate: consts.initialDate
     }
 
     // }
@@ -1070,7 +1075,8 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                     SpGlInd: specialGLInd,
                     PartnerBk: partnBnkType,
                     AllocNmbr: moment(new Date).format('MM/YYYY'),
-                    PmntBlock: pmntBlock
+                    PmntBlock: pmntBlock,
+                    TaxDate: consts.initialDate
                 })
 
 
@@ -1091,6 +1097,7 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                 AllocNmbr: moment(new Date).format('MM/YYYY'),
                 Pmnttrms: '1000',
                 PymtMeth: pymtMeth,
+                TaxDate: consts.initialDate
 
             })
 
@@ -1142,7 +1149,8 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                     PartnerBk: partnBnkType,
                     AllocNmbr: moment(new Date).format('MM/YYYY'),
                     Pmnttrms: pmntTrms,
-                    PymtMeth: pymtMeth
+                    PymtMeth: pymtMeth,
+                    TaxDate: consts.initialDate
                 })
 
 
@@ -1245,8 +1253,10 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                         AllocNmbr: allocNmbr,
                         RefKey3: riferimento,
                         RefKey2: refKey2,
-                        RefKey1: refKey1,
-
+                        RefKey1: refKey1, 
+                        AsvalDate: consts.initialDate,
+                        BillingPeriodStartDate: consts.initialDate,
+                        BillingPeriodEndDate: consts.initialDate
                     })
 
                     aCurrencyAmount.push({
@@ -1294,20 +1304,24 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                     PartnerBk: partnBnkType,
                     AllocNmbr: moment(new Date).format('MM/YYYY'),
                     Pmnttrms: pmntTrms,
-                    PymtMeth: pymtMeth
+                    PymtMeth: pymtMeth,
+                    TaxDate: consts.initialDate
                 })
 
 
                 aAccountGL.push({
                     ItemnoAcc: '2',
                     GlAccount: oRequest.BANK_ACCOUNT,
-                    ValueDate:  moment(oRequest.VALUE_DATE).format('YYYYMMDD'),
+                    ValueDate: moment(oRequest.VALUE_DATE).format('YYYYMMDD'),
                     AllocNmbr: oPayMode.TREASURY_CODE,
                     ItemText: oPayMode.TREASURY_CODE +
                         moment(oRequest.VALUE_DATE).format('YYYYMMDD').substring(6, 8) +
                         moment(oRequest.VALUE_DATE).format('YYYYMMDD').substring(4, 6) +
                         moment(oRequest.VALUE_DATE).format('YYYYMMDD').substring(2, 4),
                     PstngDate: moment(new Date).format('YYYYMMDD'),
+                    AsvalDate: consts.initialDate,
+                    BillingPeriodStartDate: consts.initialDate,
+                    BillingPeriodEndDate: consts.initialDate
 
 
                 })
@@ -1336,8 +1350,12 @@ async function fillTableFIDocument(iRequest, iDocProp) {
                             ItemText: itemText,
                             TaxCode: taxCode,
                             Costcenter: aDocument[i].COST_CENTER,
-                            Orderid: aDocument[i].INT_ORDER
-
+                            Orderid: aDocument[i].INT_ORDER,
+                            AsvalDate: consts.initialDate,
+                            BillingPeriodStartDate: consts.initialDate,
+                            BillingPeriodEndDate: consts.initialDate,
+                            ValueDate: consts.initialDate,
+                            PstngDate: consts.initialDate
                         })
 
                     }
@@ -1391,7 +1409,7 @@ async function fillTableFIDocument(iRequest, iDocProp) {
 
 async function fillTableClearFIDocument(iRequest, iDocProp) {
 
-    let valut = '00000000'
+    let valut = consts.initialDate
     //let wrbtr = '0.00'
     let vendorReg = ''
     let doctoclear1 = ''

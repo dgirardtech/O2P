@@ -5,7 +5,13 @@ exports.PATH_API_WF = "../external/modules/SPA_Workflow_Runtime";
 exports.API_WF_DESTINATION = "sap_process_automation_api";
 exports.WF_DEFINITION_ID = "eu10.cf-kupit-dev-yy6gs83h.kupito2p.o2PProcess";
 
+exports.OU_KUPIT = "KUPIT";
+exports.OT_PROCESS_NAME = "O2P";
+exports.OT_PROCESS_DESC = "O2P";
+
+
 exports.firstId = "001"
+exports.initialDate = "00000000"
 
 
 // --------------
@@ -78,7 +84,8 @@ exports.stepStatus = Object.freeze({
 
 
 
-exports.idProcessMail = "O2PPROCESS"
+
+exports.idProcess = "O2PPROCESS"
 
 exports.mailId = Object.freeze({
     MISSING_APPROVERS: "MISSING_APPROVERS",
@@ -91,8 +98,7 @@ exports.mailId = Object.freeze({
     COUNTING: "COUNTING"
 });
 
-
-exports.idProcessNotification = "O2PPROCESS"
+ 
 
 // NOTIFICATION ID LIST
 exports.notificationId = Object.freeze({

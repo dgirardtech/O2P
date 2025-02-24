@@ -3,36 +3,119 @@ const _ = require('underscore');
 const client = require('@sap-cloud-sdk/http-client');
 const { Readable, PassThrough } = require('stream');
 const { retrieveJwt } = require('@sap-cloud-sdk/connectivity');
-const { getEnvParam, getTextBundle, getDbParam, getPidData } = require('./Utils');
+const { getTextBundle } = require('./Utils');
 const consts = require("./Constants");
 
-const sPROCESSID = "PIDSIMPLIFIED";
-const sPOINTOFSALE = "POINTOFSALE";
+const sPROCESSID = "O2P_DOC"
 
-async function _getDestination(request) {
-    let oDest = {};
-    let bJWT;
+async function testSaveOT(iRequest) {
+
+    let oFileDbKey = {};
+    let oBody = {};
+    let metadata = [];
+    let headMetaDataValue;
+    let fileMetaDataValue;
+    let openTextFileID;
 
     try {
-        bJWT = JSON.parse(await getDbParam("USE_JWT"));
-    } catch (error) {
-        let errMEssage = "ERROR KRC_parameters USE_JWT :" + error.message;
-        request.error(450, errMEssage, null, 450);
-        LOG.error(errMEssage);
-        return request;
+
+    let oRequest = await SELECT.one.from(Request).where({ REQUEST_ID: iRequest.REQUEST_ID });
+
+
+    let oAttachment = await SELECT.one.from(Attachments).where({
+        REQUEST_ID: iRequest.REQUEST_ID,
+        ATTACHMENTTYPE_ATTACHMENTTYPE: consts.attachmentTypes.DOC
+    });
+
+
+    oFileDbKey = {
+        REQUEST_ID: oAttachment.REQUEST_ID,
+        ID:  oAttachment.ID
+    };
+
+
+     fileMetaDataValue = await SELECT.one.from(Attachments).byKey(oFileDbKey);
+
+
+     headMetaDataValue = await getMetaDataValue(iRequest);
+    if (headMetaDataValue.errors) {
+        return headMetaDataValue;
     }
-    if (bJWT) {
+
+
+    oBody.ProcessId_ProcessId = consts.idProcess
+    oBody.ParentID = Number(fileMetaDataValue.OPENTEXTFILEFOLDER);
+    oBody.FileName = fileMetaDataValue.FILENAME;
+    oBody.mediaType = fileMetaDataValue.MEDIATYPE;
+    oBody.Metadata = metadata;
+
+    let attchDesc = await SELECT.one.from(AttachmentType).where({ATTACHMENTTYPE:fileMetaDataValue.ATTACHMENTTYPE_ATTACHMENTTYPE});
+    if(attchDesc){
+        fileDesc = attchDesc.DESCRIPTION;
+    }
+
+    oBody = getCommonMetaData(iRequest, oBody, headMetaDataValue)
+
+    oBody.Metadata.push(getMetaDataElement("DocumentType", fileMetaDataValue.ATTACHMENTTYPE_ATTACHMENTTYPE));
+    oBody.Metadata.push(getMetaDataElement("DocumentTypeDescr",fileDesc));
+
+    oBody.contentBase64 = fileMetaDataValue.CONTENT
+
+
+    let oRespCreateFile = await client.executeHttpRequest(await _getDestination(iRequest), {
+        method: 'POST',
+        url: `/odata/v2/catalog/OpenTextFile`,
+        data: oBody
+    }, {
+        fetchCsrfToken: false
+    });
+
+    openTextFileID = getOpenTextFileID(iRequest, oRespCreateFile);
+    if (openTextFileID.errors) {
+        return openTextFileID;
+    }
+
+    let resultUpdate = await UPDATE(Attachments).set({ OPENTEXTNODEID: openTextFileID }).byKey(oFileDbKey);
+
+
+
+    } catch (error) {
+        let deleteInsert = cds.tx();
+        let deleteDbFile = await deleteInsert.run(DELETE.from(Attachments).byKey(oFileDbKey));
+        await deleteInsert.commit();
+
+        let errMEssage = "ERROR Save OT attach: " + iRequest.REQUEST_ID  + ". " + error.message;
+        iRequest.error(450, 'OT_SAVE_FILE_GENERAL_ERROR' , Attachments, 450);
+        LOG.error(errMEssage);
+        returnInnerErrors(iRequest, iRequestId, error, 'OT_SAVE_FILE_GENERAL_ERROR');
+        return iRequest;
+    }
+
+    return iRequest;
+}
+
+async function _getDestination(request) {
+
+    let oDest = {}
+
+    let callOTwithJWT = getEnvParam("callOTwithJWT", false)
+    if (callOTwithJWT === "true") {
+
         oDest = {
             destinationName: "OT_Handler_Common_JWT",
             jwt: retrieveJwt(request)
-        };
+        }
+
     } else {
+
         oDest = {
             destinationName: "OT_Handler_Common"
-        };
+        }
+
     }
 
     return oDest;
+
 }
 
 function _startRead(data) {
@@ -82,73 +165,6 @@ function _convertToBase64(oData) {
     return Buffer.from(oData, 'binary').toString('base64');
 }
 
-async function createDbAttachment(iRequest) {
-    LOG.info("PID_Attachments - DB BEFORE CREATE Event handler")
-
-    let pidRequestId;
-    try {
-
-        let actualUser = iRequest.user.id;
-
-        //Procedura di debug per test da BAS
-        //Non viene utilizzato su richieste reali
-        if (iRequest.data.REQUEST_ID === undefined) {
-
-            iRequest.data.REQUEST_ID = 1000000530;
-            iRequest.data.ID = 0;
-            iRequest.data.FILENAME = "zz5bRFPLus03.pdf";
-            iRequest.data.ATTACHMENTTYPE_ATTACHMENTTYPE = "LAYOUT";
-            iRequest.data.MEDIATYPE = 'application/pdf';
-        }
-
-        // Check Attachment Type
-        if (iRequest.data.MEDIATYPE === undefined) {
-            iRequest.error(450, consts.MISSING_MEDIATYPE, Attachments, 450);
-            LOG.error(errMEssage);
-            return iRequest;
-        }
-
-        pidRequestId = iRequest.data.REQUEST_ID;
-
-        //check duplicate file name 
-        let fileNameUp = String(iRequest.data.FILENAME).toUpperCase();
-        let queryCheckDuplicated = await SELECT.one.from(Attachments).
-            columns(["FILENAMEUP"])
-            .where({ REQUEST_ID: pidRequestId, FILENAMEUP: fileNameUp });
-        if (queryCheckDuplicated !== undefined) {
-            iRequest.error(450, consts.FILE_DUPLICATED, Attachments, 450);
-            return iRequest;
-        }
-
-        let queryMaxResult = await SELECT.one.from(Attachments).columns(["max(ID) as maxId"])
-            .where({ REQUEST_ID: pidRequestId });
-
-        let maxId = queryMaxResult.maxId + 10;
-
-        iRequest.data.ID = maxId;
-        iRequest.data.URL = "/odata/v2/pidmodel-srv/Attachments(REQUEST_ID=" + pidRequestId + ",ID=" + maxId + ")/CONTENT";
-
-        if (iRequest.data.ATTACHMENTTYPE_ATTACHMENTTYPE === '') {
-            iRequest.data.ATTACHMENTTYPE_ATTACHMENTTYPE = consts.attachmentTypes.GENERAL;
-        }
-
-        let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
-            .where({ MailDipendente: actualUser }));
-
-        if (oInfoWDPosition === undefined) {
-            iRequest.data.CREATOR_FULLNAME = actualUser;
-        } else {
-            iRequest.data.CREATOR_FULLNAME = oInfoWDPosition.FullName;
-        }
-
-    } catch (error) {
-        let errMEssage = "ERROR PID Save DB attach: " + pidRequestId + ". " + error.message;
-        iRequest.error(450, consts.DB_SAVE_FILE_GENERAL_ERROR, Attachments, 450);
-        LOG.error(errMEssage);
-        return iRequest;
-    }
-    return iRequest;
-}
 
 
 async function saveFileonOT(iRequest) {
@@ -192,19 +208,19 @@ async function saveFileonOT(iRequest) {
         // oBody.Metadata.push(getMetaDataElement("ProjectDescription", consts.OT_PROCESS_DESC));
         // oBody.Metadata.push(getMetaDataElement("ProjectTitle", headMetaDataValue.pidRequestdData.PROJECT_TITLE));
         // oBody.Metadata.push(getMetaDataElement("SourceApplication", consts.BPROCESS_DEFINITION));
-        oBody = getCommonMetaData(iRequest,oBody,headMetaDataValue)
-        
-        
-        
+        oBody = getCommonMetaData(iRequest, oBody, headMetaDataValue)
+
+
+
         oBody.contentBase64 = _convertToBase64(await _startRead(iRequest.data.CONTENT));
-        
+
         let oRespCreateFile = await client.executeHttpRequest(await _getDestination(iRequest), {
             method: 'POST',
-            url: `/odata/v2/catalog/OpenTextFile`, 
+            url: `/odata/v2/catalog/OpenTextFile`,
             data: oBody
         });
 
-        openTextFileID = getOpenTextFileID(iRequest,oRespCreateFile);
+        openTextFileID = getOpenTextFileID(iRequest, oRespCreateFile);
         if (openTextFileID.errors) {
             return openTextFileID;
         }
@@ -223,21 +239,15 @@ async function saveFileonOT(iRequest) {
     }
 }
 
-function getCommonMetaData(iRequest,oBody,headMetaDataValue){
+function getCommonMetaData(iRequest, oBody, headMetaDataValue) {
 
     oBody.Metadata.push(getMetaDataElement("OperatingUnit", consts.OU_KUPIT));
-    oBody.Metadata.push(getMetaDataElement("InvestmentType", headMetaDataValue.investmentType));//Obbligatorio
-    oBody.Metadata.push(getMetaDataElement("Location", headMetaDataValue.location));//Obbligatorio
-    if (headMetaDataValue.pidRequestdData.OUTLET_CODE !== null) {
-        oBody.Metadata.push(getMetaDataElement("PointOfSales", headMetaDataValue.pointOfSales));
-        oBody.Metadata.push(getMetaDataElement("PointOfSalesDescr", headMetaDataValue.pointOfSalesDescr));
-    }
     oBody.Metadata.push(getMetaDataElement("ProcessName", consts.OT_PROCESS_NAME));
-    oBody.Metadata.push(getMetaDataElement("ProcessNumber", String(headMetaDataValue.pidRequestdData.REQUEST_ID)));
+    oBody.Metadata.push(getMetaDataElement("ProcessNumber", String(headMetaDataValue.request.REQUEST_ID)));
     oBody.Metadata.push(getMetaDataElement("ProcessTechnicalKey", consts.OT_PROCESS_NAME));
     oBody.Metadata.push(getMetaDataElement("ProjectDescription", consts.OT_PROCESS_DESC));
-    oBody.Metadata.push(getMetaDataElement("ProjectTitle", headMetaDataValue.pidRequestdData.PROJECT_TITLE));
-    oBody.Metadata.push(getMetaDataElement("SourceApplication", consts.BPROCESS_DEFINITION));
+    //oBody.Metadata.push(getMetaDataElement("ProjectTitle", headMetaDataValue.request.TITLE));
+    oBody.Metadata.push(getMetaDataElement("SourceApplication", consts.idProcess));
 
     return oBody;
 
@@ -248,11 +258,11 @@ function getOpenTextFileID(iRequest, iServiceResult) {
     try {
         openTextFileId = iServiceResult.data.d.OpenTextFileID;
 
-        if (openTextFileId.length <=0){
+        if (openTextFileId.length <= 0) {
             let errMEssage = "ERROR getOpenTextFileID: OpenTextFileID is empty";
             iRequest.error(450, errMEssage, null, 450);
             LOG.error(errMEssage);
-            return iRequest;    
+            return iRequest;
         }
     } catch (error) {
         let errMEssage = "ERROR getOpenTextFileID: " + error.message;
@@ -392,21 +402,19 @@ function getMetaDataElement(iKey, iValue) {
 }
 
 async function getMetaDataValue(iRequest) {
+
     let metaDataValue = {};
-    let pointOfSales;
-    let pointOfSalesDescr;
-    let investmentType;
-    let location;
-    let pidRequestId;
+   // let pointOfSales;
+   // let pointOfSalesDescr;
+  //  let investmentType;
+  //  let location;
+ //   let pidRequestId;
 
     try {
-        pidRequestId = iRequest.data.REQUEST_ID;
+ 
+        let oRequest = await SELECT.one.from(Request).where({ REQUEST_ID: iRequest.REQUEST_ID });
 
-        let returnPidData = await getPidData(pidRequestId, iRequest);
-        if (returnPidData.errors) {
-            return returnPidData;
-        }
-
+/*
         if (returnPidData.OUTLET_CODE !== null) {
             pointOfSales = returnPidData.OUTLET_CODE;
             pointOfSalesDescr = returnPidData.OUTLET_CODE_DESCRIPTION
@@ -426,7 +434,11 @@ async function getMetaDataValue(iRequest) {
         metaDataValue.pointOfSalesDescr = pointOfSalesDescr;
         metaDataValue.investmentType = investmentType;
         metaDataValue.location = location;
-        metaDataValue.pidRequestdData = returnPidData;
+
+        */
+
+        metaDataValue.request = oRequest;
+
     } catch (error) {
         let errMEssage = "ERROR getMetaDataValue: " + error.message;
         iRequest.error(450, errMEssage, null, 450);
@@ -473,7 +485,7 @@ async function createBusinessWorkspaceOT(iRequest) {
         // oBody.Metadata.push(getMetaDataElement("ProjectTitle", metaDataValue.pidRequestdData.PROJECT_TITLE));
         // oBody.Metadata.push(getMetaDataElement("SourceApplication", consts.BPROCESS_DEFINITION));
 
-        oBody = getCommonMetaData(iRequest,oBody,headMetaDataValue)
+        oBody = getCommonMetaData(iRequest, oBody, headMetaDataValue)
 
         oBody.Metadata.push(getMetaDataElement("AFEAmount", String(headMetaDataValue.pidRequestdData.AFE_IMPORT)));
         oBody.Metadata.push(getMetaDataElement("AFEType", headMetaDataValue.pidRequestdData.AFE_CATEGORY_AFECATEGORY));
@@ -486,7 +498,7 @@ async function createBusinessWorkspaceOT(iRequest) {
             data: oBody
         });
 
-        openTexNodeIDs = getOpenTexNodeIDs(iRequest,oRespCreateBw);
+        openTexNodeIDs = getOpenTexNodeIDs(iRequest, oRespCreateBw);
         if (openTexNodeIDs.errors) {
             return openTexNodeIDs;
         }
@@ -512,8 +524,8 @@ function getOpenTexNodeIDs(iRequest, iServiceResult) {
         createBwResult = iServiceResult.data.d.childs.results;
 
         let documentsFolderNodeId = _.findWhere(createBwResult, { Name: "Documents" });
-        if(documentsFolderNodeId === undefined){
-            let errMEssage = "ERROR getOpenTexNodeIDs: Folder Documents not found"; 
+        if (documentsFolderNodeId === undefined) {
+            let errMEssage = "ERROR getOpenTexNodeIDs: Folder Documents not found";
             iRequest.error(450, errMEssage, null, 450);
             LOG.error(errMEssage);
             return iRequest;
@@ -521,7 +533,7 @@ function getOpenTexNodeIDs(iRequest, iServiceResult) {
 
         openTexNodeIDs.OPENTEXTFILEFOLDER = String(documentsFolderNodeId.NodeId);
         openTexNodeIDs.OPENTEXTNODEID = String(documentsFolderNodeId.ParentID);
- 
+
     } catch (error) {
         let errMEssage = "ERROR getOpenTexNodeIDs: " + error.message;
         iRequest.error(450, errMEssage, null, 450);
@@ -761,5 +773,6 @@ module.exports = {
     getFileFromOT,
     sendDeleteToDMS,
     createAttachment,
-    updateOtProcessAttribute
+    updateOtProcessAttribute,
+    testSaveOT
 }

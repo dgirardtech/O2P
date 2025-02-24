@@ -68,6 +68,17 @@ async function createAttachment(iRequest) {
         let actualUser = iRequest.user.id;
         let RequestId = iRequest.data.REQUEST_ID;
 
+        
+        //check duplicate file name 
+        let fileNameUp = String(iRequest.data.FILENAME).toUpperCase();
+        let queryCheckDuplicated = await SELECT.one.from(Attachments).
+            columns(["FILENAMEUP"])
+            .where({ REQUEST_ID: RequestId, FILENAMEUP: fileNameUp });
+        if (queryCheckDuplicated !== undefined) {
+            iRequest.error(450, 'FILE_DUPLICATED', Attachments, 450);
+            return iRequest;
+        }
+
         let queryMaxResult = await SELECT.one.from(Attachments).columns(["max(ID) as maxId"])
             .where({ REQUEST_ID: RequestId });
 
@@ -140,6 +151,9 @@ async function readAttachment(iData, iRequest) {
             attach.ATTACHDESC = attachElement.DESCRIPTION;
         }
 
+
+
+
         attach.ISEDITABLE = true;
         if (attach.createdBy !== actualUser) {
             attach.ISEDITABLE = false;
@@ -148,6 +162,11 @@ async function readAttachment(iData, iRequest) {
         if (requestStatus.STATUS_code !== consts.requestStatus.Progress) {
             attach.ISEDITABLE = false;
         }
+
+        if (attachElement.ISEDITABLE === false) {
+            attach.ISEDITABLE = false;
+        } 
+
     });
 }
 

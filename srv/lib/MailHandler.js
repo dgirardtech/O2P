@@ -18,7 +18,7 @@ async function getBodyNotification(iRequestId, iNotification) {
 
     try {
 
-        let request = "/Teams?$filter=idapplication eq '" + consts.idProcessNotification + "' and idteams eq '" + iNotification + "'";
+        let request = "/Teams?$filter=idapplication eq '" + consts.idProcess + "' and idteams eq '" + iNotification + "'";
 
         getResponse = await MailHandler.send('GET', request);
 
@@ -58,7 +58,7 @@ async function getBodyMail(iParamForMail) {
 
     try {
 
-        let request = "/Mail?$filter=idapplication eq '" + consts.idProcessMail +
+        let request = "/Mail?$filter=idapplication eq '" + consts.idProcess +
             "' and idmail eq '" + iParamForMail.mailId + "'";
 
         getResponse = await MailHandler.send('GET', request);
@@ -655,7 +655,7 @@ async function sendAllNotification(iNotification, iRequestId, iRecipients, iTask
             "toRecipients": iRecipients,
             "title": subject,
             "message": content,
-            "idapplication": consts.idProcessNotification
+            "idapplication": consts.idProcess
         };
 
         let oSendTeamsNotification = await sendTeamsNotification(iRequestId, iNotification, oBody);

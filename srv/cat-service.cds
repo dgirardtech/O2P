@@ -67,6 +67,7 @@ service O2PModelService @(requires: [
 
     @readonly
     entity AttachmentType      as projection on KupitO2PModel.AttachmentType;
+   // where ISEDITABLE = true;
 
 
     entity StepDescription     as projection on KupitO2PModel.StepDescription;
@@ -95,6 +96,7 @@ service O2PModelService @(requires: [
     entity JobRunHeader        as projection on KupitO2PModel.JobRunHeader;
     entity JobRunItem          as projection on KupitO2PModel.JobRunItem;
     entity JobRunVariant       as projection on KupitO2PModel.JobRunVariant;
+        entity OtNodeIds            as projection on KupitO2PModel.OtNodeIds;
 
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -434,6 +436,8 @@ service O2PModelService @(requires: [
                       STEPID : KupitO2PModel.STEP_ID,
                       ACTION : KupitO2PModel.Actionenum,
                       EVENT : String)                                   returns Message;
+
+        function testSaveOT(REQUEST_ID : KupitO2PModel.REQUEST_ID)          returns checkDataReturn;          
 
 
     action   saveUserAction(REQUEST_ID : KupitO2PModel.REQUEST_ID,
