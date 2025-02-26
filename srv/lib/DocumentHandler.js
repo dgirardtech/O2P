@@ -298,6 +298,8 @@ async function createFIDocument(iRequest) {
 
             let oDocProp = await getDocumentProp(iRequest.data.REQUEST_ID, iRequest.data.DOC_ID, iRequest.data.STEPID)
 
+            if(Boolean(oDocProp.isCreationStep)) {
+
             if (oDocProp.transaction === consts.transaction.FB01) {
 
                 urlPost = "/sap/opu/odata/sap/ZFI_O2P_COMMON_SRV/AccDocPostSet"
@@ -497,7 +499,16 @@ async function createFIDocument(iRequest) {
 
             }
 
+        } else {
 
+ 
+            aResult.push({
+                MTYPE: consts.ERROR,
+                TEXT: 'No Creation Step'
+            })
+             
+
+        }
 
 
         } catch (error) {
@@ -507,7 +518,7 @@ async function createFIDocument(iRequest) {
             return iRequest;
         }
 
-    }
+}
 
 
     return aResult
@@ -786,17 +797,21 @@ async function getDocumentProp(iRequestID, iDocID, iStep) {
     let oAccountreq = aAccountreq.find(oAccountreq => oAccountreq.ACCOUNT === aDocument[0].ACCOUNT)
 
 
-    for (let i = 0; i < aAccountreq.length; i++) {
+    let aDocparam = await SELECT.from(Docparam).
+    where({
+        PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE, 
+        STEP: iStep,
+        ACCOUNT_ADVANCE: oAccountreq.ACCOUNT_ADVANCE,
+        PRIORITY: oRequest.PRIORITY,
+        URGENT: oRequest.URGENT
+    });
 
-        let oDocparam = await SELECT.one.from(Docparam).
-            where({
-                PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
-                ACCOUNT: aAccountreq[i].ACCOUNT,
-                STEP: iStep,
-                ACCOUNT_ADVANCE: oAccountreq.ACCOUNT_ADVANCE,
-                PRIORITY: oRequest.PRIORITY,
-                URGENT: oRequest.URGENT
-            });
+    let oDocparam = ''
+
+    for (let i = 0; i < aDocument.length; i++) {
+
+        let oDocparam = aDocparam.find(oDocparam => oDocparam.ACCOUNT === aDocument[i].ACCOUNT)
+
 
         if (oDocparam && exception_exist === false) {
 
@@ -811,15 +826,7 @@ async function getDocumentProp(iRequestID, iDocID, iStep) {
     if (exception_exist === false) {
         //   Non esiste nessuna eccezione quindi procedo alla valorizzazione classica
 
-        let oDocparam = await SELECT.one.from(Docparam).
-            where({
-                PAYMENT_MODE_CODE: oRequest.PAYMENT_MODE_CODE,
-                ACCOUNT: '',
-                STEP: iStep,
-                ACCOUNT_ADVANCE: oAccountreq.ACCOUNT_ADVANCE,
-                PRIORITY: oRequest.PRIORITY,
-                URGENT: oRequest.URGENT
-            });
+         oDocparam = aDocparam.find(oDocparam => oDocparam.ACCOUNT === '')
 
         if (oDocparam) {
             oResult.docType = oDocparam.DOC_TYPE

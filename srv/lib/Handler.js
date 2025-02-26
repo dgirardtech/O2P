@@ -68,7 +68,7 @@ async function createAttachment(iRequest) {
         let actualUser = iRequest.user.id;
         let RequestId = iRequest.data.REQUEST_ID;
 
-        
+
         //check duplicate file name 
         let fileNameUp = String(iRequest.data.FILENAME).toUpperCase();
         let queryCheckDuplicated = await SELECT.one.from(Attachments).
@@ -165,7 +165,7 @@ async function readAttachment(iData, iRequest) {
 
         if (attachElement.ISEDITABLE === false) {
             attach.ISEDITABLE = false;
-        } 
+        }
 
     });
 }
@@ -1836,7 +1836,21 @@ async function enrichCountingSend(iRequest, iCounting) {
 
     for (let x = 0; x < aCounting.length; x++) {
 
-        let started = moment(aCounting[x].ENDDATE)
+        let oRequest = await SELECT.one.from(Request).
+            where({ REQUEST_ID: aCounting[x].REQUEST_ID });
+
+
+            let oDocument = await SELECT.one.from(Document).
+            where({
+                to_Request_REQUEST_ID: aCounting[x].REQUEST_ID,
+                DOC_ID: aCounting[x].DOC_ID,
+                ID: consts.firstId
+            }) ;
+
+
+
+
+        let started = moment(oRequest.ENDDATE)
         let dayDiff = now.diff(started, 'days')
 
         if ((Boolean(nDays)) &&
@@ -1853,7 +1867,7 @@ async function enrichCountingSend(iRequest, iCounting) {
 
                 aCounting[x].RESULT_TYPE = consts.ERROR
                 aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_SENDED",
-                    [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER, oResponseSendAllMail.error])
+                    [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, oDocument.DOCUMENT_NUMBER, oResponseSendAllMail.error])
 
             } else {
 
@@ -1867,7 +1881,7 @@ async function enrichCountingSend(iRequest, iCounting) {
 
                 aCounting[x].RESULT_TYPE = consts.SUCCESS
                 aCounting[x].RESULT_TEXT = oBundle.getText("CRO_SENDED",
-                    [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER])
+                    [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, oDocument.DOCUMENT_NUMBER])
 
             }
 
@@ -1876,7 +1890,7 @@ async function enrichCountingSend(iRequest, iCounting) {
 
             aCounting[x].RESULT_TYPE = consts.SUCCESS
             aCounting[x].RESULT_TEXT = oBundle.getText("CRO_SENDED",
-                [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, aCounting[x].DOCUMENT_NUMBER])
+                [aCounting[x].REQUEST_ID, aCounting[x].DOC_ID, oDocument.DOCUMENT_NUMBER])
 
         }
 
@@ -1922,7 +1936,12 @@ async function enrichCountingCreate(iRequest, iCounting) {
 
     for (let x = 0; x < aCounting.length; x++) {
 
-        let started = moment(aCounting[x].ENDDATE)
+
+        let oRequest = await SELECT.one.from(Request).
+            where({ REQUEST_ID: aCounting[x].REQUEST_ID });
+
+
+        let started = moment(oRequest.ENDDATE)
         let dayDiff = now.diff(started, 'days')
 
 
@@ -1934,35 +1953,47 @@ async function enrichCountingCreate(iRequest, iCounting) {
 
         let oDocumentDetail = await getDocumentDetail(aCounting[x].REQUEST_ID, aCounting[x].DOC_ID)
 
+        if (save === true) {
 
         //  if (Boolean(oDocumentDetail.augbl) && Boolean(oDocumentDetail.xblnr) && oDocumentDetail.blart === 'ZP') {
         if (Boolean(oDocumentDetail.augbl) && Boolean(oDocumentDetail.xblnr)) { // per test
 
+          
 
-            let o2pAccounting = await generateO2PAccounting(iRequest, oDocumentDetail, save)
 
-            let aError = o2pAccounting.error
+                let o2pAccounting = await generateO2PAccounting(iRequest, oDocumentDetail, save)
 
-            if (aError.length > 0) {
+                let aError = o2pAccounting.error
 
-                aCounting[x].RESULT_TYPE = consts.ERROR
-                aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_CREATED",
-                    [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber, aError.join(' , ')])
+                if (aError.length > 0) {
 
+                    aCounting[x].RESULT_TYPE = consts.ERROR
+                    aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_CREATED",
+                        [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber, aError.join(' , ')])
+
+
+                } else {
+
+                    aCounting[x].RESULT_TYPE = consts.SUCCESS
+                    aCounting[x].RESULT_TEXT = oBundle.getText("CRO_CREATED",
+                        [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber])
+
+                }
 
             } else {
 
-                aCounting[x].RESULT_TYPE = consts.SUCCESS
-                aCounting[x].RESULT_TEXT = oBundle.getText("CRO_CREATED",
-                    [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber])
+                aCounting[x].RESULT_TYPE = consts.ERROR
+                aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_AVAILABLE",
+                    [oDocumentDetail.requestId, oDocumentDetail.documentNumber])
 
             }
 
         } else {
 
-            aCounting[x].RESULT_TYPE = consts.ERROR
-            aCounting[x].RESULT_TEXT = oBundle.getText("CRO_NOT_AVAILABLE",
-                [oDocumentDetail.requestId, oDocumentDetail.documentNumber])
+
+            aCounting[x].RESULT_TYPE = consts.SUCCESS
+            aCounting[x].RESULT_TEXT = oBundle.getText("CRO_CREATED",
+                [oDocumentDetail.requestId, oDocumentDetail.docId, oDocumentDetail.documentNumber])
 
         }
 
