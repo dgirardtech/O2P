@@ -715,10 +715,11 @@ async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAtt
         attach.SIZE = fileSizeInBytes
         attach.URL = "/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=" + iRequestId + ",ID=" + maxId + ")/CONTENT";
         attach.ATTACHMENTTYPE_ATTACHMENTTYPE = iAttachType;
-        attach.CREATOR_FULLNAME = fullName;
+        //attach.CREATOR_FULLNAME = fullName;
+        attach.CREATOR_FULLNAME  = 'System';
         attach.createdAt = new Date();
-        attach.createdBy = actualUser;
-
+        //attach.createdBy = actualUser;
+        attach.createdBy = 'SYSTEM'
         attachUpdate.push(attach);
 
         const cdsTx = cds.tx(); //-> creo la transaction //gli allegati vengono committati per la gestione della mail

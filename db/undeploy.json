@@ -5,6 +5,8 @@
   "src/gen/**/*_drafts.hdbtable",
   "src/gen/**/*.hdbcalculationview", 
   "_src/gen/kupit.o2p.Accountreq.hdbtable",
-  "src/gen/kupit.o2p.Proclog.hdbtable"
+  "src/gen/kupit.o2p.Proclog.hdbtable",
+    "_src/REQUESTID.hdbsequence",
+     "src/REQUESTIDO2P.hdbsequence"
   
 ]

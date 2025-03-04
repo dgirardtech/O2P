@@ -10,7 +10,7 @@ module.exports = class SequenceHelper {
 		return new Promise((resolve, reject) => {
 			let nextNumber = 0;
 			 
-            this.db.run(`ALTER SEQUENCE "${this.sequence}" RESTART WITH 1`)
+            this.db.run(`ALTER SEQUENCE "${this.sequence}" RESTART WITH 1000000000`)
                 .then(result => {
                 })
                 .catch(error => {

@@ -897,6 +897,31 @@ async function getTaskInstanceUrl(iRequest, iRequestId, iWfInstaceID) {
     return lReturn;
 }
 
+
+async function resetSequence (iRequest) {
+
+    let lRequestID = 0;
+    try {
+        LOG.info("Reset RequestID");
+
+        const db = await cds.connect.to("db");
+        const sequence = new SequenceHelper({
+            db: db,
+            sequence: consts.SEQUENCE,
+        });
+
+        lRequestID = await sequence.resetSequence();
+    } catch (error) {
+        let errMEssage = "Reset RequestId " + error.message;
+        iRequest.error(450, errMEssage, null, 450);
+        LOG.error(errMEssage);
+        return iRequest;
+    }
+    return {}
+
+
+}
+
 async function getNextRequestId(iRequest) {
     let lRequestID = 0;
     try {
@@ -1263,6 +1288,7 @@ module.exports = {
     getApproverSequence,
     getTaskInstanceUrl,
     getNextRequestId,
+    resetSequence,
     reqWithZeroes,
     createRequest,
     startBPAProcess,
