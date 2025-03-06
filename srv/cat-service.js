@@ -1,16 +1,16 @@
 
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
-const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams,resetSequence } = require('./lib/createProcess');
-const { createAttachment, readAttachment, deleteAttachment, 
-        createNote, readNote, deleteNote,
-        updateRequest, getMonitorRequest, manageDocPopupData, getDocStatus,
-        getEccServices, getAssignInfo, isCreationStep, manageMainData, 
-        enrichCountingCreate, enrichCountingSend } = require('./lib/Handler');
+const { createProcess, checkTaskCreated, getMonitorTaskLink, userTaskCounter, getMOAParams, resetSequence } = require('./lib/createProcess');
+const {// createAttachment, readAttachment, deleteAttachment, 
+    createNote, readNote, deleteNote,
+    updateRequest, getMonitorRequest, manageDocPopupData, getDocStatus,
+    getEccServices, getAssignInfo, isCreationStep, manageMainData,
+    enrichCountingCreate, enrichCountingSend } = require('./lib/Handler');
 const { saveUserAction, assignApprover } = require('./lib/TaskHandler');
 const { testMail, sendAllMail } = require('./lib/MailHandler');
-const { fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument, 
-        formatDocument, createFIDocument } = require('./lib/DocumentHandler');
+const { fromDocumentToTree, fromRequestIdToTree, fromTreeToDocument,
+    formatDocument, createFIDocument } = require('./lib/DocumentHandler');
 const { getNameMotivationAction } = require('./lib/Utils');
 const SequenceHelper = require("./lib/SequenceHelper");
 
@@ -18,8 +18,9 @@ const { generateO2PF23Aut, generateO2PDocument } = require('./lib/PDFHandler');
 
 const { scheduleRun, createScheduledRun, saveVariant } = require('./lib/JobHandler');
 
-const { testSaveOT } = require('./lib/OTHandler'); 
-//const { eventSaveFileonOT, eventGetFileFromOT, eventDeleteFileToOt, createAttachment,readAttachments } = require('./lib/OtHandler');
+const { testSaveOT } = require('./lib/OTHandler');
+const { eventSaveFileonOT, updateOtProcessAttribute, updateAllFileonOT, eventGetFileFromOT, eventDeleteFileToOt,
+    createAttachment, readAttachments } = require('./lib/OTHandler');
 
 
 
@@ -40,7 +41,7 @@ module.exports = cds.service.impl(async function () {
 
     /////////////////////////////////////////////////////////////////////////////////////
 
-    const { Requester, Paymode, AttachmentType, Attachments,OtNodeIds, Notes,
+    const { Requester, Paymode, AttachmentType, Attachments, OtNodeIds, Notes,
         ApprovalHistory, ApprovalFlow, StepDescription, ApprovalView,
         Request, Document, Currencies, Accountreq, Bank, Bankexc, Bankreq, Bankdefault, Clearacc,
         Doclog, Docparam, Orgunitreq, Parameters, Tribreq, Currency, Param, F24Entratel } = this.entities;
@@ -132,11 +133,17 @@ module.exports = cds.service.impl(async function () {
 
         // background for performance
         cds.spawn({ after: 1000 }, async (tx) => {
-
-            let oResponseSendAllMail = await sendAllMail(request, request.data.REQUEST_ID, '', request.event, false)
             let o2pDocument = await generateO2PDocument(request, true)
-
+            let oResponseSendAllMail = await sendAllMail(request, request.data.REQUEST_ID, '', request.event, false) 
         })
+
+        // background for performance
+        if (request.data.STEPID === 10) {
+            cds.spawn({ after: 1000 }, async (tx) => {
+                let resUpdateOt = await updateOtProcessAttribute(request, request.data.REQUEST_ID)
+                //let oReturnUpdateAllFileonOT = await updateAllFileonOT(request, request.data.REQUEST_ID)
+            })
+        }
 
         return request
 
@@ -154,15 +161,16 @@ module.exports = cds.service.impl(async function () {
     });
 
 
-    //-------------ATTACHMENTS-------------------
-    this.before('CREATE', 'Attachments', createAttachment);
-    this.after('READ', 'Attachments', readAttachment);
-    this.before('DELETE', 'Attachments', deleteAttachment);
-
-
-    //-------------ATTACHMENTS-------------------
-
     /*
+ //-------------ATTACHMENTS-------------------
+ this.before('CREATE', 'Attachments', createAttachment);
+ this.after('READ', 'Attachments', readAttachment);
+ this.before('DELETE', 'Attachments', deleteAttachment);
+*/
+
+
+    //-------------ATTACHMENTS-------------------
+
     this.after('READ', 'Attachments', readAttachments);
 
     this.on(['GET'], 'Attachments', async (request, next) => {
@@ -178,10 +186,8 @@ module.exports = cds.service.impl(async function () {
     });
 
     this.before(['DELETE'], 'Attachments', async (request) => {
-        return await eventDeleteFileToOt(request);
+        return await eventDeleteFileToOt(request.data.REQ);
     });
-    */
-
 
 
 
@@ -299,7 +305,7 @@ module.exports = cds.service.impl(async function () {
     this.on('createScheduledRun', async (request) => {
 
         const ojobSchedulerInfo = request.data.jobSchedulerInfo;
- 
+
         cds.spawn({ after: 3000 }, async (tx) => {
 
             await createScheduledRun(request, ojobSchedulerInfo);
@@ -317,7 +323,7 @@ module.exports = cds.service.impl(async function () {
 
         return await testSaveOT(request);
 
-});
+    });
 
 
     this.after('READ', 'Document', formatDocument);

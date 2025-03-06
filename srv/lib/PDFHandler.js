@@ -8,6 +8,8 @@ const fs = require('fs')
 const consts = require("./Constants");
 const client = require('@sap-cloud-sdk/http-client');
 const connectivity = require('@sap-cloud-sdk/connectivity');
+const { saveFileonOT,updateFileonOT } = require('./OTHandler');
+
 
 
 async function _getDestination() {
@@ -134,11 +136,11 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
         let vendorIbanText = ''
         if (oRequest.PAYMENT_MODE_CODE === consts.Paymode.BONIFICO) {
             vendorIbanText = aDocHeader[i].VENDOR + ' - ' + aDocHeader[i].VENDOR_DESC + '\r\n' +
-                            '( ' + aDocHeader[i].IBAN + ' )'
+                '( ' + aDocHeader[i].IBAN + ' )'
         } else {
             vendorIbanText = aDocHeader[i].VENDOR + ' - ' + aDocHeader[i].VENDOR_DESC
         }
-        
+
 
 
         let aDocPos = aDocHeader[i].POSITION
@@ -157,15 +159,15 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
 
             let accountText = ''
             let oAccountreq = await SELECT.one.from(Accountreq).
-            where({
-                REQUESTER_CODE: oRequest.REQUESTER_CODE,
-                ACCOUNT: aDocPos[x].ACCOUNT
-            });
+                where({
+                    REQUESTER_CODE: oRequest.REQUESTER_CODE,
+                    ACCOUNT: aDocPos[x].ACCOUNT
+                });
             if (oAccountreq) {
                 accountText = oAccountreq.ACCOUNT + ' ( ' + oAccountreq.ACCOUNT_TEXT + ' )'
             }
-          
- 
+
+
 
             aGtDocument.push({
                 DOC_ID_TEXT: aDocHeader[i].DOC_ID,
@@ -251,7 +253,7 @@ async function generateO2PDocument(iRequest, iSaveAttach) {
 
         let filename = "O2P_" + iRequest.data.REQUEST_ID + ".pdf"
         let oResponseSaveAttach = await saveAttach(returnCreatePdf,
-            iRequest.data.REQUEST_ID, iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.DOC, filename,'')
+            iRequest.data.REQUEST_ID, iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.DOC, filename, '')
     }
 
     return { binary: returnCreatePdf, type: consts.attachmentFormat.PDF }
@@ -605,7 +607,7 @@ async function generateO2PAccounting(iRequest, iDocumentDetail, iSaveAttach) {
 
         if (Boolean(iSaveAttach)) {
 
-            let filename = "ContabileBPM " + iDocumentDetail.requestId + iDocumentDetail.docId + ".pdf"
+            let filename = "Contabile " + iDocumentDetail.requestId + iDocumentDetail.docId + ".pdf"
 
             let oResponseSaveAttach = await saveAttach(returnCreatePdf, iDocumentDetail.requestId,
                 iRequest, consts.attachmentFormat.PDF, consts.attachmentTypes.COUNTING, filename, iDocumentDetail.docId)
@@ -613,7 +615,7 @@ async function generateO2PAccounting(iRequest, iDocumentDetail, iSaveAttach) {
                 return oResponseSaveAttach;
             }
 
-            let resUpdate = await UPDATE(Document).set({ CONTABILE_NICKNAME: '1' , CRO: iDocumentDetail.xblnr}).where({
+            let resUpdate = await UPDATE(Document).set({ CONTABILE_NICKNAME: '1', CRO: iDocumentDetail.xblnr }).where({
                 to_Request_REQUEST_ID: iDocumentDetail.requestId,
                 DOC_ID: iDocumentDetail.docId
 
@@ -635,7 +637,7 @@ async function generateO2PAccounting(iRequest, iDocumentDetail, iSaveAttach) {
 
 }
 
-async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAttachType, iFileName,iDocId) {
+async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAttachType, iFileName, iDocId) {
 
     let fullName;
     let attach = {};
@@ -669,63 +671,76 @@ async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAtt
         }
 
 
-        let maxId = 0
+
         let oAttachmentDb
 
         if (Boolean(iDocId)) {
-            
+
             oAttachmentDb = await SELECT.one.from(Attachments)
-            .where({
-                REQUEST_ID: iRequestId,
-                ATTACHMENTTYPE_ATTACHMENTTYPE: iAttachType,
-                DOC_ID : iDocId
-            });
+                .where({
+                    REQUEST_ID: iRequestId,
+                    ATTACHMENTTYPE_ATTACHMENTTYPE: iAttachType,
+                    DOC_ID: iDocId
+                });
 
         } else {
 
             oAttachmentDb = await SELECT.one.from(Attachments)
-            .where({
-                REQUEST_ID: iRequestId,
-                ATTACHMENTTYPE_ATTACHMENTTYPE: iAttachType
-            });
+                .where({
+                    REQUEST_ID: iRequestId,
+                    ATTACHMENTTYPE_ATTACHMENTTYPE: iAttachType
+                });
 
         }
-      
+
+        let returnSaveFileOnOt;
+       
 
         if (oAttachmentDb) {
 
-            maxId = oAttachmentDb.ID;
+            returnSaveFileOnOt = await updateFileonOT(iRequest, iRequestId, oAttachmentDb.ID, iPdfContent, false)
 
         } else {
 
             let queryMaxResult = await SELECT.one.from(Attachments).columns(["max(ID) as maxId"])
                 .where({ REQUEST_ID: iRequestId });
+ 
+            let maxId = queryMaxResult.maxId + 10
 
-            maxId = queryMaxResult.maxId + 10;
+            attach.to_Request_REQUEST_ID = iRequestId;
+            attach.ID = maxId
+            attach.DOC_ID = iDocId;
+            // attach.CONTENT = iPdfContent;
+            attach.MEDIATYPE = attachFormat;
+            attach.FILENAME = filename
+            attach.SIZE = fileSizeInBytes
+            attach.URL = "/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=" + iRequestId + ",ID=" + maxId + ")/CONTENT";
+            attach.ATTACHMENTTYPE_ATTACHMENTTYPE = iAttachType;
+            //attach.CREATOR_FULLNAME = fullName;
+            attach.CREATOR_FULLNAME = 'System';
+            attach.createdAt = new Date();
+            //attach.createdBy = actualUser;
+            attach.createdBy = 'SYSTEM'
+            attachUpdate.push(attach);
+
+            let upsertAttch = await INSERT.into(Attachments).entries(attachUpdate);
+
+            returnSaveFileOnOt = await saveFileonOT(iRequest, iRequestId, maxId, iPdfContent, false);
 
         }
 
+        if (returnSaveFileOnOt.errors) {
+            return returnSaveFileOnOt;
+        }
 
-        attach.to_Request_REQUEST_ID = iRequestId;
-        attach.ID = maxId;
-        attach.DOC_ID = iDocId;
-        attach.CONTENT = iPdfContent;
-        attach.MEDIATYPE = attachFormat;
-        attach.FILENAME = filename
-        attach.SIZE = fileSizeInBytes
-        attach.URL = "/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=" + iRequestId + ",ID=" + maxId + ")/CONTENT";
-        attach.ATTACHMENTTYPE_ATTACHMENTTYPE = iAttachType;
-        //attach.CREATOR_FULLNAME = fullName;
-        attach.CREATOR_FULLNAME  = 'System';
-        attach.createdAt = new Date();
-        //attach.createdBy = actualUser;
-        attach.createdBy = 'SYSTEM'
-        attachUpdate.push(attach);
 
-        const cdsTx = cds.tx(); //-> creo la transaction //gli allegati vengono committati per la gestione della mail
+
+        /*
+        const cdsTx = cds.tx(); 
         let upsertAttch = UPSERT.into(Attachments).entries(attachUpdate);
         let upsertResponse = await cdsTx.run(upsertAttch);
         await cdsTx.commit();
+        */
 
     } catch (error) {
         let errMEssage = "ERROR saveAttach " + iRequestId + " :" + error.message;

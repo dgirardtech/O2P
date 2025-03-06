@@ -8,6 +8,8 @@ exports.WF_DEFINITION_ID = "eu10.cf-kupit-dev-yy6gs83h.kupito2p.o2PProcess";
 exports.OU_KUPIT = "KUPIT";
 exports.OT_PROCESS_NAME = "O2P";
 exports.OT_PROCESS_DESC = "O2P";
+exports.OT_PROCESS_ID = "ORDERTOPAY";
+
 
 
 exports.firstId = "001"
@@ -153,5 +155,6 @@ exports.attachmentTypes = Object.freeze({
     F23_UFF: "F23_UFF",
     F23_VERS: "F23_VERS",
     COUNTING: "COUNTING",
-    DOC : "DOC"
+    DOC : "DOC",
+    FREE: "FREE"
 });

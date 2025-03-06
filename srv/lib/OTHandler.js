@@ -2,11 +2,11 @@ const LOG = cds.log('OTservice');
 const _ = require('underscore');
 const client = require('@sap-cloud-sdk/http-client');
 const { Readable, PassThrough } = require('stream');
-const { retrieveJwt } = require('@sap-cloud-sdk/connectivity'); 
+const { retrieveJwt } = require('@sap-cloud-sdk/connectivity');
 const consts = require("./Constants");
-const { getEnvParam, getTextBundle} = require('./Utils'); 
+const { getEnvParam, getTextBundle } = require('./Utils');
 
-const sPROCESSID = "O2P_DOC"
+
 
 
 async function testSaveOT(iRequest) {
@@ -100,16 +100,6 @@ async function createDbAttachment(iRequest) {
 
         let actualUser = iRequest.user.id;
 
-        //Procedura di debug per test da BAS
-        //Non viene utilizzato su richieste reali
-        if (iRequest.data.REQUEST_ID === undefined) {
-
-            iRequest.data.REQUEST_ID = 1000000000;
-            iRequest.data.ID = 10;
-            iRequest.data.FILENAME = "O2P_1000000000.pdf";
-            iRequest.data.ATTACHMENTTYPE_ATTACHMENTTYPE = "DOC";
-            iRequest.data.MEDIATYPE = 'application/pdf';
-        }
 
         // Check Attachment Type
         if (iRequest.data.MEDIATYPE === undefined) {
@@ -140,7 +130,7 @@ async function createDbAttachment(iRequest) {
         iRequest.data.URL = "/odata/v2/kupito2pmodel-srv/Attachments(REQUEST_ID=" + requestId + ",ID=" + maxId + ")/CONTENT";
 
         if (iRequest.data.ATTACHMENTTYPE_ATTACHMENTTYPE === '') {
-            iRequest.data.ATTACHMENTTYPE_ATTACHMENTTYPE = consts.attachmentTypes.GENERAL;
+            iRequest.data.ATTACHMENTTYPE_ATTACHMENTTYPE = consts.attachmentTypes.FREE;
         }
 
         let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
@@ -194,12 +184,12 @@ async function saveFileonOT(iRequest, iRequestId, attachId, iFileContent, iConve
 
         fileMetaDataValue = await SELECT.one.from(Attachments).byKey(oFileDbKey);
         let attchDesc = await SELECT.one.from(AttachmentType)
-        .where({ ATTACHMENTTYPE: fileMetaDataValue.ATTACHMENTTYPE_ATTACHMENTTYPE });
+            .where({ ATTACHMENTTYPE: fileMetaDataValue.ATTACHMENTTYPE_ATTACHMENTTYPE });
         if (attchDesc) {
             fileDesc = attchDesc.DESCRIPTION;
         }
 
-        oBody.ProcessId_ProcessId = consts.idProcess;
+        oBody.ProcessId_ProcessId = consts.OT_PROCESS_ID;
         oBody.ParentID = Number(headMetaDataValue.OPENTEXTFILEFOLDER);
         oBody.FileName = fileMetaDataValue.FILENAME;
         oBody.mediaType = fileMetaDataValue.MEDIATYPE;
@@ -235,21 +225,43 @@ async function saveFileonOT(iRequest, iRequestId, attachId, iFileContent, iConve
 
     } catch (error) {
 
-        /*
+
         let deleteInsert = cds.tx();
         let deleteDbFile = await deleteInsert.run(DELETE.from(Attachments).byKey(oFileDbKey));
         await deleteInsert.commit();
 
-        */
-
 
         let errMEssage = "ERROR Save OT attach: " + iRequestId + ". " + error.message;
-        iRequest.error(450, consts.OT_SAVE_FILE_GENERAL_ERROR, Attachments, 450);
+        iRequest.error(450, 'OT_SAVE_FILE_GENERAL_ERROR', Attachments, 450);
         LOG.error(errMEssage);
-        returnInnerErrors(iRequest, iRequestId, error, consts.OT_SAVE_FILE_GENERAL_ERROR);
+        returnInnerErrors(iRequest, iRequestId, error, 'OT_SAVE_FILE_GENERAL_ERROR');
         return iRequest;
     }
     return iRequest;
+}
+
+
+
+async function updateAllFileonOT(iRequest, iRequestId) {
+
+    let aAttachments = await SELECT.from(Attachments).where({ REQUEST_ID: iRequestId });
+
+    for (let i = 0; i < aAttachments.length; i++) {
+
+        if (aAttachments[i].ATTACHMENTTYPE_ATTACHMENTTYPE !== consts.attachmentTypes.DOC &&
+            aAttachments[i].ATTACHMENTTYPE_ATTACHMENTTYPE !== consts.attachmentTypes.COUNTING
+        ) {
+
+            let file = await getFileFromOT(iRequest, iRequestId, aAttachments[i].ID);
+
+            //let returnDelete = await deleteFileToOt(iRequest, iRequestId, aAttachments[i].ID );
+
+           // let returnSave = await saveFileonOT(iRequest, iRequestId, aAttachments[i].ID, file.base64, false);
+
+             let returnSaveFileOnOt = await updateFileonOT(iRequest, iRequestId, aAttachments[i].ID, file.base64, false)
+
+        }
+    } 
 }
 
 async function updateFileonOT(iRequest, iRequestId, attachId, iFileContent, iConvertToBase64) {
@@ -280,7 +292,7 @@ async function updateFileonOT(iRequest, iRequestId, attachId, iFileContent, iCon
             fileDesc = attchDesc.DESCRIPTION;
         }
 
-        oBody.ProcessId_ProcessId = consts.idProcess;
+        oBody.ProcessId_ProcessId = consts.OT_PROCESS_ID;
         oBody.ParentID = Number(headMetaDataValue.OPENTEXTFILEFOLDER);
         oBody.FileName = fileMetaDataValue.FILENAME;
         oBody.mediaType = fileMetaDataValue.MEDIATYPE;
@@ -299,7 +311,7 @@ async function updateFileonOT(iRequest, iRequestId, attachId, iFileContent, iCon
 
         oBody.contentBase64 = fileContent;
 
-        let sUrl = `/odata/v2/catalog/OpenTextFile(ProcessId_ProcessId='${consts.idProcess}',ParentID=0,OpenTextFileID='${fileMetaDataValue.OPENTEXTNODEID}',FileName='${fileMetaDataValue.FILENAME}',Version='')`;
+        let sUrl = `/odata/v2/catalog/OpenTextFile(ProcessId_ProcessId='${consts.OT_PROCESS_ID}',ParentID=0,OpenTextFileID='${fileMetaDataValue.OPENTEXTNODEID}',FileName='${fileMetaDataValue.FILENAME}',Version='')`;
 
         let oRespCreateFile = await client.executeHttpRequest(await _getDestination(iRequest), {
             method: 'PUT',
@@ -395,17 +407,14 @@ async function readAttachments(iData, iRequest) {
             attach.ISEDITABLE = true;
             if (attach.createdBy !== actualUser) {
                 attach.ISEDITABLE = false;
-            }
-
-            if (requestStatus.to_Status_code !== consts.requestStatus.Progress) {
+            } else if (requestStatus.STATUS_code === consts.requestStatus.Completed) {
                 attach.ISEDITABLE = false;
-            }
-
-            if (attachElement.ISEDITABLE === false) {
+            } else if (attachElement.ISEDITABLE === false) {
                 attach.ISEDITABLE = false;
             }
 
         });
+
     } catch (error) {
         let errMEssage = "ERROR readAttachment " + error.message;
         iRequest.error(450, errMEssage, null, 450);
@@ -446,7 +455,7 @@ async function getFileFromOT(iRequest, iRequestId, iAttachId) {
             return iRequest;
         }
 
-        let sUrl = `/odata/v2/catalog/OpenTextFile(ProcessId_ProcessId='${consts.idProcess}',ParentID=0,OpenTextFileID='${oSelect.OPENTEXTNODEID}',FileName='${oSelect.FILENAME}',Version='')/content`;
+        let sUrl = `/odata/v2/catalog/OpenTextFile(ProcessId_ProcessId='${consts.OT_PROCESS_ID}',ParentID=0,OpenTextFileID='${oSelect.OPENTEXTNODEID}',FileName='${oSelect.FILENAME}',Version='')/content`;
 
         let oResp = await client.executeHttpRequest(await _getDestination(iRequest), {
             method: 'GET',
@@ -466,6 +475,7 @@ async function getFileFromOT(iRequest, iRequestId, iAttachId) {
         }
 
         return {
+            base64 : Buffer.from(oResp.data, 'binary').toString('base64'),
             value: fileFromOtResponse,
             $mediaContentType: oSelect.MEDIATYPE,
             $mediaContentDispositionFilename: oSelect.FILENAME
@@ -522,7 +532,7 @@ async function deleteFileToOt(iRequest, iRequestId, iFielId) {
             return iRequest;
         }
 
-        let sUrl = `/odata/v2/catalog/OpenTextFile(ProcessId_ProcessId='${consts.idProcess}',ParentID=0,OpenTextFileID='${oSelect.OPENTEXTNODEID}',FileName='${oSelect.FILENAME}',Version='')`;
+        let sUrl = `/odata/v2/catalog/OpenTextFile(ProcessId_ProcessId='${consts.OT_PROCESS_ID}',ParentID=0,OpenTextFileID='${oSelect.OPENTEXTNODEID}',FileName='${oSelect.FILENAME}',Version='')`;
 
         oResp = await client.executeHttpRequest(await _getDestination(iRequest), {
             method: 'DELETE',
@@ -584,10 +594,24 @@ async function getMetaDataValue(iRequest, iRequestId) {
         metaDataValue.RequestedBy = oRequest.createdBy;
         metaDataValue.UpdatedBy = oRequest.modifiedBy;
         metaDataValue.Company = oRequester.BUKRS;
+
+
+        metaDataValue.CompanyName = ''
+        var EccServiceAfe = await cds.connect.to('ZFI_AFE_COMMON_SRV');
+        const { CompanySet } = EccServiceAfe.entities;
+        let aCompany = await EccServiceAfe.run(
+            SELECT.from(CompanySet).where({ Bukrs: oRequester.BUKRS }));
+
+        if (aCompany.length > 0) {
+            metaDataValue.CompanyName = aCompany[0].Butxt
+        }
+
         metaDataValue.Requester = oRequest.REQUESTER_CODE;
         metaDataValue.OrderDesc = oRequest.TITLE;
         metaDataValue.Paymode = oRequest.PAYMENT_MODE_CODE;
         metaDataValue.OrderAmount = oRequest.TOTAL;
+
+
 
         metaDataValue.requestdData = oRequest;
 
@@ -618,11 +642,19 @@ function getCommonMetaData(iRequest, oBody, headMetaDataValue) {
     oBody.Metadata.push(getMetaDataElement("ProcessNumber", String(headMetaDataValue.requestdData.REQUEST_ID)));
     oBody.Metadata.push(getMetaDataElement("ProcessTechnicalKey", consts.OT_PROCESS_NAME));
     oBody.Metadata.push(getMetaDataElement("ProjectDescription", consts.OT_PROCESS_DESC));
-    oBody.Metadata.push(getMetaDataElement("SourceApplication", consts.idProcess));
+    oBody.Metadata.push(getMetaDataElement("SourceApplication", consts.OT_PROCESS_ID));
 
     oBody.Metadata.push(getMetaDataElement("RequestedBy", headMetaDataValue.RequestedBy));
     oBody.Metadata.push(getMetaDataElement("UpdatedBy", headMetaDataValue.UpdatedBy));
     oBody.Metadata.push(getMetaDataElement("Company", headMetaDataValue.Company));
+
+    oBody.Metadata.push(getMetaDataElement("CompanyName", headMetaDataValue.CompanyName));
+
+    oBody.Metadata.push(getMetaDataElement("Requester", headMetaDataValue.Requester));
+    oBody.Metadata.push(getMetaDataElement("OrderDescription", headMetaDataValue.OrderDesc));
+    oBody.Metadata.push(getMetaDataElement("PaymentMode", headMetaDataValue.Paymode));
+    oBody.Metadata.push(getMetaDataElement("OrderAmount", headMetaDataValue.OrderAmount));
+
 
     //oBody.Metadata.push({ "ProcessAttribute": "PuntoVendita", OTAttributeValueArray: headMetaDataValue.PuntoVendita });
 
@@ -660,12 +692,26 @@ async function createBusinessWorkspaceOT(iRequest) {
             return headMetaDataValue;
         }
 
-        oBody.ProcessId_ProcessId = consts.idProcess;
+        oBody.ProcessId_ProcessId = consts.OT_PROCESS_ID;
         oBody.ParentID = 0;
         oBody.template_id = 0;
         oBody.wksp_type_id = 0;
+
+
+        //otbwname 
+        /*
+         otBwName = getOtBwName(iRequest, requestId, headMetaDataValue);
+         if (otBwName.errors) {  return otBwName }
+ 
+         oBody.Name = otBwName;
+         oBody.Description = otBwName;
+         
+         */
+        //////////////////////////////////////////////////////
+
         oBody.childs = childs;
         oBody.Metadata = metadata;
+
 
         oBody = getCommonMetaData(iRequest, oBody, headMetaDataValue)
 
@@ -768,12 +814,13 @@ async function updateOtProcessAttribute(iRequest, iRequestId) {
     let headMetaDataValue;
     let otAttachCheck;
     let otBwName;
+    let oResult = { error: '' }
 
     try {
 
         otAttachCheck = await SELECT.one.from(Attachments).where({ REQUEST_ID: iRequestId });
         if (!otAttachCheck) {
-            return iRequest;
+            return oResult
         }
 
         headMetaDataValue = await getMetaDataValue(iRequest, iRequestId);
@@ -786,7 +833,7 @@ async function updateOtProcessAttribute(iRequest, iRequestId) {
             return otBwName;
         }
 
-        oBody.ProcessId_ProcessId = consts.idProcess;
+        oBody.ProcessId_ProcessId = consts.OT_PROCESS_ID;
         oBody.OpenTextBusinessWorkspaceID = headMetaDataValue.OPENTEXTNODEID;
 
         oBody.ParentID = 0;
@@ -799,7 +846,7 @@ async function updateOtProcessAttribute(iRequest, iRequestId) {
 
         oBody = getCommonMetaData(iRequest, oBody, headMetaDataValue)
 
-        let uRL = "/odata/v2/catalog/OpenTextBusinessWorkspace(ProcessId_ProcessId='" + consts.idProcess +
+        let uRL = "/odata/v2/catalog/OpenTextBusinessWorkspace(ProcessId_ProcessId='" + consts.OT_PROCESS_ID +
             "',OpenTextBusinessWorkspaceID='" + headMetaDataValue.OPENTEXTNODEID + "')";
 
         oRespUpdateBw = await client.executeHttpRequest(await _getDestination(iRequest), {
@@ -838,7 +885,9 @@ function getOtBwName(iRequest, iRequestId, iRequestData) {
         requester = iRequestData.Requester;
         requestId = "" + iRequestId;
 
-        otBwName = bProcess + " " + requester + "(Request " + requestId + ")";
+        // otBwName = bProcess + " " + requester + "(Request " + requestId + ")";
+
+        otBwName = 'Order To Pay (Request ' + requestId + ')'
 
     } catch (error) {
         let errMEssage = "ERROR getOtBwName: " + error.message;
@@ -892,5 +941,6 @@ module.exports = {
     eventGetFileFromOT,
     eventDeleteFileToOt,
     updateFileonOT,
+    updateAllFileonOT,
     testSaveOT
 }

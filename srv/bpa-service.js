@@ -1,8 +1,8 @@
 const cds = require('@sap/cds');
 const LOG = cds.log('KupitO2PSrv');
 const { getStepParams, getStepList, updateRequestVersion, updateTaskId,
-    sendTeamsNotificationAfterUpdateTaskId
-} = require('./lib/TaskHandler');
+    sendTeamsNotificationAfterUpdateTaskId } = require('./lib/TaskHandler');
+const { generateO2PDocument } = require('./lib/PDFHandler');
 
 module.exports = cds.service.impl(async function () {
     global.that = this;
@@ -38,7 +38,8 @@ module.exports = cds.service.impl(async function () {
 
         // background for performance
         cds.spawn({ after: 1000 }, async (tx) => {
-            let oResponse = await sendTeamsNotificationAfterUpdateTaskId(oUpdateTaskId)
+            let o2pDocument = await generateO2PDocument(request, true)
+            let oResponse = await sendTeamsNotificationAfterUpdateTaskId(oUpdateTaskId) 
         })
 
         return request

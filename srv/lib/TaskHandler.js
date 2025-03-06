@@ -3,7 +3,6 @@ const _ = require('underscore');
 const consts = require("./Constants");
 const { getTextBundle, checkMail, getTaskComposedUrl} = require('./Utils');
 const { updateMoaApprovers, insertApprovalHistory} = require('./createProcess');
-const { generateO2PDocument } = require('./PDFHandler');
 const {  UserTaskInstancesApi } = require(consts.PATH_API_WF);
 const { sendAllMail,  sendAllNotification } = require('./MailHandler');
 const { PassThrough } = require("stream");
@@ -35,15 +34,6 @@ async function saveUserAction(iRequest) {
                 LOG.error(errMEssage);
                 return iRequest;
         }
-
-
-// no await for performance
-      //  let oResponseSendAllMail = await sendAllMail(iRequest, iRequest.data.REQUEST_ID, '', iRequest.event, false)
-      // sendAllMail(iRequest, iRequest.data.REQUEST_ID, '', iRequest.event, false)
-
-        // no await for performance
-       // let o2pDocument = await generateO2PDocument(iRequest, true)
-      //  generateO2PDocument(iRequest, true)
 
 
         return response;
@@ -656,9 +646,6 @@ async function updateRequestVersion(iRequest) {
     let moaApprovers = await getNextApprovers(requestId, 0, iRequest);
 
     let respInsertHistory = await insertApprovalHistory(iRequest, requestId, moaApprovers.approvalFlow, newVersion);
-
-            // no await for performance
-    let o2pDocument =  await generateO2PDocument(iRequest, true)
 
     return respInsertHistory;
 
