@@ -10,13 +10,7 @@ const { getEnvParam, getTextBundle } = require('./Utils');
 
 
 async function testSaveOT(iRequest) {
-
-
-
-
-    await createBusinessWorkspaceOT(iRequest);
-
-
+ 
 }
 
 
@@ -207,6 +201,8 @@ async function saveFileonOT(iRequest, iRequestId, attachId, iFileContent, iConve
         }
 
         oBody.contentBase64 = fileContent;
+
+
 
         let oRespCreateFile = await client.executeHttpRequest(await _getDestination(iRequest), {
             method: 'POST',
@@ -503,8 +499,8 @@ function getFileFromOtResponse(iRequest, otResponse) {
     return otFile;
 }
 
-async function eventDeleteFileToOt(iRequest) {
-    return deleteFileToOt(iRequest, iRequest.data.REQUEST_ID, iRequest.data.ID);
+async function eventDeleteFileToOt(iRequest, iRequestId, iFielId) {
+    return deleteFileToOt(iRequest, iRequestId, iFielId);
 }
 
 async function deleteFileToOt(iRequest, iRequestId, iFielId) {
@@ -558,7 +554,7 @@ async function createAttachment(iRequest) {
     if (retCreateDbAttachment.errors) {
         return retCreateDbAttachment;
     }
-    await createBusinessWorkspaceOT(iRequest);
+   // await createBusinessWorkspaceOT(iRequest, iRequest.data.REQUEST_ID );
 }
 
 function getMetaDataElement(iKey, iValue) {
@@ -672,7 +668,7 @@ function checknullValue(iElement, iAttribute) {
     return value;
 }
 
-async function createBusinessWorkspaceOT(iRequest) {
+async function createBusinessWorkspaceOT(iRequest,iRequestId) {
 
     let oRespCreateBw;
     let openTexNodeIDs;
@@ -685,7 +681,13 @@ async function createBusinessWorkspaceOT(iRequest) {
 
     try {
 
-        requestId = iRequest.data.REQUEST_ID;
+        //requestId = iRequest.data.REQUEST_ID;
+        requestId = iRequestId
+
+        otNodeIdsCheck = await SELECT.one.from(OtNodeIds).where({ REQUEST_ID: requestId });
+        if (otNodeIdsCheck) {
+            return iRequest;
+        }
 
         headMetaDataValue = await getMetaDataValue(iRequest, requestId);
         if (headMetaDataValue.errors) {
@@ -942,5 +944,6 @@ module.exports = {
     eventDeleteFileToOt,
     updateFileonOT,
     updateAllFileonOT,
-    testSaveOT
+    testSaveOT,
+    createBusinessWorkspaceOT
 }

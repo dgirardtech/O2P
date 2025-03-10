@@ -1,13 +1,14 @@
-const LOG = cds.log('KupitO2PSrv'); 
+const LOG = cds.log('KupitO2PSrv');
 const _ = require('underscore');
 const consts = require("./Constants");
 const { getEnvParam, getTextBundle, getTaskComposedUrl } = require('./Utils');
 const SequenceHelper = require("./SequenceHelper");
-const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF); 
+const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_WF);
 const { retrieveJwt } = require('@sap-cloud-sdk/connectivity');
 const SapCfAxios = require('sap-cf-axios').default;
-const axiosMyInboxService = SapCfAxios("sap_inbox_task_api", { logger: console }); 
- 
+const axiosMyInboxService = SapCfAxios("sap_inbox_task_api", { logger: console });
+const { createBusinessWorkspaceOT } = require('./OTHandler');
+
 
 
 
@@ -110,10 +111,6 @@ async function createProcess(iRequest) {
         if (returnUpdateWfInstanceId.errors) {
             return returnUpdateWfInstanceId;
         }
-
-
-      //  let o2pDocument = await generateO2PDocument(iRequest, true)
-
 
 
         message.MTYPE = consts.SUCCESS;
@@ -370,7 +367,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                     { attribute: "ADD_STEP_70", value: oMOAParam.addStep70 },
 
                     { attribute: "IDAREA", value: oMOAParam.idArea }
-                    
+
                 ]
             }
 
@@ -401,7 +398,7 @@ async function getMoaApprovers(iRequest, iRequestID, iUserCompiler) {
                 approver = iRequest.user.id
             }
 
-            
+
 
             let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay)
                 .where({ MailDipendente: approver }));
@@ -575,7 +572,7 @@ async function getMOAParams(iRequestID) {
         addStep60Finanza: 'FALSE',
         addStep70: 'FALSE',
         addStep80: 'FALSE',
-        idArea : ''
+        idArea: ''
     }
 
 
@@ -666,22 +663,22 @@ async function getMOAParams(iRequestID) {
 
                 let sendFakeMail = getEnvParam("FAKE_APPROVERS", false);
                 if (sendFakeMail === "false") {
-                    
-                let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
-                    oResult.managerExceptStep40 + "'");
 
-                if (oResponse && oResponse.d.results.length > 0) {
+                    let oResponse = await MoaExtraction.send("GET", "/PostionsMapping?$filter=LBLPOSITION eq '" +
+                        oResult.managerExceptStep40 + "'");
 
-                    let wd = oResponse.d.results[0].WDPOSITION;
-                    let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
-                    if (oInfoWDPosition) {
+                    if (oResponse && oResponse.d.results.length > 0) {
 
-                        oResult.managerExceptStep40WDID = oInfoWDPosition.WorkdayEmployeeID
+                        let wd = oResponse.d.results[0].WDPOSITION;
+                        let oInfoWDPosition = await WorkDayProxy.run(SELECT.one.from(WorkDay).where({ IdPosizione: wd }));
+                        if (oInfoWDPosition) {
 
+                            oResult.managerExceptStep40WDID = oInfoWDPosition.WorkdayEmployeeID
+
+                        }
                     }
-                }
 
-            }
+                }
 
 
 
@@ -898,7 +895,7 @@ async function getTaskInstanceUrl(iRequest, iRequestId, iWfInstaceID) {
 }
 
 
-async function resetSequence (iRequest) {
+async function resetSequence(iRequest) {
 
     let lRequestID = 0;
     try {
@@ -1293,7 +1290,7 @@ module.exports = {
     createRequest,
     startBPAProcess,
     userTaskCounter,
-    getMonitorTaskLink, 
-    updateMoaApprovers, 
+    getMonitorTaskLink,
+    updateMoaApprovers,
     getMOAParams
 }

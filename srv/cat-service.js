@@ -20,7 +20,7 @@ const { scheduleRun, createScheduledRun, saveVariant } = require('./lib/JobHandl
 
 const { testSaveOT } = require('./lib/OTHandler');
 const { eventSaveFileonOT, updateOtProcessAttribute, updateAllFileonOT, eventGetFileFromOT, eventDeleteFileToOt,
-    createAttachment, readAttachments } = require('./lib/OTHandler');
+    createAttachment, readAttachments,createBusinessWorkspaceOT } = require('./lib/OTHandler');
 
 
 
@@ -112,7 +112,27 @@ module.exports = cds.service.impl(async function () {
     });
 
     //-------------ACTION AVVIO PROCESSO-------------------
-    this.on('createProcess', createProcess);
+    //this.on('createProcess', createProcess);
+
+    this.on('createProcess', async (request) => {
+
+        let returnCreateProcess = await createProcess(request)
+        if (returnCreateProcess.errors) {
+            return returnCreateProcess
+        }
+
+        cds.spawn({ after: 5 }, async (tx) => {
+               let returncreateBusinessWorkspaceOT = await createBusinessWorkspaceOT(request, returnCreateProcess.REQUESTID); 
+               /*
+                if (returncreateBusinessWorkspaceOT.errors) {
+                    return returncreateBusinessWorkspaceOT;
+                }
+                    */
+            })
+
+        return returnCreateProcess
+
+    });
 
 
     //-------------ACTION RECUPERO URL BPA-------------------
@@ -133,17 +153,16 @@ module.exports = cds.service.impl(async function () {
 
         // background for performance
         cds.spawn({ after: 1000 }, async (tx) => {
+            if (request.data.STEPID === 10) {
+            let resUpdateOt = await updateOtProcessAttribute(request, request.data.REQUEST_ID)
+            //let oReturnUpdateAllFileonOT = await updateAllFileonOT(request, request.data.REQUEST_ID)
+            }
+
             let o2pDocument = await generateO2PDocument(request, true)
             let oResponseSendAllMail = await sendAllMail(request, request.data.REQUEST_ID, '', request.event, false) 
         })
 
-        // background for performance
-        if (request.data.STEPID === 10) {
-            cds.spawn({ after: 1000 }, async (tx) => {
-                let resUpdateOt = await updateOtProcessAttribute(request, request.data.REQUEST_ID)
-                //let oReturnUpdateAllFileonOT = await updateAllFileonOT(request, request.data.REQUEST_ID)
-            })
-        }
+  
 
         return request
 
@@ -186,7 +205,7 @@ module.exports = cds.service.impl(async function () {
     });
 
     this.before(['DELETE'], 'Attachments', async (request) => {
-        return await eventDeleteFileToOt(request.data.REQ);
+        return await eventDeleteFileToOt(request, request.data.REQUEST_ID, request.data.ID);
     });
 
 

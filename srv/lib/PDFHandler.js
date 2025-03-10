@@ -8,7 +8,7 @@ const fs = require('fs')
 const consts = require("./Constants");
 const client = require('@sap-cloud-sdk/http-client');
 const connectivity = require('@sap-cloud-sdk/connectivity');
-const { saveFileonOT,updateFileonOT } = require('./OTHandler');
+const { saveFileonOT, updateFileonOT,deleteFileToOt,eventDeleteFileToOt } = require('./OTHandler');
 
 
 
@@ -694,7 +694,7 @@ async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAtt
         }
 
         let returnSaveFileOnOt;
-       
+
 
         if (oAttachmentDb) {
 
@@ -704,7 +704,7 @@ async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAtt
 
             let queryMaxResult = await SELECT.one.from(Attachments).columns(["max(ID) as maxId"])
                 .where({ REQUEST_ID: iRequestId });
- 
+
             let maxId = queryMaxResult.maxId + 10
 
             attach.to_Request_REQUEST_ID = iRequestId;
@@ -751,11 +751,32 @@ async function saveAttach(iPdfContent, iRequestId, iRequest, iAttachFormat, iAtt
     return iRequest;
 }
 
+async function deleteO2PDocument(iRequest, iRequestId) {
+
+    let oAttachment = await SELECT.one.from(Attachments).where({
+        REQUEST_ID: iRequestId,
+        ATTACHMENTTYPE_ATTACHMENTTYPE: consts.attachmentTypes.DOC
+    });
+    if (oAttachment) {
+        let deleteFileToOt = await eventDeleteFileToOt(iRequest, iRequestId, oAttachment.ID)
+        if (deleteFileToOt.hasOwnProperty("error"))  { } else {
+
+            let deleteDbFile = await DELETE.from(Attachments).where(
+                {
+                    REQUEST_ID: iRequestId,
+                    ATTACHMENTTYPE_ATTACHMENTTYPE: consts.attachmentTypes.DOC
+                })
+        }
+
+    }
+
+}
 
 module.exports = {
     createPdf,
     generateO2PDocument,
     generateO2PF23Aut,
     generateO2PAccounting,
-    saveAttach
+    saveAttach,
+    deleteO2PDocument
 }
