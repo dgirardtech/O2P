@@ -7,7 +7,7 @@ const { WorkflowInstancesApi, UserTaskInstancesApi } = require(consts.PATH_API_W
 const { retrieveJwt } = require('@sap-cloud-sdk/connectivity');
 const SapCfAxios = require('sap-cf-axios').default;
 const axiosMyInboxService = SapCfAxios("sap_inbox_task_api", { logger: console });
-const { createBusinessWorkspaceOT } = require('./OTHandler');
+ 
 
 
 
