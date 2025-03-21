@@ -168,6 +168,8 @@ entity OtNodeIds : managed {
       OPENTEXTFILEFOLDER         : String;
 }
 
+
+
 //ZFI_O2P_NOTE
 entity Notes : managed {
   key to_Request         : Association to Request;
