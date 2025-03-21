@@ -536,8 +536,7 @@ type UserActionenum   : String(15) enum {
   Terminated  = 'TERMINATED';
 }
 
-type STEP_DESCRIPTION : String(250);
-type STEP_DESCRIPTION2 : String(250);
+type STEP_DESCRIPTION : String(250); 
 type REQUEST_ID       : Integer;
 type REQUEST_ID_PROG  : Integer;
 type STEP_ID          : Integer;
