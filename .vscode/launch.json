@@ -18,6 +18,25 @@
       ],
       "envFile": "${workspaceFolder}/.env"
     },
+
+    {
+      "restart": true,
+      "name": "cds serve 2",
+      "request": "launch",
+      "type": "node",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "cds",
+      "args": [
+        "serve",
+        "--with-mocks",
+        "--in-memory?"
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "envFile": "${workspaceFolder}/.env"
+    },
+
     {
       "command": "cds watch --profile hybrid",
       "name": "cds watch hybrid",
